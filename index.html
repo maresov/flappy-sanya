@@ -29,32 +29,61 @@ canvas { display: block; image-rendering: auto; }
 <body>
 <canvas id="game"></canvas>
 <script>
-// ============ RATE DATA ============
+// ============ RATE DATA (weekly, March 2022 — March 2026, CBR) ============
 const RATE_DATA = [
-  {date:"2025-12-02",rate:77.70},{date:"2025-12-03",rate:77.46},{date:"2025-12-04",rate:77.96},
-  {date:"2025-12-05",rate:76.97},{date:"2025-12-06",rate:76.09},{date:"2025-12-09",rate:77.27},
-  {date:"2025-12-10",rate:76.81},{date:"2025-12-11",rate:77.90},{date:"2025-12-12",rate:79.34},
-  {date:"2025-12-13",rate:79.73},{date:"2025-12-16",rate:79.45},{date:"2025-12-17",rate:79.43},
-  {date:"2025-12-18",rate:80.38},{date:"2025-12-19",rate:80.03},{date:"2025-12-20",rate:80.72},
-  {date:"2025-12-23",rate:79.31},{date:"2025-12-24",rate:78.59},{date:"2025-12-25",rate:78.44},
-  {date:"2025-12-26",rate:77.88},{date:"2025-12-27",rate:77.69},{date:"2025-12-30",rate:77.45},
-  {date:"2025-12-31",rate:78.23},{date:"2026-01-13",rate:78.79},{date:"2026-01-14",rate:78.85},
-  {date:"2026-01-15",rate:78.57},{date:"2026-01-16",rate:78.53},{date:"2026-01-17",rate:77.83},
-  {date:"2026-01-20",rate:77.76},{date:"2026-01-21",rate:77.82},{date:"2026-01-22",rate:77.52},
-  {date:"2026-01-23",rate:76.04},{date:"2026-01-24",rate:75.92},{date:"2026-01-27",rate:76.01},
-  {date:"2026-01-28",rate:76.55},{date:"2026-01-29",rate:76.27},{date:"2026-01-30",rate:76.03},
-  {date:"2026-01-31",rate:75.73},{date:"2026-02-03",rate:77.02},{date:"2026-02-04",rate:76.98},
-  {date:"2026-02-05",rate:76.91},{date:"2026-02-06",rate:76.55},{date:"2026-02-07",rate:77.05},
-  {date:"2026-02-10",rate:77.65},{date:"2026-02-11",rate:77.21},{date:"2026-02-12",rate:77.46},
-  {date:"2026-02-13",rate:77.19},{date:"2026-02-14",rate:77.19},{date:"2026-02-17",rate:76.62},
-  {date:"2026-02-18",rate:76.74},{date:"2026-02-19",rate:76.15},{date:"2026-02-20",rate:76.64},
-  {date:"2026-02-21",rate:76.75},{date:"2026-02-25",rate:76.63},{date:"2026-02-26",rate:76.47},
-  {date:"2026-02-27",rate:77.12},{date:"2026-02-28",rate:77.27},{date:"2026-03-03",rate:77.17},
-  {date:"2026-03-04",rate:77.61},{date:"2026-03-05",rate:77.80},{date:"2026-03-06",rate:78.19},
-  {date:"2026-03-07",rate:79.15},{date:"2026-03-11",rate:78.74},{date:"2026-03-12",rate:79.07},
-  {date:"2026-03-13",rate:79.07},{date:"2026-03-14",rate:80.23},{date:"2026-03-17",rate:81.05},
-  {date:"2026-03-18",rate:81.91},{date:"2026-03-19",rate:83.13},{date:"2026-03-20",rate:84.84},
-  {date:"2026-03-21",rate:84.00},{date:"2026-03-24",rate:81.88}
+  {date:"2022-03-07",rate:105.81},{date:"2022-03-14",rate:115.20},{date:"2022-03-21",rate:104.68},{date:"2022-03-28",rate:93.71},
+  {date:"2022-04-04",rate:83.59},{date:"2022-04-11",rate:79.16},{date:"2022-04-18",rate:79.45},{date:"2022-04-25",rate:73.36},
+  {date:"2022-05-02",rate:71.02},{date:"2022-05-09",rate:67.38},{date:"2022-05-16",rate:63.44},{date:"2022-05-23",rate:58.21},
+  {date:"2022-05-30",rate:63.10},{date:"2022-06-06",rate:61.11},{date:"2022-06-13",rate:57.78},{date:"2022-06-20",rate:56.17},
+  {date:"2022-06-27",rate:53.36},{date:"2022-07-04",rate:55.09},{date:"2022-07-11",rate:61.30},{date:"2022-07-18",rate:56.56},
+  {date:"2022-07-25",rate:57.78},{date:"2022-08-01",rate:62.05},{date:"2022-08-08",rate:60.32},{date:"2022-08-15",rate:61.37},
+  {date:"2022-08-22",rate:59.74},{date:"2022-08-29",rate:60.36},{date:"2022-09-05",rate:60.90},{date:"2022-09-12",rate:60.46},
+  {date:"2022-09-19",rate:60.17},{date:"2022-09-26",rate:58.00},{date:"2022-10-03",rate:57.57},{date:"2022-10-10",rate:62.31},
+  {date:"2022-10-17",rate:61.76},{date:"2022-10-24",rate:61.16},{date:"2022-10-31",rate:61.62},{date:"2022-11-07",rate:61.24},
+  {date:"2022-11-14",rate:60.40},{date:"2022-11-21",rate:60.74},{date:"2022-11-28",rate:60.75},{date:"2022-12-05",rate:62.18},
+  {date:"2022-12-12",rate:62.77},{date:"2022-12-19",rate:66.35},{date:"2022-12-26",rate:68.45},{date:"2023-01-02",rate:70.34},
+  {date:"2023-01-09",rate:70.30},{date:"2023-01-16",rate:68.29},{date:"2023-01-23",rate:68.63},{date:"2023-01-30",rate:69.59},
+  {date:"2023-02-06",rate:70.60},{date:"2023-02-13",rate:73.63},{date:"2023-02-20",rate:74.04},{date:"2023-02-27",rate:75.43},
+  {date:"2023-03-06",rate:75.47},{date:"2023-03-13",rate:75.46},{date:"2023-03-20",rate:77.24},{date:"2023-03-27",rate:76.57},
+  {date:"2023-04-03",rate:77.95},{date:"2023-04-10",rate:81.74},{date:"2023-04-17",rate:81.63},{date:"2023-04-24",rate:81.27},
+  {date:"2023-05-01",rate:80.51},{date:"2023-05-08",rate:76.82},{date:"2023-05-15",rate:79.10},{date:"2023-05-22",rate:79.94},
+  {date:"2023-05-29",rate:80.06},{date:"2023-06-05",rate:81.33},{date:"2023-06-12",rate:82.64},{date:"2023-06-19",rate:83.99},
+  {date:"2023-06-26",rate:84.66},{date:"2023-07-03",rate:89.33},{date:"2023-07-10",rate:91.49},{date:"2023-07-17",rate:90.42},
+  {date:"2023-07-24",rate:90.49},{date:"2023-07-31",rate:91.59},{date:"2023-08-07",rate:96.57},{date:"2023-08-14",rate:101.04},
+  {date:"2023-08-21",rate:94.14},{date:"2023-08-28",rate:95.47},{date:"2023-09-04",rate:96.62},{date:"2023-09-11",rate:96.51},
+  {date:"2023-09-18",rate:96.65},{date:"2023-09-25",rate:96.15},{date:"2023-10-02",rate:98.48},{date:"2023-10-09",rate:101.36},
+  {date:"2023-10-16",rate:97.29},{date:"2023-10-23",rate:94.71},{date:"2023-10-30",rate:93.24},{date:"2023-11-06",rate:93.04},
+  {date:"2023-11-13",rate:92.12},{date:"2023-11-20",rate:88.50},{date:"2023-11-27",rate:88.70},{date:"2023-12-04",rate:90.67},
+  {date:"2023-12-11",rate:90.98},{date:"2023-12-18",rate:90.42},{date:"2023-12-25",rate:91.97},{date:"2024-01-01",rate:89.69},
+  {date:"2024-01-08",rate:90.40},{date:"2024-01-15",rate:87.68},{date:"2024-01-22",rate:87.97},{date:"2024-01-29",rate:89.61},
+  {date:"2024-02-05",rate:91.24},{date:"2024-02-12",rate:91.08},{date:"2024-02-19",rate:92.41},{date:"2024-02-26",rate:92.63},
+  {date:"2024-03-04",rate:91.35},{date:"2024-03-11",rate:90.63},{date:"2024-03-18",rate:91.98},{date:"2024-03-25",rate:92.78},
+  {date:"2024-04-01",rate:92.29},{date:"2024-04-08",rate:92.58},{date:"2024-04-15",rate:93.59},{date:"2024-04-22",rate:93.25},
+  {date:"2024-04-29",rate:91.78},{date:"2024-05-06",rate:91.31},{date:"2024-05-13",rate:91.63},{date:"2024-05-20",rate:90.65},
+  {date:"2024-05-27",rate:88.69},{date:"2024-06-03",rate:89.38},{date:"2024-06-10",rate:88.99},{date:"2024-06-17",rate:89.05},
+  {date:"2024-06-24",rate:87.37},{date:"2024-07-01",rate:87.30},{date:"2024-07-08",rate:88.17},{date:"2024-07-15",rate:87.81},
+  {date:"2024-07-22",rate:87.78},{date:"2024-07-29",rate:86.56},{date:"2024-08-05",rate:84.95},{date:"2024-08-12",rate:89.95},
+  {date:"2024-08-19",rate:89.54},{date:"2024-08-26",rate:91.77},{date:"2024-09-02",rate:90.00},{date:"2024-09-09",rate:90.39},
+  {date:"2024-09-16",rate:91.14},{date:"2024-09-23",rate:92.92},{date:"2024-09-30",rate:93.22},{date:"2024-10-07",rate:96.06},
+  {date:"2024-10-14",rate:96.10},{date:"2024-10-21",rate:96.09},{date:"2024-10-28",rate:97.23},{date:"2024-11-04",rate:97.55},
+  {date:"2024-11-11",rate:97.95},{date:"2024-11-18",rate:99.94},{date:"2024-11-25",rate:103.79},{date:"2024-12-02",rate:107.18},
+  {date:"2024-12-09",rate:99.38},{date:"2024-12-16",rate:102.91},{date:"2024-12-23",rate:101.61},{date:"2024-12-30",rate:101.68},
+  {date:"2025-01-06",rate:102.29},{date:"2025-01-13",rate:102.71},{date:"2025-01-20",rate:101.96},{date:"2025-01-27",rate:97.13},
+  {date:"2025-02-03",rate:99.94},{date:"2025-02-10",rate:96.78},{date:"2025-02-17",rate:91.43},{date:"2025-02-24",rate:88.21},
+  {date:"2025-03-03",rate:89.25},{date:"2025-03-10",rate:88.39},{date:"2025-03-17",rate:84.31},{date:"2025-03-24",rate:83.87},
+  {date:"2025-03-31",rate:85.50},{date:"2025-04-07",rate:86.19},{date:"2025-04-14",rate:82.77},{date:"2025-04-21",rate:80.76},
+  {date:"2025-04-28",rate:82.55},{date:"2025-05-05",rate:81.91},{date:"2025-05-12",rate:80.89},{date:"2025-05-19",rate:80.41},
+  {date:"2025-05-26",rate:79.66},{date:"2025-06-02",rate:79.13},{date:"2025-06-09",rate:79.15},{date:"2025-06-16",rate:78.51},
+  {date:"2025-06-23",rate:78.29},{date:"2025-06-30",rate:78.53},{date:"2025-07-07",rate:78.72},{date:"2025-07-14",rate:78.37},
+  {date:"2025-07-21",rate:78.33},{date:"2025-07-28",rate:79.58},{date:"2025-08-04",rate:79.67},{date:"2025-08-11",rate:79.67},
+  {date:"2025-08-18",rate:80.43},{date:"2025-08-25",rate:80.68},{date:"2025-09-01",rate:80.43},{date:"2025-09-08",rate:82.34},
+  {date:"2025-09-15",rate:83.07},{date:"2025-09-22",rate:84.02},{date:"2025-09-29",rate:82.87},{date:"2025-10-06",rate:83.00},
+  {date:"2025-10-13",rate:80.85},{date:"2025-10-20",rate:81.36},{date:"2025-10-27",rate:78.98},{date:"2025-11-03",rate:80.89},
+  {date:"2025-11-10",rate:81.01},{date:"2025-11-17",rate:81.13},{date:"2025-11-24",rate:78.92},{date:"2025-12-01",rate:77.70},
+  {date:"2025-12-08",rate:77.27},{date:"2025-12-15",rate:79.45},{date:"2025-12-22",rate:79.31},{date:"2025-12-29",rate:77.45},
+  {date:"2026-01-12",rate:78.79},{date:"2026-01-19",rate:77.76},{date:"2026-01-26",rate:76.01},{date:"2026-02-02",rate:77.02},
+  {date:"2026-02-09",rate:77.65},{date:"2026-02-16",rate:76.62},{date:"2026-02-23",rate:76.75},{date:"2026-03-02",rate:77.17},
+  {date:"2026-03-09",rate:79.15},{date:"2026-03-16",rate:81.05},{date:"2026-03-23",rate:81.88}
 ];
 
 // ============ JOKES ============
@@ -95,7 +124,7 @@ const JOKES_END = [
   "Саня не смог обогнать курс.\nНу хоть в игре, не только в жизни",
   "Game Over! Доллар по 118₽\nвсё ещё ждёт Саню на вершине",
   "Крах! Саня потерял {RATE}₽,\nно это мелочь по сравнению\nс его покупкой по 118₽",
-  "Саня продержался {DAYS} дней!\nЕго доллары по 118₽ держатся\nуже 4 года... в минусе",
+  "Саня продержался {DAYS} нед.!\nЕго доллары по 118₽ держатся\nуже 4 года... в минусе",
   "Упс! Саня встретился с курсом.\nВ отличие от 118₽, этот курс\nего хотя бы заметил",
   "Саня не долетел!\nКак и доллар — до 118₽ обратно",
 ];
@@ -108,9 +137,9 @@ function getRandomJoke(arr, score, rate) {
 // ============ CONSTANTS ============
 let CANVAS_W = 800;
 let CANVAS_H = 500;
-const RATE_MIN = 72;
-const RATE_MAX = 122;
-const RATE_AMPLIFY = 2.5; // amplify ground curve so rate swings are dramatic
+const RATE_MIN = 48;
+const RATE_MAX = 125;
+const RATE_AMPLIFY = 1.3; // slight amplification (data already has big swings 53-120)
 const CEILING_RATE = 118;
 let GRAVITY = 0.35;
 let JUMP_FORCE = -6.5;
@@ -1016,7 +1045,7 @@ function drawHUD() {
   ctx.fillStyle = '#fff';
   ctx.font = `bold ${P ? 32 : 22}px monospace`;
   ctx.textAlign = 'center';
-  ctx.fillText(`${Math.min(day, RATE_DATA.length)} дней`, CANVAS_W / 2, hudY);
+  ctx.fillText(`${Math.min(day, RATE_DATA.length)} нед.`, CANVAS_W / 2, hudY);
 
   ctx.font = `${P ? 16 : 11}px monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
@@ -1025,14 +1054,14 @@ function drawHUD() {
   if (highScore > 0) {
     ctx.fillStyle = '#ffd700';
     ctx.font = `${P ? 14 : 10}px monospace`;
-    ctx.fillText(`Рекорд: ${highScore} дней`, CANVAS_W / 2, hudY + (P ? 46 : 32));
+    ctx.fillText(`Рекорд: ${highScore} нед.`, CANVAS_W / 2, hudY + (P ? 46 : 32));
   }
   ctx.textAlign = 'left';
 
   // Y-axis labels
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.font = `${P ? 12 : 9}px monospace`;
-  for (let r = 80; r <= 115; r += 5) {
+  for (let r = 55; r <= 115; r += 10) {
     const y = rateToY(r);
     ctx.fillText(r + '₽', CANVAS_W - (P ? 40 : 32), y + 3);
     ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
@@ -1107,7 +1136,7 @@ function drawMenu() {
     if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 20px monospace';
-      ctx.fillText(`Рекорд: ${highScore} дней`, cx, y + 18);
+      ctx.fillText(`Рекорд: ${highScore} нед.`, cx, y + 18);
       y += 28 + gap;
     }
 
@@ -1199,7 +1228,7 @@ function drawMenu() {
     if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = '13px monospace';
-      ctx.fillText(`Рекорд: ${highScore} дней`, cx, nextY + 6);
+      ctx.fillText(`Рекорд: ${highScore} нед.`, cx, nextY + 6);
       nextY += 18;
     }
 
@@ -1325,7 +1354,7 @@ function drawGameOver() {
 
     ctx.fillStyle = '#fff';
     ctx.font = '24px monospace';
-    ctx.fillText(`Саня продержался ${score} дней`, cx, y + 24);
+    ctx.fillText(`Саня продержался ${score} нед.`, cx, y + 24);
     y += 40;
 
     const day = Math.min(score, RATE_DATA.length - 1);
@@ -1350,7 +1379,7 @@ function drawGameOver() {
     } else if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = '18px monospace';
-      ctx.fillText(`Рекорд: ${highScore} дней`, cx, y + 18);
+      ctx.fillText(`Рекорд: ${highScore} нед.`, cx, y + 18);
     }
 
     // Buttons pinned to bottom
@@ -1379,7 +1408,7 @@ function drawGameOver() {
 
     ctx.fillStyle = '#fff';
     ctx.font = '20px monospace';
-    ctx.fillText(`Саня продержался ${score} дней`, cx, CANVAS_H * 0.25);
+    ctx.fillText(`Саня продержался ${score} нед.`, cx, CANVAS_H * 0.25);
 
     const day = Math.min(score, RATE_DATA.length - 1);
     if (day > 0) {
@@ -1400,7 +1429,7 @@ function drawGameOver() {
     } else if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = '13px monospace';
-      ctx.fillText(`Рекорд: ${highScore} дней`, cx, jY + jLines * 16 + 18);
+      ctx.fillText(`Рекорд: ${highScore} нед.`, cx, jY + jLines * 16 + 18);
     }
 
     const btnW = 200, btnH = 45;
