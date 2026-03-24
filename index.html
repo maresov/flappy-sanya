@@ -1117,8 +1117,15 @@ function drawMenu() {
 
     // Title
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 48px monospace';
     ctx.textAlign = 'center';
+    const titlePad = 20;
+    const maxTitleW = CANVAS_W - titlePad * 2;
+    let titleFontSize = 48;
+    ctx.font = `bold ${titleFontSize}px monospace`;
+    while (ctx.measureText('FLAPPY ТРЕЙДЕР').width > maxTitleW && titleFontSize > 20) {
+      titleFontSize -= 2;
+      ctx.font = `bold ${titleFontSize}px monospace`;
+    }
     ctx.fillText('FLAPPY ТРЕЙДЕР', cx, y + 44);
     y += 52 + gap;
 
@@ -1145,7 +1152,7 @@ function drawMenu() {
     // Skin label
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 22px monospace';
-    ctx.fillText('Выбери лук Сани:', cx, y + 20);
+    ctx.fillText('Выбери лук трейдера:', cx, y + 20);
     y += 28 + gap;
 
     // 3 near-square cards
@@ -1213,8 +1220,15 @@ function drawMenu() {
     const offsetY = Math.max(10, (CANVAS_H - totalContentH) / 2);
 
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 40px monospace';
     ctx.textAlign = 'center';
+    const titlePadD = 20;
+    const maxTitleWD = CANVAS_W - titlePadD * 2;
+    let titleFontSizeD = 40;
+    ctx.font = `bold ${titleFontSizeD}px monospace`;
+    while (ctx.measureText('FLAPPY ТРЕЙДЕР').width > maxTitleWD && titleFontSizeD > 16) {
+      titleFontSizeD -= 2;
+      ctx.font = `bold ${titleFontSizeD}px monospace`;
+    }
     ctx.fillText('FLAPPY ТРЕЙДЕР', cx, offsetY + 45);
 
     ctx.font = '15px monospace';
@@ -1236,7 +1250,7 @@ function drawMenu() {
 
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 16px monospace';
-    ctx.fillText('Выбери лук Сани:', cx, nextY + 20);
+    ctx.fillText('Выбери лук трейдера:', cx, nextY + 20);
     const skinStartY = nextY + 32;
 
     const bw = 140, bh = 110, gap = 20;
