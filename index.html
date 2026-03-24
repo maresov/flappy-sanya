@@ -110,6 +110,7 @@ let CANVAS_W = 800;
 let CANVAS_H = 500;
 const RATE_MIN = 72;
 const RATE_MAX = 122;
+const RATE_AMPLIFY = 2.5; // amplify ground curve so rate swings are dramatic
 const CEILING_RATE = 118;
 let GRAVITY = 0.35;
 let JUMP_FORCE = -6.5;
@@ -180,13 +181,22 @@ function rateToY(rate) {
   return CANVAS_H - 10 - t * (CANVAS_H - 20);
 }
 
+// Mean rate for amplification baseline
+const RATE_MEAN = RATE_DATA.reduce((s,d) => s + d.rate, 0) / RATE_DATA.length;
+
+function amplifyRate(rate) {
+  // Amplify deviation from mean so ground curve has dramatic swings
+  return RATE_MEAN + (rate - RATE_MEAN) * RATE_AMPLIFY;
+}
+
 function getGroundY(px) {
   const dayFloat = (px + scrollX) / DAY_WIDTH;
   const i = Math.floor(dayFloat);
   const frac = dayFloat - i;
-  if (i < 0) return rateToY(RATE_DATA[0].rate);
-  if (i >= RATE_DATA.length - 1) return rateToY(RATE_DATA[RATE_DATA.length - 1].rate);
-  return rateToY(RATE_DATA[i].rate + (RATE_DATA[i + 1].rate - RATE_DATA[i].rate) * frac);
+  if (i < 0) return rateToY(amplifyRate(RATE_DATA[0].rate));
+  if (i >= RATE_DATA.length - 1) return rateToY(amplifyRate(RATE_DATA[RATE_DATA.length - 1].rate));
+  const rawRate = RATE_DATA[i].rate + (RATE_DATA[i + 1].rate - RATE_DATA[i].rate) * frac;
+  return rateToY(amplifyRate(rawRate));
 }
 
 function getCurrentDay() {
