@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Flappy Sanya — Курс Доллара</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: #0a0a2e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+canvas { display: block; image-rendering: auto; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+// ============ RATE DATA ============
+const RATE_DATA = [
+  {date:"2025-12-02",rate:77.70},{date:"2025-12-03",rate:77.46},{date:"2025-12-04",rate:77.96},
+  {date:"2025-12-05",rate:76.97},{date:"2025-12-06",rate:76.09},{date:"2025-12-09",rate:77.27},
+  {date:"2025-12-10",rate:76.81},{date:"2025-12-11",rate:77.90},{date:"2025-12-12",rate:79.34},
+  {date:"2025-12-13",rate:79.73},{date:"2025-12-16",rate:79.45},{date:"2025-12-17",rate:79.43},
+  {date:"2025-12-18",rate:80.38},{date:"2025-12-19",rate:80.03},{date:"2025-12-20",rate:80.72},
+  {date:"2025-12-23",rate:79.31},{date:"2025-12-24",rate:78.59},{date:"2025-12-25",rate:78.44},
+  {date:"2025-12-26",rate:77.88},{date:"2025-12-27",rate:77.69},{date:"2025-12-30",rate:77.45},
+  {date:"2025-12-31",rate:78.23},{date:"2026-01-13",rate:78.79},{date:"2026-01-14",rate:78.85},
+  {date:"2026-01-15",rate:78.57},{date:"2026-01-16",rate:78.53},{date:"2026-01-17",rate:77.83},
+  {date:"2026-01-20",rate:77.76},{date:"2026-01-21",rate:77.82},{date:"2026-01-22",rate:77.52},
+  {date:"2026-01-23",rate:76.04},{date:"2026-01-24",rate:75.92},{date:"2026-01-27",rate:76.01},
+  {date:"2026-01-28",rate:76.55},{date:"2026-01-29",rate:76.27},{date:"2026-01-30",rate:76.03},
+  {date:"2026-01-31",rate:75.73},{date:"2026-02-03",rate:77.02},{date:"2026-02-04",rate:76.98},
+  {date:"2026-02-05",rate:76.91},{date:"2026-02-06",rate:76.55},{date:"2026-02-07",rate:77.05},
+  {date:"2026-02-10",rate:77.65},{date:"2026-02-11",rate:77.21},{date:"2026-02-12",rate:77.46},
+  {date:"2026-02-13",rate:77.19},{date:"2026-02-14",rate:77.19},{date:"2026-02-17",rate:76.62},
+  {date:"2026-02-18",rate:76.74},{date:"2026-02-19",rate:76.15},{date:"2026-02-20",rate:76.64},
+  {date:"2026-02-21",rate:76.75},{date:"2026-02-25",rate:76.63},{date:"2026-02-26",rate:76.47},
+  {date:"2026-02-27",rate:77.12},{date:"2026-02-28",rate:77.27},{date:"2026-03-03",rate:77.17},
+  {date:"2026-03-04",rate:77.61},{date:"2026-03-05",rate:77.80},{date:"2026-03-06",rate:78.19},
+  {date:"2026-03-07",rate:79.15},{date:"2026-03-11",rate:78.74},{date:"2026-03-12",rate:79.07},
+  {date:"2026-03-13",rate:79.07},{date:"2026-03-14",rate:80.23},{date:"2026-03-17",rate:81.05},
+  {date:"2026-03-18",rate:81.91},{date:"2026-03-19",rate:83.13},{date:"2026-03-20",rate:84.84},
+  {date:"2026-03-21",rate:84.00},{date:"2026-03-24",rate:81.88}
+];
+
+// ============ JOKES ============
+const JOKES_START = [
+  "Саня купил доллар по 118₽.\nТеперь пытается долететь хотя бы до 90...",
+  "Саня в 2022: «Рубль всё, берём доллар!»\nДоллар: *падает до 76₽*\nСаня: ...",
+  "Портфель Сани: 100% USD по 118₽\nДиверсификация: 0%  Боль: 100%",
+  "Саня смотрит на курс 77₽ и думает:\n«Ещё чуть-чуть и я в плюсе...\nлет через 40»",
+  "Когда Саня говорит «я инвестор»,\nвсе вспоминают доллар по 118₽",
+  "Саня купил доллар на хаях.\nТеперь хай говорит только Саня —\nсвоим деньгам на прощание",
+  "Финансовый план Сани:\n1. Купить доллар по 118₽\n2. ???\n3. Profit (когда-нибудь)",
+];
+
+const JOKES_SKIN = [
+  // Rocket jokes
+  [
+    "Саня на ракете!\nК сожалению, доллар летит\nв обратную сторону...",
+    "Ракета Сани стартовала!\nПравда доллар по 118₽\nтак и не взлетел",
+    "Саня запустил ракету!\nЖаль, его инвестиции\nтак и остались на земле",
+  ],
+  // Car jokes
+  [
+    "Саня за рулём! Может хоть\nот курса 118₽ удастся уехать",
+    "Саня сел в машину.\nНа бензин тратит меньше,\nчем потерял на долларе",
+    "Саня на тачке! Тачку купил\nна рубли, которые не потратил\nна доллар... а нет, потратил",
+  ],
+  // Walk jokes
+  [
+    "Саня идёт пешком.\nВсю машину продал,\nчтобы закупить доллар по 118₽",
+    "Пешком, как и положено\nчеловеку, купившему доллар\nна самом пике",
+    "Саня идёт пешком — на такси\nне хватает после покупки\nдоллара по 118₽",
+  ],
+];
+
+const JOKES_END = [
+  "Саня врезался в курс!\nКак и его портфель в 2022-м...",
+  "Крах! Прямо как Санины\nинвестиции по 118₽ за доллар",
+  "Саня не смог обогнать курс.\nНу хоть в игре, не только в жизни",
+  "Game Over! Доллар по 118₽\nвсё ещё ждёт Саню на вершине",
+  "Крах! Саня потерял {RATE}₽,\nно это мелочь по сравнению\nс его покупкой по 118₽",
+  "Саня продержался {DAYS} дней!\nЕго доллары по 118₽ держатся\nуже 4 года... в минусе",
+  "Упс! Саня встретился с курсом.\nВ отличие от 118₽, этот курс\nего хотя бы заметил",
+  "Саня не долетел!\nКак и доллар — до 118₽ обратно",
+];
+
+function getRandomJoke(arr, score, rate) {
+  const joke = arr[Math.floor(Math.random() * arr.length)];
+  return joke.replace('{DAYS}', score).replace('{RATE}', rate ? rate.toFixed(0) : '??');
+}
+
+// ============ CONSTANTS ============
+let CANVAS_W = 800;
+let CANVAS_H = 500;
+const RATE_MIN = 72;
+const RATE_MAX = 122;
+const CEILING_RATE = 118;
+let GRAVITY = 0.35;
+let JUMP_FORCE = -6.5;
+let SCROLL_SPEED = 2.5;
+let DAY_WIDTH = 60;
+let PLAYER_X = 150;
+let PLAYER_SCALE = 2;
+let IS_PORTRAIT = false;
+
+// ============ CANVAS ============
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const sw = window.innerWidth;
+  const sh = window.innerHeight;
+  IS_PORTRAIT = sh > sw * 1.2;
+
+  if (IS_PORTRAIT) {
+    CANVAS_W = 400;
+    CANVAS_H = Math.round(400 * (sh / sw));
+    if (CANVAS_H > 860) CANVAS_H = 860;
+    GRAVITY = 0.3;
+    JUMP_FORCE = -6.0;
+    SCROLL_SPEED = 2.0;
+    DAY_WIDTH = 45;
+    PLAYER_X = 80;
+    PLAYER_SCALE = 1.4;
+  } else {
+    CANVAS_W = 800;
+    CANVAS_H = 500;
+    GRAVITY = 0.35;
+    JUMP_FORCE = -6.5;
+    SCROLL_SPEED = 2.5;
+    DAY_WIDTH = 60;
+    PLAYER_X = 150;
+    PLAYER_SCALE = 2;
+  }
+
+  canvas.width = CANVAS_W;
+  canvas.height = CANVAS_H;
+  canvas.style.width = sw + 'px';
+  canvas.style.height = sh + 'px';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+// ============ GAME STATE ============
+let state = 'menu';
+let selectedSkin = 0;
+let highScore = 0;
+try { highScore = parseInt(localStorage.getItem('flappySanyaHigh') || '0'); } catch(e) {}
+let score = 0;
+let playerY = CANVAS_H / 2;
+let playerVY = 0;
+let scrollX = 0;
+let currentJoke = '';
+let menuJoke = getRandomJoke(JOKES_START, 0, 0);
+let skinJoke = getRandomJoke(JOKES_SKIN[0], 0, 0);
+
+// ============ COORDINATE MAPPING ============
+function rateToY(rate) {
+  // rate=RATE_MAX(122) -> y=10 (top), rate=RATE_MIN(72) -> y=CANVAS_H-10 (bottom)
+  const t = (rate - RATE_MIN) / (RATE_MAX - RATE_MIN);
+  return CANVAS_H - 10 - t * (CANVAS_H - 20);
+}
+
+function getGroundY(px) {
+  const dayFloat = (px + scrollX) / DAY_WIDTH;
+  const i = Math.floor(dayFloat);
+  const frac = dayFloat - i;
+  if (i < 0) return rateToY(RATE_DATA[0].rate);
+  if (i >= RATE_DATA.length - 1) return rateToY(RATE_DATA[RATE_DATA.length - 1].rate);
+  return rateToY(RATE_DATA[i].rate + (RATE_DATA[i + 1].rate - RATE_DATA[i].rate) * frac);
+}
+
+function getCurrentDay() {
+  return Math.min(Math.floor(scrollX / DAY_WIDTH), RATE_DATA.length - 1);
+}
+
+// ============ PRE-RENDER SASHA FACE ============
+function createSashaFaceCanvas(size) {
+  const faceCanvas = document.createElement('canvas');
+  const s = size * 4; // high res
+  faceCanvas.width = s;
+  faceCanvas.height = s * 1.18;
+  const fc = faceCanvas.getContext('2d');
+  const cx = s / 2, cy = s / 2, r = s / 2 * 0.88;
+
+  // === HEAD SHAPE - squared jaw like Sasha ===
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.68, cy - r * 0.45);
+  // Left temple to forehead
+  fc.quadraticCurveTo(cx - r * 0.68, cy - r * 0.95, cx - r * 0.15, cy - r);
+  // Forehead top
+  fc.quadraticCurveTo(cx, cy - r * 1.02, cx + r * 0.15, cy - r);
+  // Right temple
+  fc.quadraticCurveTo(cx + r * 0.68, cy - r * 0.95, cx + r * 0.68, cy - r * 0.45);
+  // Right cheek
+  fc.lineTo(cx + r * 0.7, cy + r * 0.15);
+  // Right jaw - squared
+  fc.quadraticCurveTo(cx + r * 0.7, cy + r * 0.65, cx + r * 0.45, cy + r * 0.85);
+  // Chin - broad
+  fc.quadraticCurveTo(cx + r * 0.2, cy + r * 0.95, cx, cy + r * 0.95);
+  fc.quadraticCurveTo(cx - r * 0.2, cy + r * 0.95, cx - r * 0.45, cy + r * 0.85);
+  // Left jaw
+  fc.quadraticCurveTo(cx - r * 0.7, cy + r * 0.65, cx - r * 0.7, cy + r * 0.15);
+  fc.closePath();
+
+  // Multi-stop skin gradient
+  const skinGrad = fc.createRadialGradient(cx - r * 0.15, cy - r * 0.25, r * 0.05, cx, cy + r * 0.1, r * 1.1);
+  skinGrad.addColorStop(0, '#fde8d0');
+  skinGrad.addColorStop(0.3, '#f8d4b0');
+  skinGrad.addColorStop(0.6, '#f0c49a');
+  skinGrad.addColorStop(1, '#dba678');
+  fc.fillStyle = skinGrad;
+  fc.fill();
+
+  // Subtle cheek blush
+  fc.fillStyle = 'rgba(220,150,130,0.08)';
+  fc.beginPath(); fc.ellipse(cx - r * 0.4, cy + r * 0.15, r * 0.2, r * 0.15, 0, 0, Math.PI*2); fc.fill();
+  fc.beginPath(); fc.ellipse(cx + r * 0.4, cy + r * 0.15, r * 0.2, r * 0.15, 0, 0, Math.PI*2); fc.fill();
+
+  // Jaw shadow
+  fc.fillStyle = 'rgba(180,140,100,0.12)';
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.7, cy + r * 0.15);
+  fc.quadraticCurveTo(cx - r * 0.7, cy + r * 0.65, cx - r * 0.45, cy + r * 0.85);
+  fc.quadraticCurveTo(cx, cy + r * 0.95, cx + r * 0.45, cy + r * 0.85);
+  fc.quadraticCurveTo(cx + r * 0.7, cy + r * 0.65, cx + r * 0.7, cy + r * 0.15);
+  fc.lineTo(cx + r * 0.7, cy + r * 0.4);
+  fc.quadraticCurveTo(cx, cy + r * 0.5, cx - r * 0.7, cy + r * 0.4);
+  fc.closePath();
+  fc.fill();
+
+  // Head outline
+  fc.strokeStyle = '#c89870';
+  fc.lineWidth = 1.2;
+  fc.stroke();
+
+  // === EARS ===
+  [[-1, -0.1], [1, 0.1]].forEach(([side, rot]) => {
+    const ex = cx + side * r * 0.72;
+    // Outer ear
+    fc.fillStyle = '#f0c898';
+    fc.beginPath();
+    fc.ellipse(ex, cy - r * 0.05, r * 0.1, r * 0.22, rot, 0, Math.PI * 2);
+    fc.fill();
+    // Inner ear shadow
+    fc.fillStyle = 'rgba(200,150,110,0.3)';
+    fc.beginPath();
+    fc.ellipse(ex + side * r * 0.01, cy - r * 0.03, r * 0.05, r * 0.13, rot, 0, Math.PI * 2);
+    fc.fill();
+    fc.strokeStyle = '#d4a07a'; fc.lineWidth = 0.8; fc.stroke();
+  });
+
+  // === HAIR - short buzzcut, Sasha style ===
+  // Base hair mass
+  const hairGrad = fc.createLinearGradient(cx - r * 0.5, cy - r * 1.1, cx + r * 0.3, cy - r * 0.5);
+  hairGrad.addColorStop(0, '#8a7a5a');
+  hairGrad.addColorStop(0.4, '#7a6a4f');
+  hairGrad.addColorStop(1, '#6a5a40');
+  fc.fillStyle = hairGrad;
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.7, cy - r * 0.48);
+  fc.quadraticCurveTo(cx - r * 0.72, cy - r * 1.0, cx - r * 0.2, cy - r * 1.1);
+  fc.quadraticCurveTo(cx, cy - r * 1.14, cx + r * 0.2, cy - r * 1.1);
+  fc.quadraticCurveTo(cx + r * 0.72, cy - r * 1.0, cx + r * 0.7, cy - r * 0.48);
+  fc.quadraticCurveTo(cx + r * 0.68, cy - r * 0.95, cx + r * 0.15, cy - r);
+  fc.quadraticCurveTo(cx, cy - r * 1.02, cx - r * 0.15, cy - r);
+  fc.quadraticCurveTo(cx - r * 0.68, cy - r * 0.95, cx - r * 0.7, cy - r * 0.48);
+  fc.closePath();
+  fc.fill();
+
+  // Hair texture - short strands
+  fc.strokeStyle = 'rgba(90,75,50,0.5)'; fc.lineWidth = 0.6;
+  for (let i = -8; i <= 8; i++) {
+    fc.beginPath();
+    const hx = cx + i * r * 0.075;
+    fc.moveTo(hx, cy - r * 0.98);
+    fc.bezierCurveTo(hx + i * 0.3, cy - r * 1.08, hx + i * 1.0, cy - r * 0.85, hx + i * 1.8, cy - r * 0.52);
+    fc.stroke();
+  }
+  // Hair highlight
+  fc.fillStyle = 'rgba(160,140,110,0.15)';
+  fc.beginPath();
+  fc.ellipse(cx - r * 0.15, cy - r * 0.9, r * 0.3, r * 0.12, -0.2, 0, Math.PI * 2);
+  fc.fill();
+
+  // Side fade (very short sides)
+  fc.fillStyle = 'rgba(110,95,70,0.3)';
+  fc.fillRect(cx - r * 0.72, cy - r * 0.48, r * 0.07, r * 0.5);
+  fc.fillRect(cx + r * 0.65, cy - r * 0.48, r * 0.07, r * 0.5);
+  // Fade dots for buzz effect
+  fc.fillStyle = 'rgba(100,85,60,0.2)';
+  for (let i = 0; i < 30; i++) {
+    const sx = cx + (Math.random() > 0.5 ? 1 : -1) * (r * 0.62 + Math.random() * r * 0.1);
+    const sy = cy - r * 0.45 + Math.random() * r * 0.45;
+    fc.beginPath(); fc.arc(sx, sy, 0.6 + Math.random() * 0.4, 0, Math.PI * 2); fc.fill();
+  }
+
+  // === FOREHEAD LINES (subtle) ===
+  fc.strokeStyle = 'rgba(190,155,120,0.12)'; fc.lineWidth = 0.5;
+  fc.beginPath(); fc.moveTo(cx - r * 0.3, cy - r * 0.55); fc.quadraticCurveTo(cx, cy - r * 0.57, cx + r * 0.3, cy - r * 0.55); fc.stroke();
+
+  // === EYEBROWS - thick, straight, like Sasha ===
+  fc.fillStyle = '#4d3e28';
+  [[-1], [1]].forEach(([side]) => {
+    const bx = cx + side * r * 0.3;
+    fc.beginPath();
+    fc.moveTo(bx - side * r * 0.22, cy - r * 0.28);
+    fc.quadraticCurveTo(bx, cy - r * 0.4, bx + side * r * 0.22, cy - r * 0.32);
+    fc.quadraticCurveTo(bx + side * r * 0.22, cy - r * 0.27, bx + side * r * 0.18, cy - r * 0.26);
+    fc.quadraticCurveTo(bx, cy - r * 0.32, bx - side * r * 0.2, cy - r * 0.22);
+    fc.closePath();
+    fc.fill();
+    // Brow hairs
+    fc.strokeStyle = 'rgba(70,55,35,0.3)'; fc.lineWidth = 0.4;
+    for (let j = 0; j < 6; j++) {
+      fc.beginPath();
+      const hx = bx - side * r * 0.15 + j * side * r * 0.06;
+      fc.moveTo(hx, cy - r * 0.26);
+      fc.lineTo(hx + side * r * 0.04, cy - r * 0.35);
+      fc.stroke();
+    }
+  });
+
+  // === EYES - detailed, blue-grey ===
+  [[-1, -0.28], [1, 0.28]].forEach(([side, ex]) => {
+    const eyeX = cx + r * ex;
+    const eyeY = cy - r * 0.1;
+    // Socket shadow
+    fc.fillStyle = 'rgba(170,130,100,0.2)';
+    fc.beginPath(); fc.ellipse(eyeX, eyeY, r * 0.2, r * 0.15, 0, 0, Math.PI * 2); fc.fill();
+    // White with subtle veins
+    const whiteGrad = fc.createRadialGradient(eyeX, eyeY, 0, eyeX, eyeY, r * 0.16);
+    whiteGrad.addColorStop(0, '#faf8f5');
+    whiteGrad.addColorStop(0.7, '#f0ece6');
+    whiteGrad.addColorStop(1, '#e5ddd5');
+    fc.fillStyle = whiteGrad;
+    fc.beginPath(); fc.ellipse(eyeX, eyeY, r * 0.17, r * 0.12, 0, 0, Math.PI * 2); fc.fill();
+    // Iris - blue-grey with detail
+    const irisR = r * 0.1;
+    const irisGrad = fc.createRadialGradient(eyeX + side * r * 0.01, eyeY, irisR * 0.2, eyeX + side * r * 0.02, eyeY + r * 0.01, irisR);
+    irisGrad.addColorStop(0, '#7ea8c4');
+    irisGrad.addColorStop(0.5, '#5e8aa8');
+    irisGrad.addColorStop(0.8, '#4a7590');
+    irisGrad.addColorStop(1, '#3a6070');
+    fc.fillStyle = irisGrad;
+    fc.beginPath(); fc.arc(eyeX + side * r * 0.02, eyeY + r * 0.01, irisR, 0, Math.PI * 2); fc.fill();
+    // Iris ring
+    fc.strokeStyle = 'rgba(50,80,100,0.4)'; fc.lineWidth = 0.8;
+    fc.beginPath(); fc.arc(eyeX + side * r * 0.02, eyeY + r * 0.01, irisR, 0, Math.PI * 2); fc.stroke();
+    // Pupil
+    fc.fillStyle = '#111820';
+    fc.beginPath(); fc.arc(eyeX + side * r * 0.02, eyeY + r * 0.01, irisR * 0.45, 0, Math.PI * 2); fc.fill();
+    // Highlight
+    fc.fillStyle = 'rgba(255,255,255,0.85)';
+    fc.beginPath(); fc.arc(eyeX + side * r * 0.0 - r * 0.02, eyeY - r * 0.03, irisR * 0.25, 0, Math.PI * 2); fc.fill();
+    // Secondary highlight
+    fc.fillStyle = 'rgba(255,255,255,0.3)';
+    fc.beginPath(); fc.arc(eyeX + side * r * 0.04, eyeY + r * 0.04, irisR * 0.12, 0, Math.PI * 2); fc.fill();
+    // Upper eyelid
+    fc.strokeStyle = '#7a6050'; fc.lineWidth = 1.2;
+    fc.beginPath(); fc.arc(eyeX, eyeY, r * 0.17, -Math.PI * 0.85, -Math.PI * 0.15); fc.stroke();
+    // Lower eyelid (subtle)
+    fc.strokeStyle = 'rgba(150,120,95,0.3)'; fc.lineWidth = 0.6;
+    fc.beginPath(); fc.arc(eyeX, eyeY, r * 0.16, Math.PI * 0.15, Math.PI * 0.85); fc.stroke();
+    // Eyelashes (top - subtle)
+    fc.strokeStyle = 'rgba(80,60,40,0.4)'; fc.lineWidth = 0.5;
+    for (let j = 0; j < 4; j++) {
+      const a = -Math.PI * 0.75 + j * Math.PI * 0.15;
+      fc.beginPath();
+      fc.moveTo(eyeX + Math.cos(a) * r * 0.17, eyeY + Math.sin(a) * r * 0.12);
+      fc.lineTo(eyeX + Math.cos(a) * r * 0.21, eyeY + Math.sin(a) * r * 0.15);
+      fc.stroke();
+    }
+  });
+
+  // === NOSE - straight, slightly wide ===
+  // Bridge
+  fc.strokeStyle = 'rgba(190,150,115,0.4)'; fc.lineWidth = 1.0;
+  fc.beginPath();
+  fc.moveTo(cx + r * 0.01, cy - r * 0.1);
+  fc.bezierCurveTo(cx - r * 0.02, cy + r * 0.05, cx - r * 0.04, cy + r * 0.15, cx - r * 0.05, cy + r * 0.2);
+  fc.stroke();
+  // Nose tip and wings
+  fc.strokeStyle = 'rgba(180,140,105,0.5)'; fc.lineWidth = 1.0;
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.12, cy + r * 0.22);
+  fc.quadraticCurveTo(cx - r * 0.08, cy + r * 0.27, cx, cy + r * 0.26);
+  fc.quadraticCurveTo(cx + r * 0.08, cy + r * 0.27, cx + r * 0.12, cy + r * 0.22);
+  fc.stroke();
+  // Nostrils
+  fc.fillStyle = 'rgba(160,120,85,0.35)';
+  fc.beginPath(); fc.ellipse(cx - r * 0.06, cy + r * 0.23, r * 0.04, r * 0.022, -0.2, 0, Math.PI * 2); fc.fill();
+  fc.beginPath(); fc.ellipse(cx + r * 0.06, cy + r * 0.23, r * 0.04, r * 0.022, 0.2, 0, Math.PI * 2); fc.fill();
+  // Nose shadow
+  fc.fillStyle = 'rgba(170,130,95,0.1)';
+  fc.beginPath(); fc.ellipse(cx, cy + r * 0.2, r * 0.1, r * 0.06, 0, 0, Math.PI); fc.fill();
+
+  // === NASOLABIAL FOLDS ===
+  fc.strokeStyle = 'rgba(180,145,110,0.2)'; fc.lineWidth = 0.9;
+  [[-1], [1]].forEach(([d]) => {
+    fc.beginPath();
+    fc.moveTo(cx + d * r * 0.18, cy + r * 0.06);
+    fc.bezierCurveTo(cx + d * r * 0.24, cy + r * 0.2, cx + d * r * 0.26, cy + r * 0.32, cx + d * r * 0.22, cy + r * 0.4);
+    fc.stroke();
+  });
+
+  // === MOUTH - asymmetric smirk like Sasha ===
+  // Lip line
+  fc.strokeStyle = '#a86558'; fc.lineWidth = 1.3;
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.2, cy + r * 0.4);
+  fc.bezierCurveTo(cx - r * 0.1, cy + r * 0.42, cx - r * 0.02, cy + r * 0.46, cx + r * 0.03, cy + r * 0.44);
+  fc.bezierCurveTo(cx + r * 0.1, cy + r * 0.41, cx + r * 0.16, cy + r * 0.39, cx + r * 0.22, cy + r * 0.41);
+  fc.stroke();
+  // Upper lip cupid's bow
+  fc.fillStyle = 'rgba(190,110,90,0.15)';
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.15, cy + r * 0.38);
+  fc.quadraticCurveTo(cx - r * 0.05, cy + r * 0.35, cx, cy + r * 0.37);
+  fc.quadraticCurveTo(cx + r * 0.05, cy + r * 0.35, cx + r * 0.15, cy + r * 0.38);
+  fc.quadraticCurveTo(cx, cy + r * 0.43, cx - r * 0.15, cy + r * 0.38);
+  fc.fill();
+  // Lower lip
+  fc.fillStyle = 'rgba(200,120,100,0.12)';
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.15, cy + r * 0.42);
+  fc.quadraticCurveTo(cx, cy + r * 0.52, cx + r * 0.18, cy + r * 0.43);
+  fc.quadraticCurveTo(cx, cy + r * 0.46, cx - r * 0.15, cy + r * 0.42);
+  fc.fill();
+  // Lip corners slight shadow
+  fc.fillStyle = 'rgba(150,100,80,0.15)';
+  fc.beginPath(); fc.arc(cx - r * 0.21, cy + r * 0.41, r * 0.025, 0, Math.PI*2); fc.fill();
+  fc.beginPath(); fc.arc(cx + r * 0.23, cy + r * 0.42, r * 0.025, 0, Math.PI*2); fc.fill();
+
+  // === CHIN DIMPLE (subtle) ===
+  fc.fillStyle = 'rgba(170,130,95,0.1)';
+  fc.beginPath(); fc.ellipse(cx, cy + r * 0.7, r * 0.06, r * 0.04, 0, 0, Math.PI * 2); fc.fill();
+
+  // === STUBBLE - realistic pattern ===
+  const stubbleSeeds = [];
+  for (let i = 0; i < 120; i++) {
+    stubbleSeeds.push([
+      cx + (Math.random() - 0.5) * r * 1.1,
+      cy + r * 0.3 + Math.random() * r * 0.65,
+      0.3 + Math.random() * 0.6
+    ]);
+  }
+  stubbleSeeds.forEach(([sx, sy, sr]) => {
+    // Only draw if inside face area
+    const dx = (sx - cx) / (r * 0.7);
+    const dy = (sy - cy) / (r * 0.95);
+    if (dx * dx + dy * dy < 1.1 && sy > cy + r * 0.25) {
+      fc.fillStyle = `rgba(85,70,50,${0.04 + Math.random() * 0.04})`;
+      fc.beginPath(); fc.arc(sx, sy, sr, 0, Math.PI * 2); fc.fill();
+    }
+  });
+
+  // === TEMPLE SHADOW ===
+  fc.fillStyle = 'rgba(160,120,85,0.08)';
+  fc.beginPath(); fc.ellipse(cx - r * 0.55, cy - r * 0.25, r * 0.12, r * 0.25, 0.2, 0, Math.PI*2); fc.fill();
+  fc.beginPath(); fc.ellipse(cx + r * 0.55, cy - r * 0.25, r * 0.12, r * 0.25, -0.2, 0, Math.PI*2); fc.fill();
+
+  // === NECK ===
+  fc.fillStyle = '#e8ba8a';
+  fc.beginPath();
+  fc.moveTo(cx - r * 0.28, cy + r * 0.92);
+  fc.lineTo(cx - r * 0.3, cy + r * 1.15);
+  fc.lineTo(cx + r * 0.3, cy + r * 1.15);
+  fc.lineTo(cx + r * 0.28, cy + r * 0.92);
+  fc.closePath();
+  fc.fill();
+  // Neck shadow
+  fc.fillStyle = 'rgba(180,140,100,0.15)';
+  fc.fillRect(cx - r * 0.28, cy + r * 0.92, r * 0.56, r * 0.08);
+
+  return faceCanvas;
+}
+
+const faceTiny = createSashaFaceCanvas(12);
+const faceSmall = createSashaFaceCanvas(20);
+const faceMedium = createSashaFaceCanvas(32);
+const faceLarge = createSashaFaceCanvas(56);
+
+function drawSashaFace(cx, cy, size) {
+  let f;
+  if (size <= 15) f = faceTiny;
+  else if (size <= 24) f = faceSmall;
+  else if (size <= 40) f = faceMedium;
+  else f = faceLarge;
+  const w = size, h = size * (f.height / f.width);
+  ctx.drawImage(f, cx - w / 2, cy - h / 2, w, h);
+}
+
+// ============ CHARACTER SKINS ============
+function drawRocket(cx, cy, s) {
+  s = s || 1;
+  // Main body with gradient
+  const bodyGrad = ctx.createLinearGradient(cx - 15 * s, cy - 18 * s, cx - 15 * s, cy + 18 * s);
+  bodyGrad.addColorStop(0, '#ff4444');
+  bodyGrad.addColorStop(0.5, '#cc2233');
+  bodyGrad.addColorStop(1, '#991122');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx + 30 * s, cy - 16 * s);
+  ctx.lineTo(cx + 42 * s, cy);
+  ctx.lineTo(cx + 30 * s, cy + 16 * s);
+  ctx.lineTo(cx - 20 * s, cy + 16 * s);
+  ctx.lineTo(cx - 20 * s, cy - 16 * s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#880015'; ctx.lineWidth = 2 * s; ctx.stroke();
+
+  // Metallic nose cone
+  const noseGrad = ctx.createLinearGradient(cx + 30 * s, cy - 16 * s, cx + 30 * s, cy + 16 * s);
+  noseGrad.addColorStop(0, '#ff8888');
+  noseGrad.addColorStop(0.5, '#ff5555');
+  noseGrad.addColorStop(1, '#cc3333');
+  ctx.fillStyle = noseGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx + 30 * s, cy - 16 * s);
+  ctx.lineTo(cx + 50 * s, cy);
+  ctx.lineTo(cx + 30 * s, cy + 16 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  // Rivets along body
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  for (let i = -1; i <= 1; i++) {
+    ctx.beginPath();
+    ctx.arc(cx + i * 12 * s, cy - 14 * s, 1.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + i * 12 * s, cy + 14 * s, 1.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Stripe
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.fillRect(cx - 18 * s, cy - 3 * s, 46 * s, 6 * s);
+
+  // Window with reflection
+  ctx.fillStyle = '#87CEEB';
+  ctx.beginPath();
+  ctx.arc(cx + 8 * s, cy, 12 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#4682B4'; ctx.lineWidth = 2 * s; ctx.stroke();
+  // Window reflection
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx + 5 * s, cy - 4 * s, 5 * s, 8 * s, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sasha in window
+  drawSashaFace(cx + 8 * s, cy, 20 * s);
+
+  // Fins with gradient
+  const finGrad = ctx.createLinearGradient(cx - 30 * s, 0, cx - 15 * s, 0);
+  finGrad.addColorStop(0, '#1d3557');
+  finGrad.addColorStop(1, '#2a5580');
+  ctx.fillStyle = finGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - 20 * s, cy - 16 * s);
+  ctx.lineTo(cx - 32 * s, cy - 28 * s);
+  ctx.lineTo(cx - 10 * s, cy - 16 * s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx - 20 * s, cy + 16 * s);
+  ctx.lineTo(cx - 32 * s, cy + 28 * s);
+  ctx.lineTo(cx - 10 * s, cy + 16 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  // Animated flame
+  const t = Date.now() / 50;
+  const fl1 = 8 + Math.sin(t) * 5;
+  const fl2 = 5 + Math.cos(t * 1.3) * 3;
+  // Outer flame
+  ctx.fillStyle = '#f4a261';
+  ctx.beginPath();
+  ctx.moveTo(cx - 20 * s, cy - 12 * s);
+  ctx.quadraticCurveTo(cx - (30 + fl1) * s, cy - 5 * s, cx - (35 + fl1) * s, cy);
+  ctx.quadraticCurveTo(cx - (30 + fl1) * s, cy + 5 * s, cx - 20 * s, cy + 12 * s);
+  ctx.closePath();
+  ctx.fill();
+  // Inner flame
+  ctx.fillStyle = '#e9c46a';
+  ctx.beginPath();
+  ctx.moveTo(cx - 20 * s, cy - 6 * s);
+  ctx.quadraticCurveTo(cx - (22 + fl2) * s, cy - 2 * s, cx - (26 + fl2) * s, cy);
+  ctx.quadraticCurveTo(cx - (22 + fl2) * s, cy + 2 * s, cx - 20 * s, cy + 6 * s);
+  ctx.closePath();
+  ctx.fill();
+  // White hot core
+  ctx.fillStyle = 'rgba(255,255,200,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(cx - 20 * s, cy - 3 * s);
+  ctx.quadraticCurveTo(cx - 24 * s, cy, cx - 20 * s, cy + 3 * s);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCar(cx, cy, s) {
+  s = s || 1;
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 18 * s, 30 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Car body with gradient
+  const bodyGrad = ctx.createLinearGradient(cx, cy - 10 * s, cx, cy + 14 * s);
+  bodyGrad.addColorStop(0, '#42A5F5');
+  bodyGrad.addColorStop(1, '#1565C0');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.roundRect(cx - 32 * s, cy - 10 * s, 64 * s, 24 * s, 6 * s);
+  ctx.fill();
+  ctx.strokeStyle = '#0D47A1'; ctx.lineWidth = 2 * s; ctx.stroke();
+
+  // Body shine
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.beginPath();
+  ctx.roundRect(cx - 30 * s, cy - 9 * s, 60 * s, 8 * s, [4 * s, 4 * s, 0, 0]);
+  ctx.fill();
+
+  // Roof/cabin with gradient
+  const roofGrad = ctx.createLinearGradient(cx, cy - 30 * s, cx, cy - 10 * s);
+  roofGrad.addColorStop(0, '#64B5F6');
+  roofGrad.addColorStop(1, '#42A5F5');
+  ctx.fillStyle = roofGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - 8 * s, cy - 10 * s);
+  ctx.lineTo(cx - 14 * s, cy - 30 * s);
+  ctx.lineTo(cx + 20 * s, cy - 30 * s);
+  ctx.lineTo(cx + 24 * s, cy - 10 * s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#1565C0'; ctx.lineWidth = 1.5 * s; ctx.stroke();
+
+  // Windshield
+  const windGrad = ctx.createLinearGradient(cx, cy - 28 * s, cx, cy - 12 * s);
+  windGrad.addColorStop(0, '#B3E5FC');
+  windGrad.addColorStop(1, '#81D4FA');
+  ctx.fillStyle = windGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - 6 * s, cy - 12 * s);
+  ctx.lineTo(cx - 11 * s, cy - 27 * s);
+  ctx.lineTo(cx + 18 * s, cy - 27 * s);
+  ctx.lineTo(cx + 22 * s, cy - 12 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  // Windshield reflection
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1 * s;
+  ctx.beginPath();
+  ctx.moveTo(cx + 14 * s, cy - 25 * s);
+  ctx.lineTo(cx + 17 * s, cy - 14 * s);
+  ctx.stroke();
+
+  // Sasha in windshield
+  drawSashaFace(cx + 5 * s, cy - 19 * s, 16 * s);
+
+  // Door handle
+  ctx.fillStyle = '#90CAF9';
+  ctx.fillRect(cx - 2 * s, cy - 2 * s, 8 * s, 2 * s);
+
+  // Wheels with detail
+  [[-18], [18]].forEach(([wx]) => {
+    // Tire
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.arc(cx + wx * s, cy + 14 * s, 8 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // Rim
+    const rimGrad = ctx.createRadialGradient(cx + wx * s, cy + 14 * s, 1 * s, cx + wx * s, cy + 14 * s, 5 * s);
+    rimGrad.addColorStop(0, '#e0e0e0');
+    rimGrad.addColorStop(1, '#888');
+    ctx.fillStyle = rimGrad;
+    ctx.beginPath();
+    ctx.arc(cx + wx * s, cy + 14 * s, 4.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // Hub
+    ctx.fillStyle = '#aaa';
+    ctx.beginPath();
+    ctx.arc(cx + wx * s, cy + 14 * s, 1.5 * s, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Headlights
+  ctx.fillStyle = '#FFEB3B';
+  ctx.shadowColor = '#FFEB3B'; ctx.shadowBlur = 6 * s;
+  ctx.beginPath();
+  ctx.ellipse(cx + 32 * s, cy + 2 * s, 3 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Tail light
+  ctx.fillStyle = '#f44336';
+  ctx.beginPath();
+  ctx.ellipse(cx - 32 * s, cy + 2 * s, 2 * s, 4 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Exhaust puffs
+  const t = Date.now() / 200;
+  for (let i = 0; i < 3; i++) {
+    const px = cx - 36 * s - i * 8 * s - Math.sin(t + i) * 3 * s;
+    const py = cy + 8 * s - i * 2 * s;
+    const pr = (3 + i * 2) * s;
+    ctx.fillStyle = `rgba(180,180,180,${0.3 - i * 0.1})`;
+    ctx.beginPath();
+    ctx.arc(px, py, pr, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawWalking(cx, cy, s) {
+  s = s || 1;
+  const t = Date.now() / 100;
+  const legAnim = Math.sin(t) * 10 * s;
+  const armAnim = Math.sin(t + Math.PI) * 12 * s;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 42 * s, 14 * s, 4 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs (jeans)
+  ctx.lineCap = 'round';
+  [[-5, legAnim], [5, -legAnim]].forEach(([lx, la]) => {
+    // Thigh
+    ctx.strokeStyle = '#1565C0'; ctx.lineWidth = 6 * s;
+    ctx.beginPath();
+    ctx.moveTo(cx + lx * s, cy + 20 * s);
+    ctx.lineTo(cx + lx * s + la * 0.5, cy + 32 * s);
+    ctx.stroke();
+    // Shin
+    ctx.strokeStyle = '#0D47A1';
+    ctx.beginPath();
+    ctx.moveTo(cx + lx * s + la * 0.5, cy + 32 * s);
+    ctx.lineTo(cx + lx * s + la, cy + 40 * s);
+    ctx.stroke();
+  });
+
+  // Shoes
+  ctx.fillStyle = '#333';
+  [[-5, legAnim], [5, -legAnim]].forEach(([lx, la]) => {
+    ctx.beginPath();
+    ctx.ellipse(cx + lx * s + la, cy + 42 * s, 6 * s, 3 * s, la * 0.02, 0, Math.PI * 2);
+    ctx.fill();
+    // Sole
+    ctx.fillStyle = '#555';
+    ctx.fillRect(cx + lx * s + la - 5 * s, cy + 43 * s, 10 * s, 2 * s);
+    ctx.fillStyle = '#333';
+  });
+
+  // T-shirt body with gradient
+  const shirtGrad = ctx.createLinearGradient(cx, cy - 4 * s, cx, cy + 22 * s);
+  shirtGrad.addColorStop(0, '#66BB6A');
+  shirtGrad.addColorStop(1, '#388E3C');
+  ctx.fillStyle = shirtGrad;
+  ctx.beginPath();
+  ctx.roundRect(cx - 14 * s, cy - 4 * s, 28 * s, 26 * s, 4 * s);
+  ctx.fill();
+  ctx.strokeStyle = '#2E7D32'; ctx.lineWidth = 1.5 * s; ctx.stroke();
+
+  // Collar
+  ctx.strokeStyle = '#2E7D32'; ctx.lineWidth = 1.5 * s;
+  ctx.beginPath();
+  ctx.moveTo(cx - 6 * s, cy - 4 * s);
+  ctx.lineTo(cx, cy + 2 * s);
+  ctx.lineTo(cx + 6 * s, cy - 4 * s);
+  ctx.stroke();
+
+  // Shirt wrinkle
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 1 * s;
+  ctx.beginPath();
+  ctx.moveTo(cx - 4 * s, cy + 8 * s);
+  ctx.quadraticCurveTo(cx, cy + 10 * s, cx + 4 * s, cy + 8 * s);
+  ctx.stroke();
+
+  // Arms with hands
+  ctx.lineCap = 'round';
+  [[-1, armAnim], [1, -armAnim]].forEach(([d, aa]) => {
+    // Upper arm
+    ctx.strokeStyle = '#f5d0a9'; ctx.lineWidth = 5 * s;
+    ctx.beginPath();
+    ctx.moveTo(cx + d * 14 * s, cy + 2 * s);
+    ctx.lineTo(cx + d * 20 * s + aa * 0.3, cy + 14 * s);
+    ctx.stroke();
+    // Forearm
+    ctx.strokeStyle = '#edc09a'; ctx.lineWidth = 4 * s;
+    ctx.beginPath();
+    ctx.moveTo(cx + d * 20 * s + aa * 0.3, cy + 14 * s);
+    ctx.lineTo(cx + d * 22 * s + aa * 0.7, cy + 22 * s);
+    ctx.stroke();
+    // Hand
+    ctx.fillStyle = '#f5d0a9';
+    ctx.beginPath();
+    ctx.arc(cx + d * 22 * s + aa * 0.7, cy + 23 * s, 3 * s, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Head
+  drawSashaFace(cx, cy - 18 * s, 32 * s);
+}
+
+function drawPlayer(cx, cy) {
+  ctx.save();
+  const angle = Math.max(-0.3, Math.min(0.3, playerVY * 0.03));
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  if (selectedSkin === 0) drawRocket(0, 0, PLAYER_SCALE);
+  else if (selectedSkin === 1) drawCar(0, 0, PLAYER_SCALE);
+  else drawWalking(0, 0, PLAYER_SCALE);
+  ctx.restore();
+}
+
+// ============ COLLISION ============
+function getPlayerBounds() {
+  const cx = PLAYER_X, cy = playerY, s = PLAYER_SCALE;
+  if (selectedSkin === 0) return { x: cx - 20 * s, y: cy - 16 * s, w: 70 * s, h: 32 * s };
+  if (selectedSkin === 1) return { x: cx - 32 * s, y: cy - 30 * s, w: 64 * s, h: 44 * s };
+  return { x: cx - 14 * s, y: cy - 18 * s, w: 28 * s, h: 60 * s };
+}
+
+function checkCollision() {
+  const b = getPlayerBounds();
+  const ceilingY = rateToY(CEILING_RATE);
+  if (b.y < ceilingY) return true;
+  for (let px = b.x; px <= b.x + b.w; px += 5) {
+    if (b.y + b.h > getGroundY(px)) return true;
+  }
+  return false;
+}
+
+// ============ DRAW HELPERS ============
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  grad.addColorStop(0, '#0a1628');
+  grad.addColorStop(0.5, '#1a2a4a');
+  grad.addColorStop(1, '#2a3a5a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  for (let i = 0; i < 60; i++) {
+    ctx.beginPath();
+    ctx.arc((i * 137 + 50) % CANVAS_W, (i * 97 + 30) % (CANVAS_H * 0.7), 0.5 + (i % 3) * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawGround() {
+  ctx.fillStyle = 'rgba(0,200,100,0.08)';
+  ctx.beginPath();
+  ctx.moveTo(0, CANVAS_H);
+  for (let px = 0; px <= CANVAS_W; px += 3) ctx.lineTo(px, getGroundY(px));
+  ctx.lineTo(CANVAS_W, CANVAS_H);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#00e676'; ctx.lineWidth = 3;
+  ctx.shadowColor = '#00e676'; ctx.shadowBlur = 8;
+  ctx.beginPath();
+  for (let px = 0; px <= CANVAS_W; px += 2) {
+    const y = getGroundY(px);
+    px === 0 ? ctx.moveTo(px, y) : ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Labels
+  for (let px = 0; px <= CANVAS_W; px += DAY_WIDTH) {
+    const dayIdx = Math.floor((px + scrollX) / DAY_WIDTH);
+    if (dayIdx >= 0 && dayIdx < RATE_DATA.length) {
+      const y = getGroundY(px);
+      const actualPx = px - (scrollX % DAY_WIDTH);
+      if (actualPx > 10 && actualPx < CANVAS_W - 40) {
+        ctx.fillStyle = 'rgba(0,230,118,0.7)';
+        ctx.font = '9px monospace';
+        ctx.fillText(RATE_DATA[dayIdx].rate.toFixed(1), actualPx - 12, y + 14);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillText(RATE_DATA[dayIdx].date.slice(5), actualPx - 12, y + 24);
+      }
+    }
+  }
+}
+
+function drawCeiling() {
+  const ceilingY = rateToY(CEILING_RATE);
+  // Danger zone
+  ctx.fillStyle = 'rgba(255,23,68,0.04)';
+  ctx.fillRect(0, 0, CANVAS_W, ceilingY);
+  // Line
+  ctx.strokeStyle = '#ff1744'; ctx.lineWidth = 2;
+  ctx.setLineDash([8, 4]);
+  ctx.beginPath();
+  ctx.moveTo(0, ceilingY);
+  ctx.lineTo(CANVAS_W, ceilingY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Label
+  ctx.fillStyle = '#ff1744';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('118₽ — САНЯ КУПИЛ ТУТ', 10, ceilingY - 5);
+}
+
+function drawHUD() {
+  const day = getCurrentDay();
+  const currentDate = day < RATE_DATA.length ? RATE_DATA[day].date : RATE_DATA[RATE_DATA.length - 1].date;
+  const currentRate = day < RATE_DATA.length ? RATE_DATA[day].rate : RATE_DATA[RATE_DATA.length - 1].rate;
+  // All HUD below ceiling
+  const hudY = rateToY(CEILING_RATE) + 20;
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 22px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${Math.min(day, RATE_DATA.length)} дней`, CANVAS_W / 2, hudY);
+
+  ctx.font = '11px monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.fillText(`${currentDate}  |  $1 = ${currentRate.toFixed(2)}₽`, CANVAS_W / 2, hudY + 18);
+
+  if (highScore > 0) {
+    ctx.fillStyle = '#ffd700';
+    ctx.font = '10px monospace';
+    ctx.fillText(`Рекорд: ${highScore} дней`, CANVAS_W / 2, hudY + 32);
+  }
+  ctx.textAlign = 'left';
+
+  // Y-axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '9px monospace';
+  for (let r = 80; r <= 115; r += 5) {
+    const y = rateToY(r);
+    ctx.fillText(r + '₽', CANVAS_W - 32, y + 3);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CANVAS_W - 36, y); ctx.stroke();
+  }
+}
+
+function drawWrappedText(text, x, y, maxW, lineH) {
+  ctx.textAlign = 'center';
+  const lines = text.split('\n');
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+  return lines.length;
+}
+
+// ============ MENU ============
+function drawMenu() {
+  drawBackground();
+  const P = IS_PORTRAIT;
+  const cx = CANVAS_W / 2;
+  const skins = ['Ракета', 'Машина', 'Пешком'];
+  const skinColors = ['#e63946', '#2196F3', '#4CAF50'];
+
+  if (P) {
+    // ===== PORTRAIT: Big fullscreen vertical layout =====
+    const margin = CANVAS_W * 0.06;
+    let y = 30;
+
+    // Title
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 48px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('FLAPPY САНЯ', cx, y + 48);
+    y += 60;
+
+    ctx.font = '18px monospace';
+    ctx.fillStyle = '#a0c4ff';
+    ctx.fillText('Пролети через курс доллара!', cx, y + 18);
+    y += 30;
+
+    // Menu joke
+    ctx.fillStyle = '#ffa726';
+    ctx.font = '16px monospace';
+    const jLines = drawWrappedText(menuJoke, cx, y + 16, CANVAS_W * 0.9, 22);
+    y += jLines * 22 + 12;
+
+    if (highScore > 0) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(`Рекорд: ${highScore} дней`, cx, y + 16);
+      y += 30;
+    }
+
+    // Skin label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText('Выбери лук Сани:', cx, y + 24);
+    y += 40;
+
+    // Vertical rectangular cards — big!
+    const cardW = CANVAS_W - margin * 2;
+    const cardH = 80;
+    const gap = 12;
+    const skinStartY = y;
+
+    for (let i = 0; i < 3; i++) {
+      const bx = margin;
+      const by = skinStartY + i * (cardH + gap);
+
+      ctx.fillStyle = selectedSkin === i ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)';
+      ctx.beginPath(); ctx.roundRect(bx, by, cardW, cardH, 12); ctx.fill();
+      ctx.strokeStyle = selectedSkin === i ? skinColors[i] : 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = selectedSkin === i ? 4 : 1.5;
+      ctx.beginPath(); ctx.roundRect(bx, by, cardW, cardH, 12); ctx.stroke();
+
+      ctx.save();
+      const iconX = bx + 50;
+      const iconY = by + cardH * 0.48;
+      if (i === 0) drawRocket(iconX, iconY, 0.7);
+      else if (i === 1) drawCar(iconX, iconY, 0.65);
+      else drawWalking(iconX, iconY, 0.6);
+      ctx.restore();
+
+      ctx.fillStyle = selectedSkin === i ? skinColors[i] : '#ccc';
+      ctx.font = 'bold 22px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(skins[i], bx + 100, by + cardH * 0.6);
+      ctx.textAlign = 'center';
+    }
+    const skinEndY = skinStartY + 3 * (cardH + gap);
+    window._skinBtns = Array.from({length:3}, (_,i) => ({
+      x: margin, y: skinStartY + i * (cardH + gap), w: cardW, h: cardH
+    }));
+
+    // Skin joke
+    ctx.fillStyle = 'rgba(255,200,100,0.7)';
+    ctx.font = '14px monospace';
+    const sjLines = drawWrappedText(skinJoke, cx, skinEndY + 8, CANVAS_W * 0.9, 18);
+    let btnY = skinEndY + sjLines * 18 + 16;
+
+    // Start button — big
+    const btnW = CANVAS_W * 0.65, btnH = 56;
+    ctx.fillStyle = '#00e676';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY, btnW, btnH, 14); ctx.fill();
+    ctx.fillStyle = '#0a1628';
+    ctx.font = 'bold 26px monospace';
+    ctx.fillText('СТАРТ', cx, btnY + btnH * 0.65);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '13px monospace';
+    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, btnY + btnH + 24);
+    ctx.textAlign = 'left';
+
+    window._menuBtns = {
+      skins: window._skinBtns,
+      start: { x: cx - btnW / 2, y: btnY, w: btnW, h: btnH }
+    };
+
+  } else {
+    // ===== DESKTOP: original horizontal layout =====
+    const totalContentH = 420;
+    const offsetY = Math.max(10, (CANVAS_H - totalContentH) / 2);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 40px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('FLAPPY САНЯ', cx, offsetY + 45);
+
+    ctx.font = '15px monospace';
+    ctx.fillStyle = '#a0c4ff';
+    ctx.fillText('Пролети через курс доллара!', cx, offsetY + 72);
+
+    ctx.fillStyle = '#ffa726';
+    ctx.font = '12px monospace';
+    const jokeStart = offsetY + 95;
+    const jLines = drawWrappedText(menuJoke, cx, jokeStart, CANVAS_W * 0.92, 16);
+    let nextY = jokeStart + jLines * 16 + 6;
+
+    if (highScore > 0) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '13px monospace';
+      ctx.fillText(`Рекорд: ${highScore} дней`, cx, nextY + 6);
+      nextY += 18;
+    }
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText('Выбери лук Сани:', cx, nextY + 20);
+    const skinStartY = nextY + 32;
+
+    const bw = 140, bh = 110, gap = 20;
+    const totalW = bw * 3 + gap * 2;
+    for (let i = 0; i < 3; i++) {
+      const bx = cx - totalW / 2 + i * (bw + gap);
+      const by = skinStartY;
+
+      ctx.fillStyle = selectedSkin === i ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)';
+      ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 10); ctx.fill();
+      ctx.strokeStyle = selectedSkin === i ? skinColors[i] : 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = selectedSkin === i ? 3 : 1;
+      ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 10); ctx.stroke();
+
+      ctx.save();
+      if (i === 0) drawRocket(bx + bw / 2, by + bh * 0.42, 0.9);
+      else if (i === 1) drawCar(bx + bw / 2, by + bh * 0.42, 0.85);
+      else drawWalking(bx + bw / 2, by + bh * 0.32, 0.72);
+      ctx.restore();
+
+      ctx.fillStyle = selectedSkin === i ? skinColors[i] : '#888';
+      ctx.font = 'bold 13px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(skins[i], bx + bw / 2, by + bh - 8);
+    }
+    const skinEndY = skinStartY + bh;
+    window._skinBtns = Array.from({length:3}, (_,i) => ({
+      x: cx - totalW / 2 + i * (bw + gap), y: skinStartY, w: bw, h: bh
+    }));
+
+    ctx.fillStyle = 'rgba(255,200,100,0.7)';
+    ctx.font = '10px monospace';
+    const sjY = skinEndY + 14;
+    const sjLines = drawWrappedText(skinJoke, cx, sjY, CANVAS_W * 0.9, 13);
+
+    const btnY = sjY + sjLines * 13 + 10;
+    const btnW = 200, btnH = 48;
+    ctx.fillStyle = '#00e676';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY, btnW, btnH, 10); ctx.fill();
+    ctx.fillStyle = '#0a1628';
+    ctx.font = 'bold 20px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('СТАРТ', cx, btnY + btnH * 0.65);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '11px monospace';
+    ctx.fillText('↑ / Пробел / Тап — прыгать  |  ESC — пауза', cx, btnY + btnH + 22);
+    ctx.textAlign = 'left';
+
+    window._menuBtns = {
+      skins: window._skinBtns,
+      start: { x: cx - btnW / 2, y: btnY, w: btnW, h: btnH }
+    };
+  }
+}
+
+// ============ PAUSE ============
+function drawPauseMenu() {
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 32px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('ПАУЗА', CANVAS_W / 2, CANVAS_H * 0.32);
+
+  const btnW = 240, btnH = 45;
+  const btnY1 = CANVAS_H * 0.4, btnY2 = btnY1 + btnH + 14;
+
+  ctx.fillStyle = '#00e676';
+  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY1, btnW, btnH, 8); ctx.fill();
+  ctx.fillStyle = '#0a1628';
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('ПРОДОЛЖИТЬ', CANVAS_W / 2, btnY1 + 30);
+
+  ctx.fillStyle = '#ff5722';
+  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY2, btnW, btnH, 8); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.fillText('ВЫБОР ПЕРСОНАЖА', CANVAS_W / 2, btnY2 + 30);
+  ctx.textAlign = 'left';
+
+  window._pauseBtns = {
+    cont: { x: CANVAS_W / 2 - btnW / 2, y: btnY1, w: btnW, h: btnH },
+    exit: { x: CANVAS_W / 2 - btnW / 2, y: btnY2, w: btnW, h: btnH }
+  };
+}
+
+// ============ GAME OVER ============
+function drawGameOver() {
+  ctx.fillStyle = 'rgba(0,0,0,0.78)';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = '#ff1744';
+  ctx.font = 'bold 36px monospace';
+  ctx.fillText('КРАХ!', CANVAS_W / 2, CANVAS_H * 0.16);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '20px monospace';
+  ctx.fillText(`Саня продержался ${score} дней`, CANVAS_W / 2, CANVAS_H * 0.25);
+
+  const day = Math.min(score, RATE_DATA.length - 1);
+  if (day > 0) {
+    ctx.fillStyle = '#a0c4ff';
+    ctx.font = '13px monospace';
+    ctx.fillText(`Врезался при курсе ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`, CANVAS_W / 2, CANVAS_H * 0.32);
+  }
+
+  ctx.fillStyle = '#ffa726';
+  ctx.font = '12px monospace';
+  const jY = CANVAS_H * 0.39;
+  const jLines = drawWrappedText(currentJoke, CANVAS_W / 2, jY, CANVAS_W * 0.85, 16);
+
+  if (score >= highScore && score > 0) {
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText('НОВЫЙ РЕКОРД!', CANVAS_W / 2, jY + jLines * 16 + 18);
+  } else if (highScore > 0) {
+    ctx.fillStyle = '#ffd700';
+    ctx.font = '13px monospace';
+    ctx.fillText(`Рекорд: ${highScore} дней`, CANVAS_W / 2, jY + jLines * 16 + 18);
+  }
+
+  const btnW = 200, btnH = 45;
+  const btnY1 = CANVAS_H * 0.73, btnY2 = btnY1 + btnH + 12;
+
+  ctx.fillStyle = '#00e676';
+  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY1, btnW, btnH, 8); ctx.fill();
+  ctx.fillStyle = '#0a1628';
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('ЗАНОВО', CANVAS_W / 2, btnY1 + 30);
+
+  ctx.fillStyle = '#546e7a';
+  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY2, btnW, btnH, 8); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = '14px monospace';
+  ctx.fillText('ВЫБОР ПЕРСОНАЖА', CANVAS_W / 2, btnY2 + 28);
+  ctx.textAlign = 'left';
+
+  window._goBtns = {
+    retry: { x: CANVAS_W / 2 - btnW / 2, y: btnY1, w: btnW, h: btnH },
+    menu: { x: CANVAS_W / 2 - btnW / 2, y: btnY2, w: btnW, h: btnH }
+  };
+}
+
+// ============ GAME LOGIC ============
+function endGame() {
+  if (score > highScore) {
+    highScore = score;
+    try { localStorage.setItem('flappySanyaHigh', highScore.toString()); } catch(e) {}
+  }
+  const day = Math.min(score, RATE_DATA.length - 1);
+  currentJoke = getRandomJoke(JOKES_END, score, RATE_DATA[day].rate);
+  state = 'gameover';
+}
+
+function startGame() {
+  state = 'playing';
+  playerY = rateToY(95);
+  playerVY = 0;
+  scrollX = 0;
+  score = 0;
+}
+
+function update() {
+  if (state !== 'playing') return;
+  playerVY += GRAVITY;
+  playerY += playerVY;
+  scrollX += SCROLL_SPEED;
+  score = getCurrentDay();
+
+  if (scrollX >= (RATE_DATA.length - 1) * DAY_WIDTH) {
+    score = RATE_DATA.length;
+    score = RATE_DATA.length - 1;
+    endGame();
+    return;
+  }
+  if (checkCollision()) {
+    endGame();
+  }
+}
+
+function draw() {
+  drawBackground();
+  drawCeiling();
+  drawGround();
+  drawPlayer(PLAYER_X, playerY);
+  drawHUD();
+  if (state === 'paused') drawPauseMenu();
+  if (state === 'gameover') drawGameOver();
+}
+
+function gameLoop() {
+  if (state === 'menu') drawMenu();
+  else { update(); draw(); }
+  requestAnimationFrame(gameLoop);
+}
+
+// ============ INPUT ============
+function jump() { if (state === 'playing') playerVY = JUMP_FORCE; }
+
+function hitTest(mx, my, b) {
+  return mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowUp' || e.code === 'Space') {
+    e.preventDefault();
+    if (state === 'menu') startGame();
+    else if (state === 'gameover') startGame();
+    else jump();
+  }
+  if (e.code === 'Escape') {
+    if (state === 'playing') state = 'paused';
+    else if (state === 'paused') state = 'playing';
+  }
+});
+
+function handleClick(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (clientX - rect.left) * (CANVAS_W / rect.width);
+  const my = (clientY - rect.top) * (CANVAS_H / rect.height);
+
+  if (state === 'menu' && window._menuBtns) {
+    for (let i = 0; i < 3; i++) {
+      if (hitTest(mx, my, window._menuBtns.skins[i])) {
+        selectedSkin = i;
+        skinJoke = getRandomJoke(JOKES_SKIN[i], 0, 0);
+        return;
+      }
+    }
+    if (hitTest(mx, my, window._menuBtns.start)) { startGame(); return; }
+  }
+  if (state === 'playing') { jump(); return; }
+  if (state === 'paused' && window._pauseBtns) {
+    if (hitTest(mx, my, window._pauseBtns.cont)) { state = 'playing'; return; }
+    if (hitTest(mx, my, window._pauseBtns.exit)) { menuJoke = getRandomJoke(JOKES_START,0,0); skinJoke = getRandomJoke(JOKES_SKIN[selectedSkin],0,0); state = 'menu'; return; }
+  }
+  if (state === 'gameover' && window._goBtns) {
+    if (hitTest(mx, my, window._goBtns.retry)) { startGame(); return; }
+    if (hitTest(mx, my, window._goBtns.menu)) { menuJoke = getRandomJoke(JOKES_START,0,0); skinJoke = getRandomJoke(JOKES_SKIN[selectedSkin],0,0); state = 'menu'; return; }
+  }
+}
+
+canvas.addEventListener('click', (e) => { e.preventDefault(); handleClick(e.clientX, e.clientY); });
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (e.touches.length > 0) handleClick(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: false });
+document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+canvas.addEventListener('dblclick', (e) => {
+  e.preventDefault();
+  if (state === 'playing') state = 'paused';
+  else if (state === 'paused') state = 'playing';
+});
+
+// ============ START ============
+gameLoop();
+</script>
+</body>
+</html>
