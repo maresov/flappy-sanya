@@ -973,62 +973,68 @@ function drawMenu() {
   const skinColors = ['#e63946', '#2196F3', '#4CAF50'];
 
   if (P) {
-    // ===== PORTRAIT: Fill entire screen vertically =====
+    // ===== PORTRAIT: Fill entire screen, button pinned to bottom =====
     const pad = CANVAS_W * 0.08;
     const textW = CANVAS_W - pad * 2;
-
-    // Calculate fixed element heights to distribute spacing
-    const titleH = 52;       // title line
-    const subH = 20;         // subtitle
-    const jokeH = 70;        // joke area (approx)
-    const recordH = highScore > 0 ? 28 : 0;
-    const labelH = 28;       // "Выбери лук"
-    const cardSize = Math.min((CANVAS_W - pad * 2 - 16) / 3, 120); // near-square cards, 3 in a row
-    const cardGap = 8;
-    const skinJokeH = 100;   // skin joke area (bigger font)
     const btnH = 56;
-    const hintH = 20;
+    const btnW = CANVAS_W * 0.65;
+    const bottomPad = 16;
+    const hintH = 18;
 
-    const fixedH = titleH + subH + jokeH + recordH + labelH + cardSize + skinJokeH + btnH + hintH;
-    const totalGaps = 9; // number of spacer zones
-    const spacer = Math.max(6, (CANVAS_H - fixedH) / totalGaps);
+    // Pin button + hint to bottom
+    const hintY = CANVAS_H - bottomPad;
+    const startBtnY = hintY - hintH - 8 - btnH;
 
-    let y = spacer * 0.5;
+    // Available space for content above button
+    const contentBottom = startBtnY - 12;
+    const cardSize = Math.min((CANVAS_W - pad * 2 - 16) / 3, 120);
+    const cardGap = 8;
+
+    // Count content blocks and distribute spacing evenly
+    // Blocks: title, subtitle, menuJoke, [record], skinLabel, cards, skinJoke
+    const numBlocks = highScore > 0 ? 7 : 6;
+    const blockHeights = [52, 20, 70, cardSize, 90]; // title, sub, joke, cards, skinJoke
+    if (highScore > 0) blockHeights.splice(3, 0, 28); // record
+    blockHeights.splice(3 + (highScore > 0 ? 1 : 0), 0, 28); // label
+    const totalFixed = blockHeights.reduce((a,b) => a + b, 0);
+    const gap = Math.max(8, (contentBottom - totalFixed) / (numBlocks + 1));
+
+    let y = gap;
 
     // Title
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 48px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('FLAPPY САНЯ', cx, y + 44);
-    y += titleH + spacer * 0.4;
+    y += 52 + gap;
 
     // Subtitle
     ctx.font = '18px monospace';
     ctx.fillStyle = '#a0c4ff';
     ctx.fillText('Пролети через курс доллара!', cx, y + 16);
-    y += subH + spacer * 0.5;
+    y += 20 + gap;
 
     // Menu joke
     ctx.fillStyle = '#ffa726';
     ctx.font = '15px monospace';
     const jLines = drawWrappedText(menuJoke, cx, y + 14, textW, 20);
-    y += jLines * 20 + spacer * 0.6;
+    y += jLines * 20 + gap;
 
     // Record
     if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 20px monospace';
       ctx.fillText(`Рекорд: ${highScore} дней`, cx, y + 18);
-      y += recordH + spacer * 0.4;
+      y += 28 + gap;
     }
 
     // Skin label
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 22px monospace';
     ctx.fillText('Выбери лук Сани:', cx, y + 20);
-    y += labelH + spacer * 0.5;
+    y += 28 + gap;
 
-    // 3 near-square cards in a horizontal row
+    // 3 near-square cards
     const totalCardW = cardSize * 3 + cardGap * 2;
     const cardStartX = (CANVAS_W - totalCardW) / 2;
     const skinStartY = y;
@@ -1057,33 +1063,29 @@ function drawMenu() {
       ctx.textAlign = 'center';
       ctx.fillText(skins[i], bx + cardSize / 2, by + cardSize - 8);
     }
-    y = skinStartY + cardSize + spacer * 0.5;
+    y = skinStartY + cardSize + gap;
     window._skinBtns = Array.from({length:3}, (_,i) => ({
       x: cardStartX + i * (cardSize + cardGap), y: skinStartY, w: cardSize, h: cardSize
     }));
 
-    // Skin joke — big and readable
+    // Skin joke — big, fills remaining space between cards and button
     ctx.fillStyle = '#ffa726';
     ctx.font = 'bold 20px monospace';
     ctx.textAlign = 'center';
     const sjLines = drawWrappedText(skinJoke, cx, y + 22, textW, 28);
-    y += sjLines * 28 + spacer * 0.7;
 
-    // Start button
-    const btnW = CANVAS_W * 0.65;
+    // Start button — pinned to bottom
     ctx.fillStyle = '#00e676';
-    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, y, btnW, btnH, 14); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, startBtnY, btnW, btnH, 14); ctx.fill();
     ctx.fillStyle = '#0a1628';
     ctx.font = 'bold 26px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('СТАРТ', cx, y + btnH * 0.65);
+    ctx.fillText('СТАРТ', cx, startBtnY + btnH * 0.65);
 
-    const startBtnY = y;
-    y += btnH + spacer * 0.4;
-
+    // Hint — pinned below button
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '12px monospace';
-    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, y + 12);
+    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, hintY);
     ctx.textAlign = 'left';
 
     window._menuBtns = {
