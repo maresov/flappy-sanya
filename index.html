@@ -1466,11 +1466,13 @@ function endGame() {
   state = 'gameover';
 }
 
+const START_WEEK = 75; // Start at week 75 (~101₽, Aug 2023) — after initial spike/crash
+
 function startGame() {
   state = 'playing';
-  playerY = rateToY(95);
+  scrollX = START_WEEK * DAY_WIDTH;
+  playerY = rateToY(RATE_DATA[START_WEEK].rate);
   playerVY = 0;
-  scrollX = 0;
   score = 0;
 }
 
@@ -1479,11 +1481,10 @@ function update() {
   playerVY += GRAVITY;
   playerY += playerVY;
   scrollX += SCROLL_SPEED;
-  score = getCurrentDay();
+  score = getCurrentDay() - START_WEEK;
 
   if (scrollX >= (RATE_DATA.length - 1) * DAY_WIDTH) {
-    score = RATE_DATA.length;
-    score = RATE_DATA.length - 1;
+    score = RATE_DATA.length - 1 - START_WEEK;
     endGame();
     return;
   }
