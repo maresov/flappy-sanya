@@ -149,10 +149,12 @@ function resizeCanvas() {
     PLAYER_SCALE = 2;
   }
 
-  canvas.width = CANVAS_W;
-  canvas.height = CANVAS_H;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = CANVAS_W * dpr;
+  canvas.height = CANVAS_H * dpr;
   canvas.style.width = sw + 'px';
   canvas.style.height = sh + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -620,111 +622,180 @@ function drawRocket(cx, cy, s) {
 function drawCar(cx, cy, s) {
   s = s || 1;
   // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.beginPath();
-  ctx.ellipse(cx, cy + 18 * s, 30 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + 18 * s, 34 * s, 5 * s, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Car body with gradient
-  const bodyGrad = ctx.createLinearGradient(cx, cy - 10 * s, cx, cy + 14 * s);
-  bodyGrad.addColorStop(0, '#42A5F5');
-  bodyGrad.addColorStop(1, '#1565C0');
+  // Audi A5 coupe body — sleek, low profile, green
+  const bodyGrad = ctx.createLinearGradient(cx, cy - 12 * s, cx, cy + 14 * s);
+  bodyGrad.addColorStop(0, '#2E7D32');
+  bodyGrad.addColorStop(0.5, '#1B5E20');
+  bodyGrad.addColorStop(1, '#0D3B0F');
   ctx.fillStyle = bodyGrad;
   ctx.beginPath();
-  ctx.roundRect(cx - 32 * s, cy - 10 * s, 64 * s, 24 * s, 6 * s);
-  ctx.fill();
-  ctx.strokeStyle = '#0D47A1'; ctx.lineWidth = 2 * s; ctx.stroke();
-
-  // Body shine
-  ctx.fillStyle = 'rgba(255,255,255,0.1)';
-  ctx.beginPath();
-  ctx.roundRect(cx - 30 * s, cy - 9 * s, 60 * s, 8 * s, [4 * s, 4 * s, 0, 0]);
-  ctx.fill();
-
-  // Roof/cabin with gradient
-  const roofGrad = ctx.createLinearGradient(cx, cy - 30 * s, cx, cy - 10 * s);
-  roofGrad.addColorStop(0, '#64B5F6');
-  roofGrad.addColorStop(1, '#42A5F5');
-  ctx.fillStyle = roofGrad;
-  ctx.beginPath();
-  ctx.moveTo(cx - 8 * s, cy - 10 * s);
-  ctx.lineTo(cx - 14 * s, cy - 30 * s);
-  ctx.lineTo(cx + 20 * s, cy - 30 * s);
-  ctx.lineTo(cx + 24 * s, cy - 10 * s);
+  // Sleek coupe silhouette — longer, lower
+  ctx.moveTo(cx + 36 * s, cy + 4 * s);   // front bumper top
+  ctx.quadraticCurveTo(cx + 40 * s, cy + 6 * s, cx + 38 * s, cy + 12 * s); // front curve down
+  ctx.lineTo(cx - 30 * s, cy + 12 * s);  // bottom
+  ctx.quadraticCurveTo(cx - 34 * s, cy + 10 * s, cx - 34 * s, cy + 4 * s); // rear curve
+  ctx.lineTo(cx - 32 * s, cy - 6 * s);   // rear panel
+  ctx.lineTo(cx + 30 * s, cy - 6 * s);   // hood line
+  ctx.quadraticCurveTo(cx + 38 * s, cy - 4 * s, cx + 36 * s, cy + 4 * s);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = '#1565C0'; ctx.lineWidth = 1.5 * s; ctx.stroke();
+  ctx.strokeStyle = '#0a2e0a'; ctx.lineWidth = 1.5 * s; ctx.stroke();
 
-  // Windshield
-  const windGrad = ctx.createLinearGradient(cx, cy - 28 * s, cx, cy - 12 * s);
+  // Body highlight (metallic sheen)
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  ctx.moveTo(cx - 28 * s, cy - 5 * s);
+  ctx.lineTo(cx + 32 * s, cy - 5 * s);
+  ctx.quadraticCurveTo(cx + 36 * s, cy - 3 * s, cx + 34 * s, cy);
+  ctx.lineTo(cx - 28 * s, cy);
+  ctx.closePath();
+  ctx.fill();
+
+  // Roof/cabin — Audi A5 coupe roofline (low, swept back)
+  const roofGrad = ctx.createLinearGradient(cx, cy - 28 * s, cx, cy - 6 * s);
+  roofGrad.addColorStop(0, '#388E3C');
+  roofGrad.addColorStop(1, '#2E7D32');
+  ctx.fillStyle = roofGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - 4 * s, cy - 6 * s);     // A-pillar base
+  ctx.lineTo(cx - 2 * s, cy - 24 * s);     // A-pillar top
+  ctx.quadraticCurveTo(cx + 6 * s, cy - 28 * s, cx + 14 * s, cy - 26 * s); // roof arc
+  ctx.quadraticCurveTo(cx + 22 * s, cy - 22 * s, cx + 26 * s, cy - 6 * s); // C-pillar sweep
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#1a5c1a'; ctx.lineWidth = 1.2 * s; ctx.stroke();
+
+  // Rear window (small, coupe style)
+  ctx.fillStyle = 'rgba(130,200,230,0.5)';
+  ctx.beginPath();
+  ctx.moveTo(cx + 16 * s, cy - 8 * s);
+  ctx.lineTo(cx + 17 * s, cy - 20 * s);
+  ctx.quadraticCurveTo(cx + 22 * s, cy - 18 * s, cx + 24 * s, cy - 8 * s);
+  ctx.closePath();
+  ctx.fill();
+
+  // Windshield — wider, sportier angle
+  const windGrad = ctx.createLinearGradient(cx, cy - 26 * s, cx, cy - 8 * s);
   windGrad.addColorStop(0, '#B3E5FC');
   windGrad.addColorStop(1, '#81D4FA');
   ctx.fillStyle = windGrad;
   ctx.beginPath();
-  ctx.moveTo(cx - 6 * s, cy - 12 * s);
-  ctx.lineTo(cx - 11 * s, cy - 27 * s);
-  ctx.lineTo(cx + 18 * s, cy - 27 * s);
-  ctx.lineTo(cx + 22 * s, cy - 12 * s);
+  ctx.moveTo(cx - 2 * s, cy - 8 * s);
+  ctx.lineTo(cx, cy - 22 * s);
+  ctx.lineTo(cx + 15 * s, cy - 22 * s);
+  ctx.lineTo(cx + 15 * s, cy - 8 * s);
   ctx.closePath();
   ctx.fill();
 
   // Windshield reflection
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1 * s;
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 0.8 * s;
   ctx.beginPath();
-  ctx.moveTo(cx + 14 * s, cy - 25 * s);
-  ctx.lineTo(cx + 17 * s, cy - 14 * s);
+  ctx.moveTo(cx + 10 * s, cy - 20 * s);
+  ctx.lineTo(cx + 12 * s, cy - 10 * s);
   ctx.stroke();
 
   // Sasha in windshield
-  drawSashaFace(cx + 5 * s, cy - 19 * s, 16 * s);
+  drawSashaFace(cx + 7 * s, cy - 15 * s, 14 * s);
 
-  // Door handle
-  ctx.fillStyle = '#90CAF9';
-  ctx.fillRect(cx - 2 * s, cy - 2 * s, 8 * s, 2 * s);
+  // Door line
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 0.8 * s;
+  ctx.beginPath();
+  ctx.moveTo(cx + 2 * s, cy - 6 * s);
+  ctx.lineTo(cx + 2 * s, cy + 10 * s);
+  ctx.stroke();
 
-  // Wheels with detail
-  [[-18], [18]].forEach(([wx]) => {
-    // Tire
-    ctx.fillStyle = '#222';
+  // Door handle (chrome)
+  ctx.fillStyle = '#c0c0c0';
+  ctx.beginPath();
+  ctx.roundRect(cx - 4 * s, cy + 1 * s, 6 * s, 2 * s, 1 * s);
+  ctx.fill();
+
+  // Audi rings hint (front grille area)
+  ctx.strokeStyle = 'rgba(200,200,200,0.4)'; ctx.lineWidth = 0.6 * s;
+  for (let i = 0; i < 4; i++) {
     ctx.beginPath();
-    ctx.arc(cx + wx * s, cy + 14 * s, 8 * s, 0, Math.PI * 2);
+    ctx.arc(cx + (34 + i * 2.5) * s, cy + 3 * s, 1.5 * s, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Wheels — sportier, bigger
+  [[-20], [22]].forEach(([wx]) => {
+    // Tire
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(cx + wx * s, cy + 12 * s, 9 * s, 0, Math.PI * 2);
     ctx.fill();
-    // Rim
-    const rimGrad = ctx.createRadialGradient(cx + wx * s, cy + 14 * s, 1 * s, cx + wx * s, cy + 14 * s, 5 * s);
-    rimGrad.addColorStop(0, '#e0e0e0');
+    // Tire sidewall
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1 * s;
+    ctx.stroke();
+    // Rim — 5-spoke alloy style
+    const rimGrad = ctx.createRadialGradient(cx + wx * s, cy + 12 * s, 0, cx + wx * s, cy + 12 * s, 6 * s);
+    rimGrad.addColorStop(0, '#f0f0f0');
+    rimGrad.addColorStop(0.6, '#c0c0c0');
     rimGrad.addColorStop(1, '#888');
     ctx.fillStyle = rimGrad;
     ctx.beginPath();
-    ctx.arc(cx + wx * s, cy + 14 * s, 4.5 * s, 0, Math.PI * 2);
+    ctx.arc(cx + wx * s, cy + 12 * s, 5.5 * s, 0, Math.PI * 2);
     ctx.fill();
-    // Hub
-    ctx.fillStyle = '#aaa';
+    // Spokes
+    ctx.strokeStyle = 'rgba(80,80,80,0.4)'; ctx.lineWidth = 0.8 * s;
+    for (let j = 0; j < 5; j++) {
+      const a = j * Math.PI * 2 / 5 - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + wx * s, cy + 12 * s);
+      ctx.lineTo(cx + wx * s + Math.cos(a) * 5 * s, cy + 12 * s + Math.sin(a) * 5 * s);
+      ctx.stroke();
+    }
+    // Center cap
+    ctx.fillStyle = '#ddd';
     ctx.beginPath();
-    ctx.arc(cx + wx * s, cy + 14 * s, 1.5 * s, 0, Math.PI * 2);
+    ctx.arc(cx + wx * s, cy + 12 * s, 1.5 * s, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  // Headlights
-  ctx.fillStyle = '#FFEB3B';
-  ctx.shadowColor = '#FFEB3B'; ctx.shadowBlur = 6 * s;
+  // Headlights — LED style
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#fff'; ctx.shadowBlur = 5 * s;
   ctx.beginPath();
-  ctx.ellipse(cx + 32 * s, cy + 2 * s, 3 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + 37 * s, cy + 1 * s, 2 * s, 4 * s, 0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
-
-  // Tail light
-  ctx.fillStyle = '#f44336';
+  // DRL strip
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1 * s;
   ctx.beginPath();
-  ctx.ellipse(cx - 32 * s, cy + 2 * s, 2 * s, 4 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(cx + 35 * s, cy - 3 * s);
+  ctx.lineTo(cx + 38 * s, cy - 1 * s);
+  ctx.stroke();
+
+  // Tail lights — LED strip
+  ctx.fillStyle = '#f44336';
+  ctx.shadowColor = '#f44336'; ctx.shadowBlur = 4 * s;
+  ctx.beginPath();
+  ctx.moveTo(cx - 32 * s, cy - 2 * s);
+  ctx.lineTo(cx - 34 * s, cy);
+  ctx.lineTo(cx - 34 * s, cy + 6 * s);
+  ctx.lineTo(cx - 32 * s, cy + 8 * s);
+  ctx.lineWidth = 2 * s;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Exhaust tips (dual)
+  ctx.fillStyle = '#555';
+  ctx.beginPath(); ctx.ellipse(cx - 28 * s, cy + 12 * s, 2 * s, 1.5 * s, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx - 24 * s, cy + 12 * s, 2 * s, 1.5 * s, 0, 0, Math.PI * 2); ctx.fill();
 
   // Exhaust puffs
   const t = Date.now() / 200;
   for (let i = 0; i < 3; i++) {
-    const px = cx - 36 * s - i * 8 * s - Math.sin(t + i) * 3 * s;
-    const py = cy + 8 * s - i * 2 * s;
-    const pr = (3 + i * 2) * s;
-    ctx.fillStyle = `rgba(180,180,180,${0.3 - i * 0.1})`;
+    const px = cx - 34 * s - i * 7 * s - Math.sin(t + i) * 3 * s;
+    const py = cy + 10 * s - i * 2 * s;
+    const pr = (2.5 + i * 1.8) * s;
+    ctx.fillStyle = `rgba(180,180,180,${0.25 - i * 0.08})`;
     ctx.beginPath();
     ctx.arc(px, py, pr, 0, Math.PI * 2);
     ctx.fill();
@@ -970,7 +1041,7 @@ function drawMenu() {
   const P = IS_PORTRAIT;
   const cx = CANVAS_W / 2;
   const skins = ['Ракета', 'Машина', 'Пешком'];
-  const skinColors = ['#e63946', '#2196F3', '#4CAF50'];
+  const skinColors = ['#e63946', '#2E7D32', '#4CAF50'];
 
   if (P) {
     // ===== PORTRAIT: Fill entire screen, button pinned to bottom =====
