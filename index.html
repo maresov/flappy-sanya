@@ -973,98 +973,122 @@ function drawMenu() {
   const skinColors = ['#e63946', '#2196F3', '#4CAF50'];
 
   if (P) {
-    // ===== PORTRAIT: Big fullscreen vertical layout =====
-    const margin = CANVAS_W * 0.06;
-    let y = 30;
+    // ===== PORTRAIT: Fill entire screen vertically =====
+    const pad = CANVAS_W * 0.08;
+    const textW = CANVAS_W - pad * 2;
+
+    // Calculate fixed element heights to distribute spacing
+    const titleH = 52;       // title line
+    const subH = 20;         // subtitle
+    const jokeH = 70;        // joke area (approx)
+    const recordH = highScore > 0 ? 28 : 0;
+    const labelH = 28;       // "Выбери лук"
+    const cardSize = Math.min((CANVAS_W - pad * 2 - 16) / 3, 120); // near-square cards, 3 in a row
+    const cardGap = 8;
+    const skinJokeH = 60;    // skin joke area
+    const btnH = 56;
+    const hintH = 20;
+
+    const fixedH = titleH + subH + jokeH + recordH + labelH + cardSize + skinJokeH + btnH + hintH;
+    const totalGaps = 9; // number of spacer zones
+    const spacer = Math.max(6, (CANVAS_H - fixedH) / totalGaps);
+
+    let y = spacer * 0.5;
 
     // Title
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 48px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('FLAPPY САНЯ', cx, y + 48);
-    y += 60;
+    ctx.fillText('FLAPPY САНЯ', cx, y + 44);
+    y += titleH + spacer * 0.4;
 
+    // Subtitle
     ctx.font = '18px monospace';
     ctx.fillStyle = '#a0c4ff';
-    ctx.fillText('Пролети через курс доллара!', cx, y + 18);
-    y += 30;
+    ctx.fillText('Пролети через курс доллара!', cx, y + 16);
+    y += subH + spacer * 0.5;
 
     // Menu joke
     ctx.fillStyle = '#ffa726';
-    ctx.font = '16px monospace';
-    const jLines = drawWrappedText(menuJoke, cx, y + 16, CANVAS_W * 0.9, 22);
-    y += jLines * 22 + 12;
+    ctx.font = '15px monospace';
+    const jLines = drawWrappedText(menuJoke, cx, y + 14, textW, 20);
+    y += jLines * 20 + spacer * 0.6;
 
+    // Record
     if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 20px monospace';
-      ctx.fillText(`Рекорд: ${highScore} дней`, cx, y + 16);
-      y += 30;
+      ctx.fillText(`Рекорд: ${highScore} дней`, cx, y + 18);
+      y += recordH + spacer * 0.4;
     }
 
     // Skin label
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 24px monospace';
-    ctx.fillText('Выбери лук Сани:', cx, y + 24);
-    y += 40;
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('Выбери лук Сани:', cx, y + 20);
+    y += labelH + spacer * 0.5;
 
-    // Vertical rectangular cards — big!
-    const cardW = CANVAS_W - margin * 2;
-    const cardH = 80;
-    const gap = 12;
+    // 3 near-square cards in a horizontal row
+    const totalCardW = cardSize * 3 + cardGap * 2;
+    const cardStartX = (CANVAS_W - totalCardW) / 2;
     const skinStartY = y;
+    const iconScales = [0.65, 0.6, 0.5];
 
     for (let i = 0; i < 3; i++) {
-      const bx = margin;
-      const by = skinStartY + i * (cardH + gap);
+      const bx = cardStartX + i * (cardSize + cardGap);
+      const by = skinStartY;
 
       ctx.fillStyle = selectedSkin === i ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)';
-      ctx.beginPath(); ctx.roundRect(bx, by, cardW, cardH, 12); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(bx, by, cardSize, cardSize, 12); ctx.fill();
       ctx.strokeStyle = selectedSkin === i ? skinColors[i] : 'rgba(255,255,255,0.2)';
       ctx.lineWidth = selectedSkin === i ? 4 : 1.5;
-      ctx.beginPath(); ctx.roundRect(bx, by, cardW, cardH, 12); ctx.stroke();
+      ctx.beginPath(); ctx.roundRect(bx, by, cardSize, cardSize, 12); ctx.stroke();
 
       ctx.save();
-      const iconX = bx + 50;
-      const iconY = by + cardH * 0.48;
-      if (i === 0) drawRocket(iconX, iconY, 0.7);
-      else if (i === 1) drawCar(iconX, iconY, 0.65);
-      else drawWalking(iconX, iconY, 0.6);
+      const iconCx = bx + cardSize / 2;
+      const iconCy = by + cardSize * 0.4;
+      if (i === 0) drawRocket(iconCx, iconCy, iconScales[i]);
+      else if (i === 1) drawCar(iconCx, iconCy, iconScales[i]);
+      else drawWalking(iconCx, iconCy, iconScales[i]);
       ctx.restore();
 
       ctx.fillStyle = selectedSkin === i ? skinColors[i] : '#ccc';
-      ctx.font = 'bold 22px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(skins[i], bx + 100, by + cardH * 0.6);
+      ctx.font = 'bold 14px monospace';
       ctx.textAlign = 'center';
+      ctx.fillText(skins[i], bx + cardSize / 2, by + cardSize - 8);
     }
-    const skinEndY = skinStartY + 3 * (cardH + gap);
+    y = skinStartY + cardSize + spacer * 0.5;
     window._skinBtns = Array.from({length:3}, (_,i) => ({
-      x: margin, y: skinStartY + i * (cardH + gap), w: cardW, h: cardH
+      x: cardStartX + i * (cardSize + cardGap), y: skinStartY, w: cardSize, h: cardSize
     }));
 
     // Skin joke
     ctx.fillStyle = 'rgba(255,200,100,0.7)';
-    ctx.font = '14px monospace';
-    const sjLines = drawWrappedText(skinJoke, cx, skinEndY + 8, CANVAS_W * 0.9, 18);
-    let btnY = skinEndY + sjLines * 18 + 16;
+    ctx.font = '13px monospace';
+    ctx.textAlign = 'center';
+    const sjLines = drawWrappedText(skinJoke, cx, y + 12, textW, 17);
+    y += sjLines * 17 + spacer * 0.7;
 
-    // Start button — big
-    const btnW = CANVAS_W * 0.65, btnH = 56;
+    // Start button
+    const btnW = CANVAS_W * 0.65;
     ctx.fillStyle = '#00e676';
-    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY, btnW, btnH, 14); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, y, btnW, btnH, 14); ctx.fill();
     ctx.fillStyle = '#0a1628';
     ctx.font = 'bold 26px monospace';
-    ctx.fillText('СТАРТ', cx, btnY + btnH * 0.65);
+    ctx.textAlign = 'center';
+    ctx.fillText('СТАРТ', cx, y + btnH * 0.65);
+
+    const startBtnY = y;
+    y += btnH + spacer * 0.4;
 
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '13px monospace';
-    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, btnY + btnH + 24);
+    ctx.font = '12px monospace';
+    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, y + 12);
     ctx.textAlign = 'left';
 
     window._menuBtns = {
       skins: window._skinBtns,
-      start: { x: cx - btnW / 2, y: btnY, w: btnW, h: btnH }
+      start: { x: cx - btnW / 2, y: startBtnY, w: btnW, h: btnH }
     };
 
   } else {
