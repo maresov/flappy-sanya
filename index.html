@@ -843,18 +843,18 @@ function drawWalking(cx, cy, s) {
     ctx.fillStyle = '#333';
   });
 
-  // T-shirt body with gradient
+  // T-shirt body with gradient (blue)
   const shirtGrad = ctx.createLinearGradient(cx, cy - 4 * s, cx, cy + 22 * s);
-  shirtGrad.addColorStop(0, '#66BB6A');
-  shirtGrad.addColorStop(1, '#388E3C');
+  shirtGrad.addColorStop(0, '#42A5F5');
+  shirtGrad.addColorStop(1, '#1565C0');
   ctx.fillStyle = shirtGrad;
   ctx.beginPath();
   ctx.roundRect(cx - 14 * s, cy - 4 * s, 28 * s, 26 * s, 4 * s);
   ctx.fill();
-  ctx.strokeStyle = '#2E7D32'; ctx.lineWidth = 1.5 * s; ctx.stroke();
+  ctx.strokeStyle = '#0D47A1'; ctx.lineWidth = 1.5 * s; ctx.stroke();
 
   // Collar
-  ctx.strokeStyle = '#2E7D32'; ctx.lineWidth = 1.5 * s;
+  ctx.strokeStyle = '#0D47A1'; ctx.lineWidth = 1.5 * s;
   ctx.beginPath();
   ctx.moveTo(cx - 6 * s, cy - 4 * s);
   ctx.lineTo(cx, cy + 2 * s);
@@ -965,11 +965,12 @@ function drawGround() {
       const y = getGroundY(px);
       const actualPx = px - (scrollX % DAY_WIDTH);
       if (actualPx > 10 && actualPx < CANVAS_W - 40) {
+        const gfs = IS_PORTRAIT ? 12 : 9;
         ctx.fillStyle = 'rgba(0,230,118,0.7)';
-        ctx.font = '9px monospace';
+        ctx.font = `${gfs}px monospace`;
         ctx.fillText(RATE_DATA[dayIdx].rate.toFixed(1), actualPx - 12, y + 14);
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillText(RATE_DATA[dayIdx].date.slice(5), actualPx - 12, y + 24);
+        ctx.fillText(RATE_DATA[dayIdx].date.slice(5), actualPx - 12, y + 14 + gfs + 2);
       }
     }
   }
@@ -990,41 +991,42 @@ function drawCeiling() {
   ctx.setLineDash([]);
   // Label
   ctx.fillStyle = '#ff1744';
-  ctx.font = 'bold 11px monospace';
-  ctx.fillText('118₽ — САНЯ КУПИЛ ТУТ', 10, ceilingY - 5);
+  ctx.font = `bold ${IS_PORTRAIT ? 14 : 11}px monospace`;
+  ctx.fillText('118₽ — САНЯ КУПИЛ ТУТ', IS_PORTRAIT ? 12 : 10, ceilingY - (IS_PORTRAIT ? 8 : 5));
 }
 
 function drawHUD() {
+  const P = IS_PORTRAIT;
   const day = getCurrentDay();
   const currentDate = day < RATE_DATA.length ? RATE_DATA[day].date : RATE_DATA[RATE_DATA.length - 1].date;
   const currentRate = day < RATE_DATA.length ? RATE_DATA[day].rate : RATE_DATA[RATE_DATA.length - 1].rate;
-  // All HUD below ceiling
-  const hudY = rateToY(CEILING_RATE) + 20;
+  const hudY = rateToY(CEILING_RATE) + (P ? 28 : 20);
+  const pad = P ? 12 : 0;
 
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 22px monospace';
+  ctx.font = `bold ${P ? 32 : 22}px monospace`;
   ctx.textAlign = 'center';
   ctx.fillText(`${Math.min(day, RATE_DATA.length)} дней`, CANVAS_W / 2, hudY);
 
-  ctx.font = '11px monospace';
+  ctx.font = `${P ? 16 : 11}px monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.fillText(`${currentDate}  |  $1 = ${currentRate.toFixed(2)}₽`, CANVAS_W / 2, hudY + 18);
+  ctx.fillText(`${currentDate}  |  $1 = ${currentRate.toFixed(2)}₽`, CANVAS_W / 2, hudY + (P ? 26 : 18));
 
   if (highScore > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = '10px monospace';
-    ctx.fillText(`Рекорд: ${highScore} дней`, CANVAS_W / 2, hudY + 32);
+    ctx.font = `${P ? 14 : 10}px monospace`;
+    ctx.fillText(`Рекорд: ${highScore} дней`, CANVAS_W / 2, hudY + (P ? 46 : 32));
   }
   ctx.textAlign = 'left';
 
   // Y-axis labels
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.font = '9px monospace';
+  ctx.font = `${P ? 12 : 9}px monospace`;
   for (let r = 80; r <= 115; r += 5) {
     const y = rateToY(r);
-    ctx.fillText(r + '₽', CANVAS_W - 32, y + 3);
+    ctx.fillText(r + '₽', CANVAS_W - (P ? 40 : 32), y + 3);
     ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CANVAS_W - 36, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CANVAS_W - (P ? 44 : 36), y); ctx.stroke();
   }
 }
 
@@ -1252,90 +1254,166 @@ function drawMenu() {
 
 // ============ PAUSE ============
 function drawPauseMenu() {
+  const P = IS_PORTRAIT;
+  const cx = CANVAS_W / 2;
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 32px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText('ПАУЗА', CANVAS_W / 2, CANVAS_H * 0.32);
 
-  const btnW = 240, btnH = 45;
-  const btnY1 = CANVAS_H * 0.4, btnY2 = btnY1 + btnH + 14;
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${P ? 42 : 32}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('ПАУЗА', cx, CANVAS_H * (P ? 0.35 : 0.32));
+
+  const btnW = P ? CANVAS_W * 0.7 : 240;
+  const btnH = P ? 54 : 45;
+  const btnY1 = CANVAS_H * (P ? 0.44 : 0.4);
+  const btnY2 = btnY1 + btnH + (P ? 18 : 14);
 
   ctx.fillStyle = '#00e676';
-  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY1, btnW, btnH, 8); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#0a1628';
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('ПРОДОЛЖИТЬ', CANVAS_W / 2, btnY1 + 30);
+  ctx.font = `bold ${P ? 22 : 16}px monospace`;
+  ctx.fillText('ПРОДОЛЖИТЬ', cx, btnY1 + btnH * 0.63);
 
   ctx.fillStyle = '#ff5722';
-  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY2, btnW, btnH, 8); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.fillText('ВЫБОР ПЕРСОНАЖА', CANVAS_W / 2, btnY2 + 30);
+  ctx.font = `bold ${P ? 18 : 16}px monospace`;
+  ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + btnH * 0.63);
   ctx.textAlign = 'left';
 
   window._pauseBtns = {
-    cont: { x: CANVAS_W / 2 - btnW / 2, y: btnY1, w: btnW, h: btnH },
-    exit: { x: CANVAS_W / 2 - btnW / 2, y: btnY2, w: btnW, h: btnH }
+    cont: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
+    exit: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH }
   };
 }
 
 // ============ GAME OVER ============
 function drawGameOver() {
+  const P = IS_PORTRAIT;
+  const cx = CANVAS_W / 2;
   ctx.fillStyle = 'rgba(0,0,0,0.78)';
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   ctx.textAlign = 'center';
 
-  ctx.fillStyle = '#ff1744';
-  ctx.font = 'bold 36px monospace';
-  ctx.fillText('КРАХ!', CANVAS_W / 2, CANVAS_H * 0.16);
+  const pad = CANVAS_W * 0.08;
+  const textW = CANVAS_W - pad * 2;
 
-  ctx.fillStyle = '#fff';
-  ctx.font = '20px monospace';
-  ctx.fillText(`Саня продержался ${score} дней`, CANVAS_W / 2, CANVAS_H * 0.25);
+  if (P) {
+    // Portrait game over — fill screen, buttons at bottom
+    const btnH = 52, btnW = CANVAS_W * 0.65, bottomPad = 20;
+    const btnY2 = CANVAS_H - bottomPad - btnH;
+    const btnY1 = btnY2 - btnH - 14;
+    const contentBottom = btnY1 - 20;
 
-  const day = Math.min(score, RATE_DATA.length - 1);
-  if (day > 0) {
-    ctx.fillStyle = '#a0c4ff';
-    ctx.font = '13px monospace';
-    ctx.fillText(`Врезался при курсе ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`, CANVAS_W / 2, CANVAS_H * 0.32);
-  }
+    let y = CANVAS_H * 0.08;
 
-  ctx.fillStyle = '#ffa726';
-  ctx.font = '12px monospace';
-  const jY = CANVAS_H * 0.39;
-  const jLines = drawWrappedText(currentJoke, CANVAS_W / 2, jY, CANVAS_W * 0.85, 16);
+    ctx.fillStyle = '#ff1744';
+    ctx.font = 'bold 48px monospace';
+    ctx.fillText('КРАХ!', cx, y + 48);
+    y += 70;
 
-  if (score >= highScore && score > 0) {
-    ctx.fillStyle = '#ffd700';
+    ctx.fillStyle = '#fff';
+    ctx.font = '24px monospace';
+    ctx.fillText(`Саня продержался ${score} дней`, cx, y + 24);
+    y += 40;
+
+    const day = Math.min(score, RATE_DATA.length - 1);
+    if (day > 0) {
+      ctx.fillStyle = '#a0c4ff';
+      ctx.font = '16px monospace';
+      const rateText = `Курс: ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`;
+      ctx.fillText(rateText, cx, y + 16);
+      y += 30;
+    }
+
+    y += 10;
+    ctx.fillStyle = '#ffa726';
     ctx.font = 'bold 18px monospace';
-    ctx.fillText('НОВЫЙ РЕКОРД!', CANVAS_W / 2, jY + jLines * 16 + 18);
-  } else if (highScore > 0) {
-    ctx.fillStyle = '#ffd700';
-    ctx.font = '13px monospace';
-    ctx.fillText(`Рекорд: ${highScore} дней`, CANVAS_W / 2, jY + jLines * 16 + 18);
+    const jLines = drawWrappedText(currentJoke, cx, y + 18, textW, 26);
+    y += jLines * 26 + 20;
+
+    if (score >= highScore && score > 0) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 26px monospace';
+      ctx.fillText('НОВЫЙ РЕКОРД!', cx, y + 26);
+    } else if (highScore > 0) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '18px monospace';
+      ctx.fillText(`Рекорд: ${highScore} дней`, cx, y + 18);
+    }
+
+    // Buttons pinned to bottom
+    ctx.fillStyle = '#00e676';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
+    ctx.fillStyle = '#0a1628';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('ЗАНОВО', cx, btnY1 + btnH * 0.65);
+
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px monospace';
+    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + btnH * 0.62);
+    ctx.textAlign = 'left';
+
+    window._goBtns = {
+      retry: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
+      menu: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH }
+    };
+  } else {
+    // Desktop game over
+    ctx.fillStyle = '#ff1744';
+    ctx.font = 'bold 36px monospace';
+    ctx.fillText('КРАХ!', cx, CANVAS_H * 0.16);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px monospace';
+    ctx.fillText(`Саня продержался ${score} дней`, cx, CANVAS_H * 0.25);
+
+    const day = Math.min(score, RATE_DATA.length - 1);
+    if (day > 0) {
+      ctx.fillStyle = '#a0c4ff';
+      ctx.font = '13px monospace';
+      ctx.fillText(`Врезался при курсе ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`, cx, CANVAS_H * 0.32);
+    }
+
+    ctx.fillStyle = '#ffa726';
+    ctx.font = '12px monospace';
+    const jY = CANVAS_H * 0.39;
+    const jLines = drawWrappedText(currentJoke, cx, jY, CANVAS_W * 0.85, 16);
+
+    if (score >= highScore && score > 0) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('НОВЫЙ РЕКОРД!', cx, jY + jLines * 16 + 18);
+    } else if (highScore > 0) {
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '13px monospace';
+      ctx.fillText(`Рекорд: ${highScore} дней`, cx, jY + jLines * 16 + 18);
+    }
+
+    const btnW = 200, btnH = 45;
+    const btnY1 = CANVAS_H * 0.73, btnY2 = btnY1 + btnH + 12;
+
+    ctx.fillStyle = '#00e676';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 8); ctx.fill();
+    ctx.fillStyle = '#0a1628';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText('ЗАНОВО', cx, btnY1 + 30);
+
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 8); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px monospace';
+    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + 28);
+    ctx.textAlign = 'left';
+
+    window._goBtns = {
+      retry: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
+      menu: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH }
+    };
   }
-
-  const btnW = 200, btnH = 45;
-  const btnY1 = CANVAS_H * 0.73, btnY2 = btnY1 + btnH + 12;
-
-  ctx.fillStyle = '#00e676';
-  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY1, btnW, btnH, 8); ctx.fill();
-  ctx.fillStyle = '#0a1628';
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('ЗАНОВО', CANVAS_W / 2, btnY1 + 30);
-
-  ctx.fillStyle = '#546e7a';
-  ctx.beginPath(); ctx.roundRect(CANVAS_W / 2 - btnW / 2, btnY2, btnW, btnH, 8); ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.font = '14px monospace';
-  ctx.fillText('ВЫБОР ПЕРСОНАЖА', CANVAS_W / 2, btnY2 + 28);
-  ctx.textAlign = 'left';
-
-  window._goBtns = {
-    retry: { x: CANVAS_W / 2 - btnW / 2, y: btnY1, w: btnW, h: btnH },
-    menu: { x: CANVAS_W / 2 - btnW / 2, y: btnY2, w: btnW, h: btnH }
-  };
 }
 
 // ============ GAME LOGIC ============
