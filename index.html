@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Flappy Трейдер — Курс Доллара</title>
+<title>Flappy Саня — Курс Доллара</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
@@ -88,33 +88,33 @@ const RATE_DATA = [
 
 // ============ JOKES ============
 const JOKES_START = [
-  "Вы купили доллар по 118₽.\nТеперь пытаетесь долететь хотя бы до 90...",
-  "Вы в 2022: «Рубль всё, берём доллар!»\nДоллар: *падает до 76₽*\nВы: ...",
-  "Ваш портфель: 100% USD по 118₽\nДиверсификация: 0%  Боль: 100%",
-  "Вы смотрите на курс 77₽ и думаете:\n«Ещё чуть-чуть и я в плюсе...\nлет через 40»",
-  "Когда вы говорите «я инвестор»,\nвсе вспоминают доллар по 118₽",
-  "Вы купили доллар на хаях.\nТеперь хай говорите только вы —\nсвоим деньгам на прощание",
-  "Ваш финансовый план:\n1. Купить доллар по 118₽\n2. ???\n3. Profit (когда-нибудь)",
+  "Саня купил доллар по 118₽.\nТеперь пытается долететь хотя бы до 90...",
+  "Саня в 2022: «Рубль всё, берём доллар!»\nДоллар: *падает до 76₽*\nСаня: ...",
+  "Портфель Сани: 100% USD по 118₽\nДиверсификация: 0%  Боль: 100%",
+  "Саня смотрит на курс 77₽ и думает:\n«Ещё чуть-чуть и я в плюсе...\nлет через 40»",
+  "Когда Саня говорит «я инвестор»,\nвсе вспоминают доллар по 118₽",
+  "Саня купил доллар на хаях.\nТеперь хай говорит только Саня —\nсвоим деньгам на прощание",
+  "Финансовый план Сани:\n1. Купить доллар по 118₽\n2. ???\n3. Profit (когда-нибудь)",
 ];
 
 const JOKES_SKIN = [
   // Rocket jokes
   [
-    "Вы на ракете!\nК сожалению, доллар летит\nв обратную сторону...",
-    "Ваша ракета стартовала!\nПравда доллар по 118₽\nтак и не взлетел",
-    "Вы запустили ракету!\nЖаль, ваши инвестиции\nтак и остались на земле",
+    "Саня на ракете!\nК сожалению, доллар летит\nв обратную сторону...",
+    "Ракета Сани стартовала!\nПравда доллар по 118₽\nтак и не взлетел",
+    "Саня запустил ракету!\nЖаль, его инвестиции\nтак и остались на земле",
   ],
   // Car jokes
   [
-    "Вы за рулём! Может хоть\nот курса 118₽ удастся уехать",
-    "Вы сели в машину.\nНа бензин тратите меньше,\nчем потеряли на долларе",
-    "Вы на тачке! Тачку купили\nна рубли, которые не потратили\nна доллар... а нет, потратили",
+    "Саня за рулём! Может хоть\nот курса 118₽ удастся уехать",
+    "Саня сел в машину.\nНа бензин тратит меньше,\nчем потерял на долларе",
+    "Саня на тачке! Тачку купил\nна рубли, которые не потратил\nна доллар... а нет, потратил",
   ],
   // Walk jokes
   [
-    "Вы идёте пешком.\nВсю машину продали,\nчтобы закупить доллар по 118₽",
+    "Саня идёт пешком.\nВсю машину продал,\nчтобы закупить доллар по 118₽",
     "Пешком, как и положено\nчеловеку, купившему доллар\nна самом пике",
-    "Вы идёте пешком — на такси\nне хватает после покупки\nдоллара по 118₽",
+    "Саня идёт пешком — на такси\nне хватает после покупки\nдоллара по 118₽",
   ],
 ];
 
@@ -127,6 +127,17 @@ const JOKES_END = [
   "Вы продержались {DAYS} нед.!\nВаши доллары по 118₽ держатся\nуже 4 года... в минусе",
   "Упс! Вы встретились с курсом.\nВ отличие от 118₽, этот курс\nвас хотя бы заметил",
   "Вы не долетели!\nКак и доллар — до 118₽ обратно",
+];
+
+const SANYA_QUIPS = [
+  "А Саня держится до сих пор...\nпо 118₽. Уважение!",
+  "А Саня всё ещё не продал.\nГоворит: «Это стратегия!»",
+  "А Саня держит доллар с 2022-го.\nЭто уже не инвестиция, это принцип",
+  "А Саня всё ходлит.\nДоллар падает, а Саня — нет",
+  "А Саня до сих пор в позиции.\nЕму уже не страшно ничего",
+  "А Саня говорит: «Я в долгосрок».\nОчень долгий. Очень.",
+  "А Саня не сдаётся!\nВ отличие от курса доллара",
+  "А Саня верит в доллар.\nДоллар пока не верит в Саню",
 ];
 
 function getRandomJoke(arr, score, rate) {
@@ -199,6 +210,7 @@ let playerY = CANVAS_H / 2;
 let playerVY = 0;
 let scrollX = 0;
 let currentJoke = '';
+let currentSanyaQuip = '';
 let menuJoke = getRandomJoke(JOKES_START, 0, 0);
 let skinJoke = getRandomJoke(JOKES_SKIN[0], 0, 0);
 
@@ -1033,7 +1045,7 @@ function drawCeiling() {
   // Label
   ctx.fillStyle = '#ff1744';
   ctx.font = `bold ${IS_PORTRAIT ? 14 : 11}px monospace`;
-  ctx.fillText('118₽ — ВЫ КУПИЛИ ТУТ', IS_PORTRAIT ? 12 : 10, ceilingY - (IS_PORTRAIT ? 8 : 5));
+  ctx.fillText('118₽ — САНЯ КУПИЛ ТУТ', IS_PORTRAIT ? 12 : 10, ceilingY - (IS_PORTRAIT ? 8 : 5));
 }
 
 function drawHUD() {
@@ -1122,11 +1134,11 @@ function drawMenu() {
     const maxTitleW = CANVAS_W - titlePad * 2;
     let titleFontSize = 48;
     ctx.font = `bold ${titleFontSize}px monospace`;
-    while (ctx.measureText('FLAPPY ТРЕЙДЕР').width > maxTitleW && titleFontSize > 20) {
+    while (ctx.measureText('FLAPPY САНЯ').width > maxTitleW && titleFontSize > 20) {
       titleFontSize -= 2;
       ctx.font = `bold ${titleFontSize}px monospace`;
     }
-    ctx.fillText('FLAPPY ТРЕЙДЕР', cx, y + 44);
+    ctx.fillText('FLAPPY САНЯ', cx, y + 44);
     y += 52 + gap;
 
     // Subtitle
@@ -1152,7 +1164,7 @@ function drawMenu() {
     // Skin label
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 22px monospace';
-    ctx.fillText('Выбери лук трейдера:', cx, y + 20);
+    ctx.fillText('Выбери лук Сани:', cx, y + 20);
     y += 28 + gap;
 
     // 3 near-square cards
@@ -1225,11 +1237,11 @@ function drawMenu() {
     const maxTitleWD = CANVAS_W - titlePadD * 2;
     let titleFontSizeD = 40;
     ctx.font = `bold ${titleFontSizeD}px monospace`;
-    while (ctx.measureText('FLAPPY ТРЕЙДЕР').width > maxTitleWD && titleFontSizeD > 16) {
+    while (ctx.measureText('FLAPPY САНЯ').width > maxTitleWD && titleFontSizeD > 16) {
       titleFontSizeD -= 2;
       ctx.font = `bold ${titleFontSizeD}px monospace`;
     }
-    ctx.fillText('FLAPPY ТРЕЙДЕР', cx, offsetY + 45);
+    ctx.fillText('FLAPPY САНЯ', cx, offsetY + 45);
 
     ctx.font = '15px monospace';
     ctx.fillStyle = '#a0c4ff';
@@ -1250,7 +1262,7 @@ function drawMenu() {
 
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 16px monospace';
-    ctx.fillText('Выбери лук трейдера:', cx, nextY + 20);
+    ctx.fillText('Выбери лук Сани:', cx, nextY + 20);
     const skinStartY = nextY + 32;
 
     const bw = 140, bh = 110, gap = 20;
@@ -1386,7 +1398,12 @@ function drawGameOver() {
     ctx.fillStyle = '#ffa726';
     ctx.font = 'bold 18px monospace';
     const jLines = drawWrappedText(currentJoke, cx, y + 18, textW, 26);
-    y += jLines * 26 + 20;
+    y += jLines * 26 + 14;
+
+    ctx.fillStyle = '#81d4fa';
+    ctx.font = '15px monospace';
+    const sqLines = drawWrappedText(currentSanyaQuip, cx, y + 15, textW, 20);
+    y += sqLines * 20 + 20;
 
     if (score >= highScore && score > 0) {
       ctx.fillStyle = '#ffd700';
@@ -1438,14 +1455,20 @@ function drawGameOver() {
     const jY = CANVAS_H * 0.39;
     const jLines = drawWrappedText(currentJoke, cx, jY, CANVAS_W * 0.85, 16);
 
+    const sqY = jY + jLines * 16 + 10;
+    ctx.fillStyle = '#81d4fa';
+    ctx.font = '11px monospace';
+    const sqLinesD = drawWrappedText(currentSanyaQuip, cx, sqY, CANVAS_W * 0.85, 14);
+
+    const afterSq = sqY + sqLinesD * 14 + 12;
     if (score >= highScore && score > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 18px monospace';
-      ctx.fillText('НОВЫЙ РЕКОРД!', cx, jY + jLines * 16 + 18);
+      ctx.fillText('НОВЫЙ РЕКОРД!', cx, afterSq);
     } else if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = '13px monospace';
-      ctx.fillText(`Рекорд: ${highScore} нед.`, cx, jY + jLines * 16 + 18);
+      ctx.fillText(`Рекорд: ${highScore} нед.`, cx, afterSq);
     }
 
     const btnW = 200, btnH = 45;
@@ -1479,6 +1502,7 @@ function endGame() {
   }
   const day = Math.min(score, RATE_DATA.length - 1);
   currentJoke = getRandomJoke(JOKES_END, score, RATE_DATA[day].rate);
+  currentSanyaQuip = SANYA_QUIPS[Math.floor(Math.random() * SANYA_QUIPS.length)];
   state = 'gameover';
 }
 
