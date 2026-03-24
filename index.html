@@ -139,7 +139,7 @@ let CANVAS_W = 800;
 let CANVAS_H = 500;
 const RATE_MIN = 48;
 const RATE_MAX = 125;
-const RATE_AMPLIFY = 1.3; // slight amplification (data already has big swings 53-120)
+const RATE_AMPLIFY = 2.0; // amplify swings for more challenging gameplay
 const CEILING_RATE = 118;
 let GRAVITY = 0.35;
 let JUMP_FORCE = -6.5;
@@ -1048,7 +1048,7 @@ function drawHUD() {
   ctx.fillStyle = '#fff';
   ctx.font = `bold ${P ? 32 : 22}px monospace`;
   ctx.textAlign = 'center';
-  ctx.fillText(`${Math.min(day, RATE_DATA.length)} нед.`, CANVAS_W / 2, hudY);
+  ctx.fillText(`${score} нед.`, CANVAS_W / 2, hudY);
 
   ctx.font = `${P ? 16 : 11}px monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
