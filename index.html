@@ -193,8 +193,7 @@ window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200)
 // ============ GAME STATE ============
 let state = 'menu';
 let selectedSkin = 0;
-let highScore = 0;
-try { highScore = parseInt(localStorage.getItem('flappySanyaHigh') || '0'); } catch(e) {}
+let highScore = 0; // resets on page reload, persists within session
 let score = 0;
 let playerY = CANVAS_H / 2;
 let playerVY = 0;
@@ -1462,7 +1461,7 @@ function drawGameOver() {
 function endGame() {
   if (score > highScore) {
     highScore = score;
-    try { localStorage.setItem('flappySanyaHigh', highScore.toString()); } catch(e) {}
+    // highScore lives in memory only — resets on page reload
   }
   const day = Math.min(score, RATE_DATA.length - 1);
   currentJoke = getRandomJoke(JOKES_END, score, RATE_DATA[day].rate);
