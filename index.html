@@ -985,7 +985,7 @@ function drawMenu() {
     const labelH = 28;       // "Выбери лук"
     const cardSize = Math.min((CANVAS_W - pad * 2 - 16) / 3, 120); // near-square cards, 3 in a row
     const cardGap = 8;
-    const skinJokeH = 60;    // skin joke area
+    const skinJokeH = 100;   // skin joke area (bigger font)
     const btnH = 56;
     const hintH = 20;
 
@@ -1062,12 +1062,12 @@ function drawMenu() {
       x: cardStartX + i * (cardSize + cardGap), y: skinStartY, w: cardSize, h: cardSize
     }));
 
-    // Skin joke
-    ctx.fillStyle = 'rgba(255,200,100,0.7)';
-    ctx.font = '13px monospace';
+    // Skin joke — big and readable
+    ctx.fillStyle = '#ffa726';
+    ctx.font = 'bold 20px monospace';
     ctx.textAlign = 'center';
-    const sjLines = drawWrappedText(skinJoke, cx, y + 12, textW, 17);
-    y += sjLines * 17 + spacer * 0.7;
+    const sjLines = drawWrappedText(skinJoke, cx, y + 22, textW, 28);
+    y += sjLines * 28 + spacer * 0.7;
 
     // Start button
     const btnW = CANVAS_W * 0.65;
