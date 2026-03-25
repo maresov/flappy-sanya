@@ -619,7 +619,7 @@ function draw(frozen) {
   for (let b of bonuses) {
     ctx.save();
     ctx.globalAlpha = 0.9;
-    ctx.fillStyle = b.type === 'freeze' ? 'rgba(33, 150, 243, 0.85)' : 'rgba(76, 175, 80, 0.85)';
+    ctx.fillStyle = b.type === 'freeze' ? 'rgba(160, 196, 255, 0.85)' : 'rgba(0, 230, 118, 0.85)';
     let bw = b.w, bh = b.h;
     ctx.beginPath();
     ctx.roundRect(b.x - bw / 2, b.y - bh / 2, bw, bh, 10);
