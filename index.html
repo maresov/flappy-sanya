@@ -339,7 +339,6 @@
     <div class="profile-section">
       <div class="profile-nick-row" id="profile-nick-row">
         <div class="profile-nickname" id="profile-nickname"></div>
-        <button class="profile-nick-edit-btn" id="profile-nick-edit-btn">Изменить</button>
       </div>
       <div id="profile-stats" style="margin-top:16px;"></div>
     </div>
@@ -591,7 +590,6 @@ document.getElementById('profile-logout-btn').addEventListener('click', doLogout
 function renderGames() {
   gamesGrid.innerHTML = '';
   GAMES.forEach(function(game) {
-    var best = GameHub.getMyBestScore(game.slug);
     var card = document.createElement('a');
     card.className = 'game-card';
     card.href = 'games/' + game.slug + '/';
@@ -599,8 +597,16 @@ function renderGames() {
       '<div class="game-card-icon">' + game.icon + '</div>' +
       '<div class="game-card-name">' + game.name + '</div>' +
       '<div class="game-card-desc">' + game.description + '</div>' +
-      (best !== null ? '<div class="game-card-score">\u{1F3C6} Рекорд: ' + best + '</div>' : '<div class="game-card-score" style="color:var(--text-muted)">Ещё не играли</div>');
+      '<div class="game-card-score" id="card-score-' + game.slug + '" style="color:var(--text-muted)">Ещё не играли</div>';
     gamesGrid.appendChild(card);
+
+    GameHub.getMyBestScoreAsync(game.slug).then(function(best) {
+      var scoreEl = document.getElementById('card-score-' + game.slug);
+      if (scoreEl && best !== null) {
+        scoreEl.style.color = '';
+        scoreEl.textContent = '\u{1F3C6} Рекорд: ' + best;
+      }
+    });
   });
 }
 
@@ -620,28 +626,38 @@ function renderProfile() {
   nickEl.textContent = player.nickname;
   profileNickRow.appendChild(nickEl);
 
-  var editBtn = document.createElement('button');
-  editBtn.className = 'profile-nick-edit-btn';
-  editBtn.textContent = 'Изменить';
-  editBtn.addEventListener('click', startEditNick);
-  profileNickRow.appendChild(editBtn);
-
-  var allScores = GameHub.getAllMyScores();
-  var gamesPlayed = new Set(allScores.map(function(s) { return s.gameSlug; })).size;
-  var totalAttempts = allScores.length;
-
+  // Show loading state
   profileStats.innerHTML =
-    '<div class="profile-stat"><div class="profile-stat-value">' + gamesPlayed + '</div><div class="profile-stat-label">Игр</div></div>' +
-    '<div class="profile-stat"><div class="profile-stat-value">' + totalAttempts + '</div><div class="profile-stat-label">Попыток</div></div>';
+    '<div class="profile-stat"><div class="profile-stat-value">…</div><div class="profile-stat-label">Игр</div></div>' +
+    '<div class="profile-stat"><div class="profile-stat-value">…</div><div class="profile-stat-label">Попыток</div></div>';
 
   profileScores.innerHTML = '';
   GAMES.forEach(function(game) {
-    var best = GameHub.getMyBestScore(game.slug);
     var li = document.createElement('li');
+    li.id = 'profile-score-' + game.slug;
     li.innerHTML =
       '<span class="game-name">' + game.icon + ' ' + game.name + '</span>' +
-      '<span class="best-score">' + (best !== null ? best : '—') + '</span>';
+      '<span class="best-score">…</span>';
     profileScores.appendChild(li);
+  });
+
+  // Load scores async from Supabase
+  var promises = GAMES.map(function(game) {
+    return GameHub.getMyBestScoreAsync(game.slug).then(function(best) {
+      var li = document.getElementById('profile-score-' + game.slug);
+      if (li) {
+        li.querySelector('.best-score').textContent = best !== null ? best : '—';
+      }
+      return { slug: game.slug, best: best };
+    });
+  });
+
+  Promise.all(promises).then(function(results) {
+    var gamesPlayed = results.filter(function(r) { return r.best !== null; }).length;
+    var totalBest = results.reduce(function(sum, r) { return sum + (r.best || 0); }, 0);
+    profileStats.innerHTML =
+      '<div class="profile-stat"><div class="profile-stat-value">' + gamesPlayed + '</div><div class="profile-stat-label">Игр</div></div>' +
+      '<div class="profile-stat"><div class="profile-stat-value">' + totalBest + '</div><div class="profile-stat-label">Сумма очков</div></div>';
   });
 
   // Admin panel
@@ -684,46 +700,6 @@ function renderProfile() {
   }
 }
 
-function startEditNick() {
-  if (_editingNick) return;
-  _editingNick = true;
-
-  var player = GameHub.getPlayer();
-  var currentNick = player ? player.nickname : '';
-
-  profileNickRow.innerHTML = '';
-
-  var input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'profile-nick-input';
-  input.value = currentNick === 'Аноним' ? '' : currentNick;
-  input.placeholder = 'Введите новый ник';
-  input.maxLength = 20;
-  profileNickRow.appendChild(input);
-
-  var saveBtn = document.createElement('button');
-  saveBtn.className = 'profile-nick-save-btn';
-  saveBtn.textContent = 'Сохранить';
-  saveBtn.addEventListener('click', function() {
-    saveNick(input.value);
-  });
-  profileNickRow.appendChild(saveBtn);
-
-  input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') saveNick(input.value);
-    if (e.key === 'Escape') renderProfile();
-  });
-
-  input.focus();
-}
-
-function saveNick(newNick) {
-  newNick = (newNick || '').trim();
-  if (!newNick) newNick = 'Аноним';
-  GameHub.setPlayer(newNick);
-  updateHeader();
-  renderProfile();
-}
 
 // ============ TOGGLE ============
 profileToggle.addEventListener('click', function() {
