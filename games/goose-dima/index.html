@@ -711,13 +711,13 @@ function drawStartScreen() {
   ctx.fillText('ГУСИ vs ДИМА', cx, cy - 100);
 
   // Subtitle
-  const subSize = Math.max(16, Math.min(18, W / 30));
+  const subSize = Math.max(20, Math.min(22, W / 25));
   ctx.fillStyle = ORANGE;
   ctx.font = `${subSize}px monospace`;
   const subtitle1 = 'Перетаскивай Диму пальцем,';
   const subtitle2 = 'уворачиваясь от гусей!';
   ctx.fillText(subtitle1, cx, cy - 55);
-  ctx.fillText(subtitle2, cx, cy - 35);
+  ctx.fillText(subtitle2, cx, cy - 32);
 
   // Skin selection
   const cardSize = 76;
@@ -727,7 +727,7 @@ function drawStartScreen() {
   const skinLabelY = cy - 10;
 
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 20px monospace';
+  ctx.font = 'bold 22px monospace';
   ctx.fillText('Выберите лук:', cx, skinLabelY);
 
   const cardsY = skinLabelY + 14;
@@ -761,7 +761,7 @@ function drawStartScreen() {
   }
 
   // Skin joke (wrapped, no skin name labels)
-  const jokeFontSize = Math.max(16, Math.min(20, W / 22));
+  const jokeFontSize = Math.max(20, Math.min(22, W / 22));
   ctx.fillStyle = '#ffa726';
   ctx.font = `bold ${jokeFontSize}px monospace`;
   ctx.textAlign = 'center';
@@ -796,8 +796,8 @@ function drawStartScreen() {
   ctx.fill();
 
   ctx.fillStyle = '#0a1628';
-  ctx.font = `bold 22px monospace`;
-  ctx.fillText('ИГРАТЬ', cx, btnY + 33);
+  ctx.font = `bold 26px monospace`;
+  ctx.fillText('ИГРАТЬ', cx, btnY + 34);
 
   // Store button bounds for click detection
   startButton = { x: btnX, y: btnY, w: btnW, h: btnH };
@@ -810,15 +810,15 @@ function drawStartScreen() {
   ctx.roundRect(btnX, hubBtnY, btnW, hubBtnH, 12);
   ctx.fill();
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('← ХАБ', cx, hubBtnY + 30);
+  ctx.font = 'bold 24px monospace';
+  ctx.fillText('← ХАБ', cx, hubBtnY + 32);
 
   startHubButton = { x: btnX, y: hubBtnY, w: btnW, h: hubBtnH };
 
   // High score
   if (highScore > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = `bold ${Math.max(18, Math.min(22, W / 20))}px monospace`;
+    ctx.font = `bold ${Math.max(20, Math.min(22, W / 20))}px monospace`;
     ctx.fillText(`Рекорд: ${highScore}`, cx, btnY - 20);
   }
 
@@ -826,7 +826,7 @@ function drawStartScreen() {
   const player = window.GameHub?.getPlayer?.();
   if (player?.nickname) {
     ctx.fillStyle = DARK_GRAY;
-    ctx.font = `${Math.max(18, Math.min(20, W / 22))}px monospace`;
+    ctx.font = `${Math.max(20, Math.min(22, W / 22))}px monospace`;
     ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY - 48);
   }
 }
@@ -847,7 +847,7 @@ function drawGameOverScreen() {
   ctx.fillText('ГА-ГА-ГА!', cx, cy - 120);
 
   // Subtitle
-  const subSize = Math.max(16, Math.min(20, W / 25));
+  const subSize = Math.max(20, Math.min(24, W / 25));
   ctx.fillStyle = WHITE;
   ctx.font = `${subSize}px monospace`;
   ctx.fillText('Гуси поймали Диму!', cx, cy - 80);
@@ -859,13 +859,13 @@ function drawGameOverScreen() {
 
   if (score >= highScore && score > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = `16px monospace`;
+    ctx.font = `bold 20px monospace`;
     ctx.fillText('Новый рекорд!', cx, cy - 22);
   }
 
   // Joke
   ctx.fillStyle = ORANGE;
-  const jokeSize = Math.max(18, Math.min(22, W / 20));
+  const jokeSize = Math.max(20, Math.min(22, W / 20));
   ctx.font = `${jokeSize}px monospace`;
   const jokeLines = currentJoke.split('\n');
   jokeLines.forEach((line, i) => {

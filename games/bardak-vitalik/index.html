@@ -555,9 +555,9 @@ function handleClick(cx, cy) {
   if (state !== 'playing') return;
 
   // Check pause button
-  let pauseSize = 44;
-  let pauseX = W - pauseSize - 10;
-  let pauseY = 10;
+  let pauseSize = 48;
+  let pauseX = W - pauseSize - 16;
+  let pauseY = 8;
   if (cx >= pauseX && cx <= pauseX + pauseSize && cy >= pauseY && cy <= pauseY + pauseSize) {
     pauseGame(); return;
   }
@@ -890,7 +890,7 @@ function draw(frozen) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, speedFlashTimer / 0.3);
     ctx.fillStyle = '#ffa726';
-    ctx.font = 'bold ' + Math.max(20, W * 0.05) + 'px monospace';
+    ctx.font = 'bold ' + Math.max(22, W * 0.05) + 'px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(speedFlashText || 'Посуда летит быстрее!', W / 2, H * 0.4);
@@ -899,7 +899,7 @@ function draw(frozen) {
 
   // HUD
   let hudY = 16;
-  let fontSize = Math.max(16, Math.min(20, W * 0.04));
+  let fontSize = Math.max(20, Math.min(24, W * 0.04));
   ctx.font = 'bold ' + fontSize + 'px monospace';
   ctx.textBaseline = 'top';
 
@@ -911,7 +911,7 @@ function draw(frozen) {
   // Record top-right (offset for pause button)
   ctx.fillStyle = '#ffd700';
   ctx.textAlign = 'right';
-  ctx.fillText('Рекорд: ' + highScore, W - 74, hudY);
+  ctx.fillText('Рекорд: ' + highScore, W - 76, hudY);
 
   // Table meter
   let meterY = hudY + fontSize + 8;
@@ -936,15 +936,15 @@ function draw(frozen) {
   }
 
   // Pause button
-  let ps = 44;
-  let px = W - ps - 20, py = 8;
+  let ps = 48;
+  let px = W - ps - 16, py = 8;
   ctx.fillStyle = 'rgba(42, 58, 92, 0.8)';
   ctx.beginPath();
   ctx.roundRect(px, py, ps, ps, 8);
   ctx.fill();
   ctx.fillStyle = '#e0e0e0';
-  ctx.fillRect(px + 14, py + 12, 6, 20);
-  ctx.fillRect(px + 24, py + 12, 6, 20);
+  ctx.fillRect(px + 15, py + 12, 7, 24);
+  ctx.fillRect(px + 26, py + 12, 7, 24);
 }
 
 // ===== INIT =====

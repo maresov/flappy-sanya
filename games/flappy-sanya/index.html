@@ -1307,7 +1307,7 @@ function drawMenu() {
     ctx.fillStyle = '#00e676';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, startBtnY, btnW, btnH, 14); ctx.fill();
     ctx.fillStyle = '#0a1628';
-    ctx.font = 'bold 26px monospace';
+    ctx.font = 'bold 28px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('СТАРТ', cx, startBtnY + btnH * 0.65);
 
@@ -1315,7 +1315,7 @@ function drawMenu() {
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, hubBtnY, btnW, hubBtnH, 14); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px monospace';
+    ctx.font = 'bold 22px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('← ХАБ', cx, hubBtnY + hubBtnH * 0.65);
 
@@ -1399,31 +1399,31 @@ function drawMenu() {
     }));
 
     ctx.fillStyle = '#ffa726';
-    ctx.font = '14px monospace';
+    ctx.font = '16px monospace';
     const sjY = skinEndY + 14;
-    const sjLines = drawWrappedText(skinJoke, cx, sjY, CANVAS_W * 0.9, 17);
+    const sjLines = drawWrappedText(skinJoke, cx, sjY, CANVAS_W * 0.9, 20);
 
-    const btnY = sjY + sjLines * 17 + 10;
-    const btnW = 200, btnH = 48;
+    const btnY = sjY + sjLines * 20 + 10;
+    const btnW = 220, btnH = 52;
     ctx.fillStyle = '#00e676';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#0a1628';
-    ctx.font = 'bold 20px monospace';
+    ctx.font = 'bold 24px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('СТАРТ', cx, btnY + btnH * 0.65);
 
     // Hub button — below start, same width
     const hubBtnY = btnY + btnH + 10;
-    const hubBtnH2 = 44;
+    const hubBtnH2 = 48;
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, hubBtnY, btnW, hubBtnH2, 10); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 16px monospace';
+    ctx.font = 'bold 20px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('← ХАБ', cx, hubBtnY + hubBtnH2 * 0.65);
 
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '11px monospace';
+    ctx.font = '14px monospace';
     ctx.fillText('↑ / Пробел / Тап — прыгать  |  ESC — пауза', cx, hubBtnY + hubBtnH2 + 18);
     ctx.textAlign = 'left';
 
@@ -1447,8 +1447,8 @@ function drawPauseMenu() {
   ctx.textAlign = 'center';
   ctx.fillText('ПАУЗА', cx, CANVAS_H * (P ? 0.22 : 0.2));
 
-  const btnW = P ? CANVAS_W * 0.7 : 240;
-  const btnH = P ? 50 : 48;
+  const btnW = P ? CANVAS_W * 0.7 : 260;
+  const btnH = P ? 56 : 52;
   const btnGap = P ? 14 : 11;
   const totalBtnsH = btnH * 3 + btnGap * 2;
   const btnY1 = CANVAS_H * (P ? 0.32 : 0.3);
@@ -1459,21 +1459,21 @@ function drawPauseMenu() {
   ctx.fillStyle = '#00e676';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#0a1628';
-  ctx.font = `bold ${P ? 20 : 18}px monospace`;
+  ctx.font = `bold ${P ? 24 : 22}px monospace`;
   ctx.fillText('ПРОДОЛЖИТЬ', cx, btnY1 + btnH * 0.63);
 
   // МЕНЮ ИГРЫ
   ctx.fillStyle = '#546e7a';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.font = `bold ${P ? 20 : 18}px monospace`;
+  ctx.font = `bold ${P ? 24 : 22}px monospace`;
   ctx.fillText('МЕНЮ ИГРЫ', cx, btnY2 + btnH * 0.63);
 
   // ← ХАБ
   ctx.fillStyle = '#546e7a';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.font = `bold ${P ? 20 : 18}px monospace`;
+  ctx.font = `bold ${P ? 24 : 22}px monospace`;
   ctx.fillText('← ХАБ', cx, btnY3 + btnH * 0.63);
 
   ctx.textAlign = 'left';
@@ -1519,22 +1519,22 @@ function drawGameOver() {
     ensureRateData(day);
     if (day > 0) {
       ctx.fillStyle = '#a0c4ff';
-      ctx.font = '16px monospace';
+      ctx.font = '20px monospace';
       const rateText = `Курс: ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`;
-      ctx.fillText(rateText, cx, y + 16);
+      drawWrappedText(rateText, cx, y + 16, textW, 24);
       y += 30;
     }
 
     y += 10;
     ctx.fillStyle = '#ffa726';
-    ctx.font = 'bold 18px monospace';
+    ctx.font = 'bold 20px monospace';
     const jLines = drawWrappedText(currentJoke, cx, y + 18, textW, 26);
     y += jLines * 26 + 14;
 
     ctx.fillStyle = '#a0c4ff';
-    ctx.font = '16px monospace';
-    const sqLines = drawWrappedText(currentSanyaQuip, cx, y + 15, textW, 20);
-    y += sqLines * 20 + 20;
+    ctx.font = '20px monospace';
+    const sqLines = drawWrappedText(currentSanyaQuip, cx, y + 15, textW, 24);
+    y += sqLines * 24 + 20;
 
     if (score >= highScore && score > 0) {
       ctx.fillStyle = '#ffd700';
@@ -1542,7 +1542,7 @@ function drawGameOver() {
       ctx.fillText('НОВЫЙ РЕКОРД!', cx, y + 26);
     } else if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
-      ctx.font = '18px monospace';
+      ctx.font = '20px monospace';
       ctx.fillText(`Рекорд: ${highScore} нед.`, cx, y + 18);
     }
 
@@ -1553,19 +1553,19 @@ function drawGameOver() {
     ctx.fillStyle = '#00e676';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1adj, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#0a1628';
-    ctx.font = 'bold 22px monospace';
+    ctx.font = 'bold 24px monospace';
     ctx.fillText('ЗАНОВО', cx, btnY1adj + btnH * 0.65);
 
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '16px monospace';
+    ctx.font = 'bold 22px monospace';
     ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY3 + btnH * 0.62);
 
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '16px monospace';
+    ctx.font = 'bold 22px monospace';
     ctx.fillText('ХАБ', cx, btnY2 + btnH * 0.62);
     ctx.textAlign = 'left';
 
@@ -1588,51 +1588,51 @@ function drawGameOver() {
     ensureRateData(day);
     if (day > 0) {
       ctx.fillStyle = '#a0c4ff';
-      ctx.font = '14px monospace';
+      ctx.font = '18px monospace';
       ctx.fillText(`Врезался при курсе ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`, cx, CANVAS_H * 0.32);
     }
 
     ctx.fillStyle = '#ffa726';
-    ctx.font = '14px monospace';
+    ctx.font = '18px monospace';
     const jY = CANVAS_H * 0.39;
-    const jLines = drawWrappedText(currentJoke, cx, jY, CANVAS_W * 0.85, 18);
+    const jLines = drawWrappedText(currentJoke, cx, jY, CANVAS_W * 0.85, 22);
 
-    const sqY = jY + jLines * 18 + 10;
+    const sqY = jY + jLines * 22 + 10;
     ctx.fillStyle = '#a0c4ff';
-    ctx.font = '14px monospace';
-    const sqLinesD = drawWrappedText(currentSanyaQuip, cx, sqY, CANVAS_W * 0.85, 17);
+    ctx.font = '18px monospace';
+    const sqLinesD = drawWrappedText(currentSanyaQuip, cx, sqY, CANVAS_W * 0.85, 22);
 
-    const afterSq = sqY + sqLinesD * 17 + 12;
+    const afterSq = sqY + sqLinesD * 22 + 12;
     if (score >= highScore && score > 0) {
       ctx.fillStyle = '#ffd700';
-      ctx.font = 'bold 18px monospace';
+      ctx.font = 'bold 20px monospace';
       ctx.fillText('НОВЫЙ РЕКОРД!', cx, afterSq);
     } else if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
-      ctx.font = '16px monospace';
+      ctx.font = '20px monospace';
       ctx.fillText(`Рекорд: ${highScore} нед.`, cx, afterSq);
     }
 
-    const btnW = 200, btnH = 48;
+    const btnW = 240, btnH = 52;
     const btnY1 = CANVAS_H * 0.63, btnY2 = btnY1 + btnH + 10, btnY3 = btnY2 + btnH + 10;
 
     ctx.fillStyle = '#00e676';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#0a1628';
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText('ЗАНОВО', cx, btnY1 + 31);
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('ЗАНОВО', cx, btnY1 + btnH * 0.63);
 
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '16px monospace';
-    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + 30);
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + btnH * 0.63);
 
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = '16px monospace';
-    ctx.fillText('ХАБ', cx, btnY3 + 30);
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText('ХАБ', cx, btnY3 + btnH * 0.63);
     ctx.textAlign = 'left';
 
     window._goBtns = {
