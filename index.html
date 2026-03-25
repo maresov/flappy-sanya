@@ -486,13 +486,7 @@ async function doLogin() {
   try {
     var result = await GameHub.checkNickname(nick);
     if (result.exists) {
-      if (nick === 'Админ') {
-        GameHub.setPlayer(nick);
-        hideAllScreens();
-        showHub();
-        return;
-      }
-      // Returning user — ask for PIN
+      // Returning user — ask for PIN (including admin)
       showPinEntry(nick);
     } else {
       // New user — register and show PIN
