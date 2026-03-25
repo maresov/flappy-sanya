@@ -701,75 +701,20 @@ function drawStartScreen() {
   drawBackground();
 
   const cx = W / 2;
-
-  // Distribute elements evenly across screen height
-  // Sections: title, subtitle, skin label + cards + joke, player/record, buttons
-  const topPad = H * 0.06;
-
-  // Title
-  const titleSize = Math.max(36, Math.min(42, W / 12));
-  ctx.fillStyle = WHITE;
-  ctx.font = `bold ${titleSize}px monospace`;
   ctx.textAlign = 'center';
-  const titleY = topPad + titleSize;
-  ctx.fillText('ГУСИ vs ДИМА', cx, titleY);
 
-  // Subtitle
+  // Measure content blocks to distribute evenly
+  const titleSize = Math.max(36, Math.min(42, W / 12));
   const subSize = Math.max(20, Math.min(22, W / 25));
-  ctx.fillStyle = ORANGE;
-  ctx.font = `${subSize}px monospace`;
-  const subtitle1 = 'Перетаскивай Диму пальцем,';
-  const subtitle2 = 'уворачиваясь от гусей!';
-  const subY1 = titleY + titleSize * 0.8 + 10;
-  ctx.fillText(subtitle1, cx, subY1);
-  ctx.fillText(subtitle2, cx, subY1 + subSize + 6);
-
-  // Skin selection
+  const jokeFontSize = Math.max(20, Math.min(22, W / 22));
   const cardSize = 76;
   const cardGap = 18;
-  const totalCardsW = SKINS.length * cardSize + (SKINS.length - 1) * cardGap;
-  const cardsStartX = cx - totalCardsW / 2;
-  const skinLabelY = subY1 + subSize + 6 + 32;
+  const btnW = 220;
+  const btnH = 54;
+  const hubBtnH = 52;
 
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 22px monospace';
-  ctx.fillText('Выберите лук:', cx, skinLabelY);
-
-  const cardsY = skinLabelY + 14;
-  skinCards = [];
-
-  for (let i = 0; i < SKINS.length; i++) {
-    const cardX = cardsStartX + i * (cardSize + cardGap);
-    const isSelected = (i === selectedSkin);
-
-    // Card background
-    ctx.fillStyle = isSelected ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
-    ctx.strokeStyle = isSelected ? SKIN_COLORS[i] : '#555';
-    ctx.lineWidth = isSelected ? 3 : 1;
-    ctx.beginPath();
-    ctx.roundRect(cardX, cardsY, cardSize, cardSize, 8);
-    ctx.fill();
-    ctx.stroke();
-
-    // Mini Dima preview
-    const prevSkin = selectedSkin;
-    selectedSkin = i;
-    ctx.save();
-    const scale = 0.45;
-    ctx.translate(cardX + cardSize / 2, cardsY + cardSize / 2 - 4);
-    ctx.scale(scale, scale);
-    drawDima(0, 0);
-    ctx.restore();
-    selectedSkin = prevSkin;
-
-    skinCards.push({ x: cardX, y: cardsY, w: cardSize, h: cardSize, idx: i });
-  }
-
-  // Skin joke (wrapped, no skin name labels)
-  const jokeFontSize = Math.max(20, Math.min(22, W / 22));
-  ctx.fillStyle = '#ffa726';
+  // Pre-measure joke lines
   ctx.font = `bold ${jokeFontSize}px monospace`;
-  ctx.textAlign = 'center';
   const maxJokeWidth = W - 40;
   const words = skinJoke.split(' ');
   const jokeLines = [];
@@ -784,32 +729,106 @@ function drawStartScreen() {
     }
   }
   if (curLine) jokeLines.push(curLine);
-  const jokeStartY = cardsY + cardSize + 20;
-  for (let li = 0; li < jokeLines.length; li++) {
-    ctx.fillText(jokeLines[li], cx, jokeStartY + li * (jokeFontSize + 4));
-  }
+  const jokeBlockH = jokeLines.length * (jokeFontSize + 4);
 
-  // Play button (near bottom)
-  const btnW = 220;
-  const btnH = 54;
+  // Block heights: title, subtitle(2 lines), skinLabel+cards, joke, record/player, buttons
+  const titleH = titleSize;
+  const subH = subSize * 2 + 6;
+  const skinBlockH = 22 + 14 + cardSize; // label + gap + cards
+  const infoH = 48; // record + player name
+  const buttonsH = btnH + 14 + hubBtnH;
+
+  const totalContent = titleH + subH + skinBlockH + jokeBlockH + infoH + buttonsH;
+  const gap = Math.max(16, (H - totalContent) / 7); // 7 gaps between 6 blocks + top/bottom
+
+  let y = gap;
+
+  // Title
+  ctx.fillStyle = WHITE;
+  ctx.font = `bold ${titleSize}px monospace`;
+  ctx.fillText('ГУСИ vs ДИМА', cx, y + titleSize * 0.8);
+  y += titleH + gap;
+
+  // Subtitle
+  ctx.fillStyle = ORANGE;
+  ctx.font = `${subSize}px monospace`;
+  ctx.fillText('Перетаскивай Диму пальцем,', cx, y + subSize * 0.8);
+  ctx.fillText('уворачиваясь от гусей!', cx, y + subSize * 0.8 + subSize + 6);
+  y += subH + gap;
+
+  // Skin label + cards
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText('Выберите лук:', cx, y + 20);
+
+  const cardsY = y + 22 + 14;
+  const totalCardsW = SKINS.length * cardSize + (SKINS.length - 1) * cardGap;
+  const cardsStartX = cx - totalCardsW / 2;
+  skinCards = [];
+
+  for (let i = 0; i < SKINS.length; i++) {
+    const cardX = cardsStartX + i * (cardSize + cardGap);
+    const isSelected = (i === selectedSkin);
+
+    ctx.fillStyle = isSelected ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)';
+    ctx.strokeStyle = isSelected ? SKIN_COLORS[i] : '#555';
+    ctx.lineWidth = isSelected ? 3 : 1;
+    ctx.beginPath();
+    ctx.roundRect(cardX, cardsY, cardSize, cardSize, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    const prevSkin = selectedSkin;
+    selectedSkin = i;
+    ctx.save();
+    const scale = 0.45;
+    ctx.translate(cardX + cardSize / 2, cardsY + cardSize / 2 - 4);
+    ctx.scale(scale, scale);
+    drawDima(0, 0);
+    ctx.restore();
+    selectedSkin = prevSkin;
+
+    skinCards.push({ x: cardX, y: cardsY, w: cardSize, h: cardSize, idx: i });
+  }
+  y += skinBlockH + gap;
+
+  // Skin joke
+  ctx.fillStyle = '#ffa726';
+  ctx.font = `bold ${jokeFontSize}px monospace`;
+  ctx.textAlign = 'center';
+  for (let li = 0; li < jokeLines.length; li++) {
+    ctx.fillText(jokeLines[li], cx, y + (li + 1) * (jokeFontSize + 4));
+  }
+  y += jokeBlockH + gap;
+
+  // Player name + record
+  const player = window.GameHub?.getPlayer?.();
+  if (player?.nickname) {
+    ctx.fillStyle = DARK_GRAY;
+    ctx.font = `${Math.max(20, Math.min(22, W / 22))}px monospace`;
+    ctx.fillText(`Игрок: ${player.nickname}`, cx, y + 20);
+  }
+  if (highScore > 0) {
+    ctx.fillStyle = '#ffd700';
+    ctx.font = `bold ${Math.max(20, Math.min(22, W / 20))}px monospace`;
+    ctx.fillText(`Рекорд: ${highScore}`, cx, y + 44);
+  }
+  y += infoH + gap;
+
+  // Buttons
   const btnX = cx - btnW / 2;
-  const btnY = H - 180;
+  const btnY = y;
 
   ctx.fillStyle = ACCENT;
   ctx.beginPath();
   ctx.roundRect(btnX, btnY, btnW, btnH, 10);
   ctx.fill();
-
   ctx.fillStyle = '#0a1628';
   ctx.font = `bold 26px monospace`;
   ctx.fillText('ИГРАТЬ', cx, btnY + 34);
-
-  // Store button bounds for click detection
   startButton = { x: btnX, y: btnY, w: btnW, h: btnH };
 
-  // Hub button below play
   const hubBtnY = btnY + btnH + 14;
-  const hubBtnH = 52;
   ctx.fillStyle = '#546e7a';
   ctx.beginPath();
   ctx.roundRect(btnX, hubBtnY, btnW, hubBtnH, 12);
@@ -817,23 +836,7 @@ function drawStartScreen() {
   ctx.fillStyle = WHITE;
   ctx.font = 'bold 24px monospace';
   ctx.fillText('← ХАБ', cx, hubBtnY + 32);
-
   startHubButton = { x: btnX, y: hubBtnY, w: btnW, h: hubBtnH };
-
-  // High score
-  if (highScore > 0) {
-    ctx.fillStyle = '#ffd700';
-    ctx.font = `bold ${Math.max(20, Math.min(22, W / 20))}px monospace`;
-    ctx.fillText(`Рекорд: ${highScore}`, cx, btnY - 20);
-  }
-
-  // Player name
-  const player = window.GameHub?.getPlayer?.();
-  if (player?.nickname) {
-    ctx.fillStyle = DARK_GRAY;
-    ctx.font = `${Math.max(20, Math.min(22, W / 22))}px monospace`;
-    ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY - 48);
-  }
 }
 
 function drawGameOverScreen() {
