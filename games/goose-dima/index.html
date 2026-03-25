@@ -74,7 +74,7 @@ const DIMA_RADIUS = 44;
 const GOOSE_RADIUS = 34;
 const COLLISION_GRACE = 10;
 
-const BASE_GOOSE_SPEED = 3.0;
+const BASE_GOOSE_SPEED = 3.9;
 const BASE_SPAWN_INTERVAL = 2000;
 const SPEED_INCREMENT = 0.3;
 const SPAWN_DECREMENT = 150;
@@ -101,6 +101,10 @@ let shakeIntensity = 0;
 let speedMultiplier = 1;
 let lastSpeedIncrease = 0;
 let speedFlashTimer = 0;
+
+// Progressive goose count
+let maxGeese = 2;
+let lastMaxGeeseIncrease = 0;
 
 // Speech bubbles
 let bubbleText = '';
@@ -908,6 +912,8 @@ function startGame() {
   speedMultiplier = 1;
   lastSpeedIncrease = 0;
   speedFlashTimer = 0;
+  maxGeese = 2;
+  lastMaxGeeseIncrease = 0;
   bubbleText = '';
   bubbleTimer = 0;
   nextBubbleTime = performance.now() + 10000;
@@ -975,10 +981,16 @@ function update(dt) {
   dima.x = Math.max(DIMA_RADIUS, Math.min(W - DIMA_RADIUS, dima.x));
   dima.y = Math.max(DIMA_RADIUS + 10, Math.min(H - DIMA_RADIUS, dima.y));
 
-  // Spawn geese
-  if (now - lastSpawnTime > getCurrentSpawnInterval()) {
+  // Increase max simultaneous geese every 15 seconds (cap at 8)
+  const geeseRef = lastMaxGeeseIncrease > 0 ? lastMaxGeeseIncrease : gameStartTime;
+  if (now - geeseRef >= 15000 && maxGeese < 8) {
+    maxGeese++;
+    lastMaxGeeseIncrease = now;
+  }
+
+  // Spawn geese to maintain maxGeese on screen
+  while (geese.length < maxGeese) {
     spawnGoose();
-    lastSpawnTime = now;
   }
 
   // Update geese
