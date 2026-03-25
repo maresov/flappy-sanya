@@ -527,10 +527,8 @@ async function doPinVerify() {
       pinInput.focus();
     }
   } catch (e) {
-    // Offline fallback — let them in
-    GameHub.setPlayer(_pendingNick);
-    hideAllScreens();
-    showHub();
+    pinError.textContent = 'Ошибка сети, попробуйте позже';
+    pinError.style.display = 'block';
   }
 }
 
@@ -808,6 +806,12 @@ function _renderLeaderboardLocal(tableDiv, gameSlug) {
   _renderLeaderboardTable(tableDiv, data);
 }
 
+function _escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
 function _renderLeaderboardTable(tableDiv, data) {
   if (!data || data.length === 0) {
     tableDiv.innerHTML = '<div style="color:var(--text-muted);padding:16px;text-align:center;">Пока нет результатов. Будь первым!</div>';
@@ -824,7 +828,7 @@ function _renderLeaderboardTable(tableDiv, data) {
     var nameStyle = isMe ? 'color:#00e676;font-weight:bold;' : 'color:#fff;';
     html += '<tr style="border-top:1px solid rgba(255,255,255,0.05);' + rowStyle + '">';
     html += '<td style="padding:10px 8px;">' + medal + '</td>';
-    html += '<td style="padding:10px 8px;' + nameStyle + '">' + row.nickname + '</td>';
+    html += '<td style="padding:10px 8px;' + nameStyle + '">' + _escHtml(row.nickname) + '</td>';
     html += '<td style="padding:10px 8px;text-align:right;color:#ffd700;font-weight:bold;">' + row.score + '</td>';
     html += '</tr>';
   });

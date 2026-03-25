@@ -155,16 +155,7 @@
       .single()
       .then(function (res) {
         if (res.error || !res.data) {
-          // Player not found — create first, then submit
-          sb.from('players')
-            .insert({ nickname: nickname })
-            .select('id')
-            .single()
-            .then(function (res2) {
-              if (res2.data) {
-                _insertScore(res2.data.id, gameSlug, score);
-              }
-            });
+          // Player not found in Supabase — skip (they must register first)
           return;
         }
         _insertScore(res.data.id, gameSlug, score);
@@ -307,10 +298,10 @@
 
     if (localScores.length === 0) return Promise.resolve(true);
 
-    // Ensure player exists
+    // Get player ID (don't upsert to avoid wiping PIN)
     return sb.from('players')
-      .upsert({ nickname: player.nickname }, { onConflict: 'nickname' })
       .select('id')
+      .eq('nickname', player.nickname)
       .single()
       .then(function (res) {
         if (res.error || !res.data) return false;
