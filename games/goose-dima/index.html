@@ -557,7 +557,7 @@ function drawHUD() {
   // High score
   ctx.fillStyle = '#ffd700';
   ctx.textAlign = 'right';
-  ctx.fillText(`Рекорд: ${highScore}`, W - 60, 30);
+  ctx.fillText(`Рекорд: ${highScore}`, W - 74, 30);
 
   // Player name
   const player = window.GameHub?.getPlayer?.();
@@ -639,50 +639,50 @@ function drawPauseMenu() {
   ctx.fillRect(0, 0, W, H);
 
   const cx = W / 2;
-  const cy = H / 2;
 
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 36px monospace';
+  ctx.font = 'bold 42px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('ПАУЗА', cx, cy - 80);
+  ctx.fillText('ПАУЗА', cx, H * 0.22);
 
-  const btnW = 220;
-  const btnH = 48;
+  const btnW = W * 0.7;
+  const btnH = 52;
+  const btnGap = 14;
+  const btnY1 = H * 0.32;
+  const btnY2 = btnY1 + btnH + btnGap;
+  const btnY3 = btnY2 + btnH + btnGap;
 
-  // Continue button
-  const contY = cy - 30;
+  // ПРОДОЛЖИТЬ
   ctx.fillStyle = '#00e676';
   ctx.beginPath();
-  ctx.roundRect(cx - btnW / 2, contY, btnW, btnH, 12);
+  ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 12);
   ctx.fill();
   ctx.fillStyle = '#0a1628';
-  ctx.font = 'bold 18px monospace';
-  ctx.fillText('ПРОДОЛЖИТЬ', cx, contY + 31);
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText('ПРОДОЛЖИТЬ', cx, btnY1 + btnH * 0.63);
 
-  // Game menu button
-  const exitY = contY + btnH + 15;
+  // МЕНЮ ИГРЫ
   ctx.fillStyle = '#546e7a';
   ctx.beginPath();
-  ctx.roundRect(cx - btnW / 2, exitY, btnW, btnH, 12);
+  ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 12);
   ctx.fill();
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 18px monospace';
-  ctx.fillText('МЕНЮ ИГРЫ', cx, exitY + 31);
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText('МЕНЮ ИГРЫ', cx, btnY2 + btnH * 0.63);
 
-  // Hub button
-  const hubY = exitY + btnH + 15;
+  // ← ХАБ
   ctx.fillStyle = '#546e7a';
   ctx.beginPath();
-  ctx.roundRect(cx - btnW / 2, hubY, btnW, btnH, 12);
+  ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 12);
   ctx.fill();
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('← ХАБ', cx, hubY + 30);
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText('← ХАБ', cx, btnY3 + btnH * 0.63);
 
   window._pauseBtns = {
-    cont: { x: cx - btnW / 2, y: contY, w: btnW, h: btnH },
-    exit: { x: cx - btnW / 2, y: exitY, w: btnW, h: btnH },
-    hub: { x: cx - btnW / 2, y: hubY, w: btnW, h: btnH }
+    cont: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
+    exit: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH },
+    hub: { x: cx - btnW / 2, y: btnY3, w: btnW, h: btnH }
   };
 }
 
