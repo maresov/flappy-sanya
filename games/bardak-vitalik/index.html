@@ -8,10 +8,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#0a1628;font-family:monospace;color:#e0e0e0;touch-action:none;user-select:none;-webkit-user-select:none}
 canvas{display:block;width:100%;height:100%}
-.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;background:rgba(0,0,0,0.85);padding:max(24px,env(safe-area-inset-top)) 16px 0 16px;overflow-y:auto}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;background:rgba(0,0,0,0.85);padding:max(24px,env(safe-area-inset-top)) 20px 0 20px;overflow-y:auto}
 .overlay.hidden{display:none}
 .title{font-size:clamp(24px,6vw,48px);font-weight:bold;color:#00e676;text-align:center;margin-bottom:8px}
-.subtitle{font-size:clamp(12px,3vw,18px);color:#a0c4ff;text-align:center;max-width:90%;margin-bottom:20px;line-height:1.4}
+.subtitle{font-size:clamp(12px,3vw,18px);color:#a0c4ff;text-align:center;max-width:calc(100% - 40px);margin-bottom:20px;line-height:1.4}
 .btn{display:block;width:min(280px,80vw);min-height:52px;padding:14px 20px;margin:6px auto;border:none;border-radius:12px;font-family:monospace;font-size:clamp(14px,3.5vw,20px);font-weight:bold;cursor:pointer;text-align:center;transition:transform .1s}
 .btn:active{transform:scale(0.95)}
 .btn-green{background:#00e676;color:#0a1628}
@@ -54,7 +54,7 @@ canvas{display:block;width:100%;height:100%}
 <!-- Game Over -->
 <div class="overlay hidden" id="gameOverScreen" style="justify-content:flex-start;padding-top:max(60px,env(safe-area-inset-top))">
   <div class="go-title" style="text-align:center">ПОСУДОМОЙКА ПОЛНАЯ!</div>
-  <div class="go-sub" style="text-align:center;max-width:90%;margin:8px auto">Виталик проиграл — посуда всё-таки попала в посудомойку!</div>
+  <div class="go-sub" style="text-align:center;max-width:calc(100% - 40px);margin:8px auto">Виталик проиграл — посуда всё-таки попала в посудомойку!</div>
   <div class="joke-text" id="goJoke"></div>
   <div class="score-display" id="goScore">0</div>
   <div class="highscore" id="goHigh">Рекорд: 0</div>
@@ -706,7 +706,7 @@ function draw(frozen) {
   // Score top-left
   ctx.fillStyle = '#00e676';
   ctx.textAlign = 'left';
-  ctx.fillText('Счёт: ' + score, 12, hudY);
+  ctx.fillText('Счёт: ' + score, 20, hudY);
 
   // Record top-right (offset for pause button)
   ctx.fillStyle = '#ffd700';
@@ -717,10 +717,10 @@ function draw(frozen) {
   let meterY = hudY + fontSize + 8;
   ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffa726' : '#00e676';
   ctx.textAlign = 'left';
-  ctx.fillText('Посудомойка: ' + tablePile + '/' + TABLE_MAX, 12, meterY);
+  ctx.fillText('Посудомойка: ' + tablePile + '/' + TABLE_MAX, 20, meterY);
 
   // Meter bar
-  let barX = 12, barY = meterY + fontSize + 4, barW = Math.min(160, W * 0.35), barH = 8;
+  let barX = 20, barY = meterY + fontSize + 4, barW = Math.min(160, W * 0.35), barH = 8;
   ctx.fillStyle = '#1a2a44';
   ctx.fillRect(barX, barY, barW, barH);
   let fill = (tablePile / TABLE_MAX) * barW;
@@ -737,7 +737,7 @@ function draw(frozen) {
 
   // Pause button
   let ps = 44;
-  let px = W - ps - 8, py = 8;
+  let px = W - ps - 20, py = 8;
   ctx.fillStyle = 'rgba(42, 58, 92, 0.8)';
   ctx.beginPath();
   ctx.roundRect(px, py, ps, ps, 8);
