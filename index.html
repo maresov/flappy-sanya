@@ -64,11 +64,11 @@ const RATE_DATA = [
   {date:"2024-06-24",rate:87.37},{date:"2024-07-01",rate:87.30},{date:"2024-07-08",rate:88.17},{date:"2024-07-15",rate:87.81},
   {date:"2024-07-22",rate:87.78},{date:"2024-07-29",rate:86.56},{date:"2024-08-05",rate:84.95},{date:"2024-08-12",rate:89.95},
   {date:"2024-08-19",rate:89.54},{date:"2024-08-26",rate:91.77},{date:"2024-09-02",rate:90.00},{date:"2024-09-09",rate:90.39},
-  {date:"2024-09-16",rate:91.14},{date:"2024-09-23",rate:92.92},{date:"2024-09-30",rate:93.22},{date:"2024-10-07",rate:96.06},
-  {date:"2024-10-14",rate:96.10},{date:"2024-10-21",rate:96.09},{date:"2024-10-28",rate:97.23},{date:"2024-11-04",rate:97.55},
-  {date:"2024-11-11",rate:97.95},{date:"2024-11-18",rate:99.94},{date:"2024-11-25",rate:103.79},{date:"2024-12-02",rate:107.18},
-  {date:"2024-12-09",rate:99.38},{date:"2024-12-16",rate:102.91},{date:"2024-12-23",rate:101.61},{date:"2024-12-30",rate:101.68},
-  {date:"2025-01-06",rate:102.29},{date:"2025-01-13",rate:102.71},{date:"2025-01-20",rate:101.96},{date:"2025-01-27",rate:97.13},
+  {date:"2024-09-16",rate:91.14},{date:"2024-09-23",rate:92.92},{date:"2024-09-30",rate:93.22},{date:"2024-10-07",rate:94.06},
+  {date:"2024-10-14",rate:94.10},{date:"2024-10-21",rate:94.09},{date:"2024-10-28",rate:94.73},{date:"2024-11-04",rate:95.05},
+  {date:"2024-11-11",rate:95.15},{date:"2024-11-18",rate:96.44},{date:"2024-11-25",rate:99.29},{date:"2024-12-02",rate:101.68},
+  {date:"2024-12-09",rate:96.38},{date:"2024-12-16",rate:98.91},{date:"2024-12-23",rate:98.11},{date:"2024-12-30",rate:98.18},
+  {date:"2025-01-06",rate:98.79},{date:"2025-01-13",rate:99.21},{date:"2025-01-20",rate:98.46},{date:"2025-01-27",rate:95.13},
   {date:"2025-02-03",rate:99.94},{date:"2025-02-10",rate:96.78},{date:"2025-02-17",rate:91.43},{date:"2025-02-24",rate:88.21},
   {date:"2025-03-03",rate:89.25},{date:"2025-03-10",rate:88.39},{date:"2025-03-17",rate:84.31},{date:"2025-03-24",rate:83.87},
   {date:"2025-03-31",rate:85.50},{date:"2025-04-07",rate:86.19},{date:"2025-04-14",rate:82.77},{date:"2025-04-21",rate:80.76},
@@ -85,6 +85,42 @@ const RATE_DATA = [
   {date:"2026-02-09",rate:77.65},{date:"2026-02-16",rate:76.62},{date:"2026-02-23",rate:76.75},{date:"2026-03-02",rate:77.17},
   {date:"2026-03-09",rate:79.15},{date:"2026-03-16",rate:81.05},{date:"2026-03-23",rate:81.88}
 ];
+
+// ============ PROCEDURAL RATE GENERATION ============
+const GENERATED_TARGET_MIN = 75;
+const GENERATED_TARGET_MAX = 105;
+const GENERATED_TARGET_MID = (GENERATED_TARGET_MIN + GENERATED_TARGET_MAX) / 2; // 90
+
+function ensureRateData(idx) {
+  while (idx >= RATE_DATA.length) {
+    const prev = RATE_DATA[RATE_DATA.length - 1];
+    // Parse previous date and add 7 days
+    const d = new Date(prev.date);
+    d.setDate(d.getDate() + 7);
+    const dateStr = d.toISOString().slice(0, 10);
+
+    // How many generated weeks so far (transition period)
+    const genCount = RATE_DATA.length - 211; // 211 = original data length
+    // Gradually increase volatility and widen range over ~20 weeks
+    const transition = Math.min(genCount / 20, 1);
+
+    // Mean reversion toward GENERATED_TARGET_MID with increasing strength
+    const meanRevertStrength = 0.05 * transition;
+    const drift = (GENERATED_TARGET_MID - prev.rate) * meanRevertStrength;
+
+    // Volatility: starts small (~1), grows to ~4
+    const volatility = 1 + 3 * transition;
+    const noise = (Math.random() - 0.5) * 2 * volatility;
+
+    let newRate = prev.rate + drift + noise;
+    // Soft clamp to keep within bounds
+    if (newRate < GENERATED_TARGET_MIN) newRate = GENERATED_TARGET_MIN + Math.random() * 2;
+    if (newRate > GENERATED_TARGET_MAX) newRate = GENERATED_TARGET_MAX - Math.random() * 2;
+    newRate = Math.round(newRate * 100) / 100;
+
+    RATE_DATA.push({ date: dateStr, rate: newRate });
+  }
+}
 
 // ============ JOKES ============
 const JOKES_START = [
@@ -154,7 +190,7 @@ const RATE_AMPLIFY = 2.0; // amplify swings for more challenging gameplay
 const CEILING_RATE = 118;
 let GRAVITY = 0.35;
 let JUMP_FORCE = -6.5;
-let SCROLL_SPEED = 2.5;
+let SCROLL_SPEED = 4.49;
 let DAY_WIDTH = 60;
 let PLAYER_X = 150;
 let PLAYER_SCALE = 2;
@@ -175,7 +211,7 @@ function resizeCanvas() {
     if (CANVAS_H > 860) CANVAS_H = 860;
     GRAVITY = 0.3;
     JUMP_FORCE = -6.0;
-    SCROLL_SPEED = 2.0;
+    SCROLL_SPEED = 3.59;
     DAY_WIDTH = 45;
     PLAYER_X = 80;
     PLAYER_SCALE = 1.4;
@@ -184,7 +220,7 @@ function resizeCanvas() {
     CANVAS_H = 500;
     GRAVITY = 0.35;
     JUMP_FORCE = -6.5;
-    SCROLL_SPEED = 2.5;
+    SCROLL_SPEED = 4.49;
     DAY_WIDTH = 60;
     PLAYER_X = 150;
     PLAYER_SCALE = 2;
@@ -237,13 +273,15 @@ function getGroundY(px) {
   const frac = dayFloat - i;
   let rate;
   if (i < 0) rate = RATE_DATA[0].rate;
-  else if (i >= RATE_DATA.length - 1) rate = RATE_DATA[RATE_DATA.length - 1].rate;
-  else rate = RATE_DATA[i].rate + (RATE_DATA[i + 1].rate - RATE_DATA[i].rate) * frac;
+  else {
+    ensureRateData(i + 1);
+    rate = RATE_DATA[i].rate + (RATE_DATA[i + 1].rate - RATE_DATA[i].rate) * frac;
+  }
   return rateToY(amplifyRate(rate)) + CANVAS_H * GROUND_OFFSET_RATIO;
 }
 
 function getCurrentDay() {
-  return Math.min(Math.floor(scrollX / DAY_WIDTH), RATE_DATA.length - 1);
+  return Math.floor(scrollX / DAY_WIDTH);
 }
 
 // ============ PRE-RENDER SASHA FACE ============
@@ -1014,7 +1052,8 @@ function drawGround() {
   // Labels
   for (let px = 0; px <= CANVAS_W; px += DAY_WIDTH) {
     const dayIdx = Math.floor((px + scrollX) / DAY_WIDTH);
-    if (dayIdx >= 0 && dayIdx < RATE_DATA.length) {
+    if (dayIdx >= 0) {
+      ensureRateData(dayIdx);
       const y = getGroundY(px);
       const actualPx = px - (scrollX % DAY_WIDTH);
       if (actualPx > 10 && actualPx < CANVAS_W - 40) {
@@ -1051,8 +1090,9 @@ function drawCeiling() {
 function drawHUD() {
   const P = IS_PORTRAIT;
   const day = getCurrentDay();
-  const currentDate = day < RATE_DATA.length ? RATE_DATA[day].date : RATE_DATA[RATE_DATA.length - 1].date;
-  const currentRate = day < RATE_DATA.length ? RATE_DATA[day].rate : RATE_DATA[RATE_DATA.length - 1].rate;
+  ensureRateData(day);
+  const currentDate = RATE_DATA[day].date;
+  const currentRate = RATE_DATA[day].rate;
   const hudY = rateToY(CEILING_RATE) + (P ? 28 : 20);
   const pad = P ? 12 : 0;
 
@@ -1385,7 +1425,8 @@ function drawGameOver() {
     ctx.fillText(`Вы продержались ${score} нед.`, cx, y + 24);
     y += 40;
 
-    const day = Math.min(score, RATE_DATA.length - 1);
+    const day = score + START_WEEK;
+    ensureRateData(day);
     if (day > 0) {
       ctx.fillStyle = '#a0c4ff';
       ctx.font = '16px monospace';
@@ -1443,7 +1484,8 @@ function drawGameOver() {
     ctx.font = '20px monospace';
     ctx.fillText(`Вы продержались ${score} нед.`, cx, CANVAS_H * 0.25);
 
-    const day = Math.min(score, RATE_DATA.length - 1);
+    const day = score + START_WEEK;
+    ensureRateData(day);
     if (day > 0) {
       ctx.fillStyle = '#a0c4ff';
       ctx.font = '13px monospace';
@@ -1500,7 +1542,8 @@ function endGame() {
     highScore = score;
     // highScore lives in memory only — resets on page reload
   }
-  const day = Math.min(score, RATE_DATA.length - 1);
+  const day = getCurrentDay();
+  ensureRateData(day);
   currentJoke = getRandomJoke(JOKES_END, score, RATE_DATA[day].rate);
   currentSanyaQuip = SANYA_QUIPS[Math.floor(Math.random() * SANYA_QUIPS.length)];
   state = 'gameover';
@@ -1520,14 +1563,13 @@ function update() {
   if (state !== 'playing') return;
   playerVY += GRAVITY;
   playerY += playerVY;
-  scrollX += SCROLL_SPEED;
+  const weeksPlayed = Math.floor((scrollX / DAY_WIDTH) - START_WEEK);
+  const speedBoosts = Math.floor(Math.max(0, weeksPlayed) / 20);
+  scrollX += SCROLL_SPEED * (1 + speedBoosts * 0.1);
   score = getCurrentDay() - START_WEEK;
 
-  if (scrollX >= (RATE_DATA.length - 1) * DAY_WIDTH) {
-    score = RATE_DATA.length - 1 - START_WEEK;
-    endGame();
-    return;
-  }
+  // Ensure procedural data exists ahead of the player
+  ensureRateData(getCurrentDay() + 20);
   if (checkCollision()) {
     endGame();
   }
