@@ -1225,8 +1225,8 @@ function drawMenu() {
     // Subtitle
     ctx.font = '18px monospace';
     ctx.fillStyle = '#a0c4ff';
-    ctx.fillText('Тапай чтобы лететь вверх, уворачиваясь от курса!', cx, y + 16);
-    y += 20 + gap;
+    const subLines = drawWrappedText('Тапай чтобы лететь вверх, уворачиваясь от курса!', cx, y + 16, textW, 22);
+    y += subLines * 22 + gap;
 
     // Menu joke
     ctx.fillStyle = '#ffa726';
