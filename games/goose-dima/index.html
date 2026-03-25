@@ -759,29 +759,32 @@ function drawStartScreen() {
     ctx.restore();
     selectedSkin = prevSkin;
 
-    // Skin name below card
-    ctx.fillStyle = isSelected ? SKIN_COLORS[i] : '#aaa';
-    ctx.font = `bold ${Math.max(16, Math.min(20, W / 22))}px monospace`;
-    ctx.textAlign = 'center';
-    ctx.fillText(SKINS[i], cardX + cardSize / 2, cardsY + cardSize + 16);
-
     skinCards.push({ x: cardX, y: cardsY, w: cardSize, h: cardSize, idx: i });
   }
 
-  // Skin joke
+  // Skin joke (wrapped, no skin name labels)
+  const jokeFontSize = Math.max(16, Math.min(20, W / 22));
   ctx.fillStyle = '#ffa726';
-  ctx.font = `${Math.max(16, Math.min(20, W / 22))}px monospace`;
+  ctx.font = `bold ${jokeFontSize}px monospace`;
   ctx.textAlign = 'center';
-  // Truncate skin joke if it exceeds available width
   const maxJokeWidth = W - 40;
-  let jokeText = skinJoke;
-  if (ctx.measureText(jokeText).width > maxJokeWidth) {
-    while (ctx.measureText(jokeText + '…').width > maxJokeWidth && jokeText.length > 0) {
-      jokeText = jokeText.slice(0, -1);
+  const words = skinJoke.split(' ');
+  const jokeLines = [];
+  let curLine = '';
+  for (let wi = 0; wi < words.length; wi++) {
+    const test = curLine ? curLine + ' ' + words[wi] : words[wi];
+    if (ctx.measureText(test).width > maxJokeWidth) {
+      if (curLine) jokeLines.push(curLine);
+      curLine = words[wi];
+    } else {
+      curLine = test;
     }
-    jokeText += '…';
   }
-  ctx.fillText(jokeText, cx, cardsY + cardSize + 36);
+  if (curLine) jokeLines.push(curLine);
+  const jokeStartY = cardsY + cardSize + 20;
+  for (let li = 0; li < jokeLines.length; li++) {
+    ctx.fillText(jokeLines[li], cx, jokeStartY + li * (jokeFontSize + 4));
+  }
 
   // Play button (near bottom)
   const btnW = 200;
