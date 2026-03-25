@@ -58,7 +58,7 @@ const ANGRY_THRESHOLD = 50;
 
 // ============ GAME STATE ============
 let W, H;
-let state = 'start'; // start, playing, gameover
+let state = 'start'; // start, playing, paused, gameover
 let score = 0;
 let highScore = 0;
 let dima = { x: 0, y: 0 };
@@ -71,6 +71,21 @@ let keys = {};
 let grassPatches = [];
 let shakeTimer = 0;
 let shakeIntensity = 0;
+
+// Speed scaling
+let speedMultiplier = 1;
+let lastSpeedIncrease = 0;
+let speedFlashTimer = 0;
+
+// Speech bubbles
+let bubbleText = '';
+let bubbleTimer = 0;
+let nextBubbleTime = 0;
+
+const BUBBLE_JOKES = ["Опять эти гуси...", "Я просто хотел в парк!", "МАМА!!!", "Почему именно я?!", "Гуси — это не птицы, это монстры", "В следующий раз иду в ТЦ", "Они чувствуют страх...", "Надо было слушать маму", "Я больше не ем гусиную печень!", "А если прикинуться мёртвым?", "Детская травма..."];
+
+// Pause
+let pauseButton = null;
 
 // ============ JOKES ============
 const JOKES = [
@@ -130,7 +145,7 @@ function getDifficultyLevel() {
 }
 
 function getCurrentGooseSpeed() {
-  return BASE_GOOSE_SPEED + getDifficultyLevel() * SPEED_INCREMENT;
+  return (BASE_GOOSE_SPEED + getDifficultyLevel() * SPEED_INCREMENT) * speedMultiplier;
 }
 
 function getCurrentSpawnInterval() {
@@ -179,13 +194,28 @@ function spawnGoose() {
   vx = (vx / mag) * gooseSpeed;
   vy = (vy / mag) * gooseSpeed;
 
+  // Trajectory type
+  const trajRoll = Math.random();
+  let trajectory = 'straight';
+  let arcDrift = 0;
+  if (trajRoll < 0.4) {
+    trajectory = 'straight';
+  } else if (trajRoll < 0.7) {
+    trajectory = 'sine';
+  } else {
+    trajectory = 'arc';
+    arcDrift = (Math.random() - 0.5) * 0.3;
+  }
+
   geese.push({
     x, y, vx, vy,
     angry: isAngry,
     wobbles: wobbles,
     wobblePhase: Math.random() * Math.PI * 2,
     radius: isAngry ? GOOSE_RADIUS + 5 : GOOSE_RADIUS,
-    rotation: Math.atan2(vy, vx)
+    rotation: Math.atan2(vy, vx),
+    trajectory: trajectory,
+    arcDrift: arcDrift
   });
 }
 
@@ -397,6 +427,123 @@ function drawHUD() {
     ctx.textAlign = 'left';
     ctx.fillText(player.nickname, 15, 55);
   }
+
+  // Speed flash
+  if (speedFlashTimer > 0) {
+    ctx.fillStyle = RED;
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Гуси ускоряются!', W / 2, 65);
+  }
+
+  // Pause button
+  if (state === 'playing') {
+    const pbX = W - 54;
+    const pbY = 8;
+    const pbS = 44;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.roundRect(pbX, pbY, pbS, pbS, 8);
+    ctx.fill();
+    ctx.fillStyle = WHITE;
+    ctx.font = '24px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⏸', pbX + pbS / 2, pbY + pbS / 2);
+    ctx.textBaseline = 'alphabetic';
+    pauseButton = { x: pbX, y: pbY, w: pbS, h: pbS };
+  }
+}
+
+// ============ SPEECH BUBBLE ============
+
+function drawBubble() {
+  if (bubbleTimer <= 0) return;
+  const alpha = bubbleTimer < 500 ? bubbleTimer / 500 : 1;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = '14px monospace';
+  const textW = ctx.measureText(bubbleText).width;
+  const padX = 12;
+  const padY = 8;
+  const bw = textW + padX * 2;
+  const bh = 28 + padY;
+  const bx = dima.x - bw / 2;
+  const by = dima.y - DIMA_RADIUS - 55;
+
+  // Rounded rect bubble
+  ctx.fillStyle = WHITE;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bw, bh, 8);
+  ctx.fill();
+
+  // Small triangle pointer
+  ctx.beginPath();
+  ctx.moveTo(dima.x - 6, by + bh);
+  ctx.lineTo(dima.x + 6, by + bh);
+  ctx.lineTo(dima.x, by + bh + 8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Text
+  ctx.fillStyle = '#000';
+  ctx.textAlign = 'center';
+  ctx.fillText(bubbleText, dima.x, by + bh / 2 + 5);
+  ctx.restore();
+}
+
+// ============ PAUSE MENU ============
+
+function drawPauseMenu() {
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2;
+  const cy = H / 2;
+
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 36px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('ПАУЗА', cx, cy - 80);
+
+  const btnW = 220;
+  const btnH = 48;
+
+  // Continue button
+  const contY = cy - 30;
+  ctx.fillStyle = '#00e676';
+  ctx.beginPath();
+  ctx.roundRect(cx - btnW / 2, contY, btnW, btnH, 12);
+  ctx.fill();
+  ctx.fillStyle = '#0a1628';
+  ctx.font = 'bold 18px monospace';
+  ctx.fillText('ПРОДОЛЖИТЬ', cx, contY + 31);
+
+  // Game menu button
+  const exitY = contY + btnH + 15;
+  ctx.fillStyle = '#ff5722';
+  ctx.beginPath();
+  ctx.roundRect(cx - btnW / 2, exitY, btnW, btnH, 12);
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 18px monospace';
+  ctx.fillText('МЕНЮ ИГРЫ', cx, exitY + 31);
+
+  // Hub button
+  const hubY = exitY + btnH + 15;
+  ctx.fillStyle = '#546e7a';
+  ctx.beginPath();
+  ctx.roundRect(cx - btnW / 2, hubY, btnW, btnH, 12);
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('← ХАБ', cx, hubY + 30);
+
+  window._pauseBtns = {
+    cont: { x: cx - btnW / 2, y: contY, w: btnW, h: btnH },
+    exit: { x: cx - btnW / 2, y: exitY, w: btnW, h: btnH },
+    hub: { x: cx - btnW / 2, y: hubY, w: btnW, h: btnH }
+  };
 }
 
 // ============ SCREENS ============
@@ -427,11 +574,11 @@ function drawStartScreen() {
   drawDima(cx - 40, cy + 20);
   drawGoose({ x: cx + 40, y: cy + 20, angry: false, radius: GOOSE_RADIUS, rotation: -Math.PI / 4 });
 
-  // Play button
+  // Play button (near bottom)
   const btnW = 200;
   const btnH = 50;
   const btnX = cx - btnW / 2;
-  const btnY = cy + 70;
+  const btnY = H - 170;
 
   ctx.fillStyle = ACCENT;
   ctx.beginPath();
@@ -445,11 +592,24 @@ function drawStartScreen() {
   // Store button bounds for click detection
   startButton = { x: btnX, y: btnY, w: btnW, h: btnH };
 
+  // Hub button below play
+  const hubBtnY = btnY + btnH + 12;
+  const hubBtnH = 48;
+  ctx.fillStyle = '#546e7a';
+  ctx.beginPath();
+  ctx.roundRect(btnX, hubBtnY, btnW, hubBtnH, 12);
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText('← ХАБ', cx, hubBtnY + 30);
+
+  startHubButton = { x: btnX, y: hubBtnY, w: btnW, h: hubBtnH };
+
   // High score
   if (highScore > 0) {
     ctx.fillStyle = '#ffd700';
     ctx.font = `16px monospace`;
-    ctx.fillText(`Рекорд: ${highScore}`, cx, btnY + btnH + 35);
+    ctx.fillText(`Рекорд: ${highScore}`, cx, btnY - 20);
   }
 
   // Player name
@@ -457,7 +617,7 @@ function drawStartScreen() {
   if (player?.nickname) {
     ctx.fillStyle = DARK_GRAY;
     ctx.font = `14px monospace`;
-    ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY + btnH + 60);
+    ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY - 45);
   }
 }
 
@@ -537,6 +697,7 @@ function drawGameOverScreen() {
 }
 
 let startButton = null;
+let startHubButton = null;
 let retryButton = null;
 let hubButton = null;
 
@@ -551,6 +712,12 @@ function startGame() {
   lastSpawnTime = performance.now();
   gameStartTime = performance.now();
   dragging = false;
+  speedMultiplier = 1;
+  lastSpeedIncrease = 0;
+  speedFlashTimer = 0;
+  bubbleText = '';
+  bubbleTimer = 0;
+  nextBubbleTime = performance.now() + 10000;
 }
 
 function gameOver() {
@@ -586,6 +753,23 @@ function update(dt) {
 
   const now = performance.now();
 
+  // Speed increase every 10 seconds
+  const speedRef = lastSpeedIncrease > 0 ? lastSpeedIncrease : gameStartTime;
+  if (now - speedRef >= 10000) {
+    speedMultiplier *= 1.1;
+    lastSpeedIncrease = now;
+    speedFlashTimer = 1500;
+  }
+  if (speedFlashTimer > 0) speedFlashTimer -= dt;
+
+  // Speech bubbles
+  if (now > nextBubbleTime) {
+    bubbleText = BUBBLE_JOKES[Math.floor(Math.random() * BUBBLE_JOKES.length)];
+    bubbleTimer = 3000;
+    nextBubbleTime = now + 10000 + Math.random() * 10000;
+  }
+  if (bubbleTimer > 0) bubbleTimer -= dt;
+
   // Keyboard movement
   const moveSpeed = 4;
   if (keys['ArrowLeft'] || keys['KeyA']) dima.x -= moveSpeed;
@@ -608,11 +792,28 @@ function update(dt) {
   for (let i = 0; i < geese.length; i++) {
     const g = geese[i];
 
-    // Wobble
-    if (g.wobbles) {
+    // Trajectory effects
+    if (g.trajectory === 'sine') {
+      g.wobblePhase += 0.08;
+      const wobbleAmount = Math.sin(g.wobblePhase) * 3;
+      const perpX = -g.vy;
+      const perpY = g.vx;
+      const mag = Math.sqrt(perpX * perpX + perpY * perpY);
+      if (mag > 0) {
+        g.x += (perpX / mag) * wobbleAmount;
+        g.y += (perpY / mag) * wobbleAmount;
+      }
+    } else if (g.trajectory === 'arc') {
+      const perpX = -g.vy;
+      const perpY = g.vx;
+      const mag = Math.sqrt(perpX * perpX + perpY * perpY);
+      if (mag > 0) {
+        g.vx += (perpX / mag) * g.arcDrift;
+        g.vy += (perpY / mag) * g.arcDrift;
+      }
+    } else if (g.wobbles) {
       g.wobblePhase += 0.05;
       const wobbleAmount = Math.sin(g.wobblePhase) * 0.5;
-      // Perpendicular wobble
       const perpX = -g.vy;
       const perpY = g.vx;
       const mag = Math.sqrt(perpX * perpX + perpY * perpY);
@@ -676,7 +877,14 @@ function render(time) {
     drawBackground();
     for (const g of geese) drawGoose(g);
     drawDima(dima.x, dima.y);
+    drawBubble();
     drawHUD();
+  } else if (state === 'paused') {
+    drawBackground();
+    for (const g of geese) drawGoose(g);
+    drawDima(dima.x, dima.y);
+    drawHUD();
+    drawPauseMenu();
   } else if (state === 'gameover') {
     drawBackground();
     for (const g of geese) drawGoose(g);
@@ -711,6 +919,12 @@ function handlePointerDown(e) {
   if (state === 'start') {
     if (hitTest(startButton, pos.x, pos.y)) {
       startGame();
+    } else if (hitTest(startHubButton, pos.x, pos.y)) {
+      if (window.GameHub?.backToHub) {
+        window.GameHub.backToHub();
+      } else {
+        window.location.href = '../../';
+      }
     }
     return;
   }
@@ -726,7 +940,29 @@ function handlePointerDown(e) {
     return;
   }
 
+  if (state === 'paused') {
+    const btns = window._pauseBtns;
+    if (btns) {
+      if (hitTest(btns.cont, pos.x, pos.y)) {
+        state = 'playing';
+      } else if (hitTest(btns.exit, pos.x, pos.y)) {
+        state = 'start';
+      } else if (hitTest(btns.hub, pos.x, pos.y)) {
+        if (window.GameHub?.backToHub) {
+          window.GameHub.backToHub();
+        } else {
+          window.location.href = '../../';
+        }
+      }
+    }
+    return;
+  }
+
   if (state === 'playing') {
+    if (hitTest(pauseButton, pos.x, pos.y)) {
+      state = 'paused';
+      return;
+    }
     dragging = true;
     dragOffset.x = dima.x - pos.x;
     dragOffset.y = dima.y - pos.y;
@@ -770,6 +1006,13 @@ window.addEventListener('keydown', (e) => {
   }
   if (state === 'gameover' && (e.code === 'Space' || e.code === 'Enter')) {
     startGame();
+  }
+  if (e.code === 'Escape') {
+    if (state === 'playing') {
+      state = 'paused';
+    } else if (state === 'paused') {
+      state = 'playing';
+    }
   }
 });
 
