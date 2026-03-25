@@ -6,22 +6,22 @@
 <title>Бардак Виталика</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#0a1628;font-family:'Courier New',monospace;color:#e0e0e0;touch-action:none;user-select:none;-webkit-user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a1628;font-family:monospace;color:#e0e0e0;touch-action:none;user-select:none;-webkit-user-select:none}
 canvas{display:block;width:100%;height:100%}
-.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;background:rgba(10,22,40,0.95)}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;background:rgba(0,0,0,0.75)}
 .overlay.hidden{display:none}
 .title{font-size:clamp(24px,6vw,48px);font-weight:bold;color:#00e676;text-align:center;margin-bottom:8px}
-.subtitle{font-size:clamp(12px,3vw,18px);color:#aaa;text-align:center;max-width:90%;margin-bottom:20px;line-height:1.4}
-.btn{display:block;width:min(280px,80vw);min-height:52px;padding:14px 20px;margin:6px auto;border:none;border-radius:12px;font-family:'Courier New',monospace;font-size:clamp(14px,3.5vw,20px);font-weight:bold;cursor:pointer;text-align:center;transition:transform .1s}
+.subtitle{font-size:clamp(12px,3vw,18px);color:#a0c4ff;text-align:center;max-width:90%;margin-bottom:20px;line-height:1.4}
+.btn{display:block;width:min(280px,80vw);min-height:52px;padding:14px 20px;margin:6px auto;border:none;border-radius:12px;font-family:monospace;font-size:clamp(14px,3.5vw,20px);font-weight:bold;cursor:pointer;text-align:center;transition:transform .1s}
 .btn:active{transform:scale(0.95)}
 .btn-green{background:#00e676;color:#0a1628}
-.btn-gray{background:#2a3a5c;color:#ccc}
+.btn-gray{background:#546e7a;color:#ccc}
 .btn-red{background:#ff1744;color:#fff}
 .score-display{font-size:clamp(16px,4vw,28px);color:#00e676;margin:8px 0}
 .joke-text{font-size:clamp(12px,3vw,16px);color:#ffab40;text-align:center;max-width:85%;margin:10px auto;line-height:1.4;white-space:pre-line}
 .go-title{font-size:clamp(28px,7vw,56px);font-weight:bold;color:#ff1744;margin-bottom:4px}
-.go-sub{font-size:clamp(13px,3vw,18px);color:#aaa;margin-bottom:8px}
-.highscore{font-size:clamp(12px,2.8vw,16px);color:#888;margin-bottom:10px}
+.go-sub{font-size:clamp(13px,3vw,18px);color:#fff;margin-bottom:8px}
+.highscore{font-size:clamp(12px,2.8vw,16px);color:#ffd700;margin-bottom:10px}
 .pause-buttons{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:12px}
 </style>
 </head>
@@ -31,7 +31,8 @@ canvas{display:block;width:100%;height:100%}
 <!-- Start Screen -->
 <div class="overlay" id="startScreen">
   <div class="title">Бардак Виталика</div>
-  <div class="subtitle">После дружеского ужина кто-то должен убирать. Но Виталик так не думает...</div>
+  <div class="subtitle" style="white-space:pre-line">После дружеского ужина кто-то должен убирать.
+Но Виталик так не думает...</div>
   <div class="highscore" id="startHigh">Рекорд: 0</div>
   <div style="margin-top:auto;padding-bottom:max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center">
     <button class="btn btn-green" onclick="startGame()">ИГРАТЬ</button>
@@ -52,8 +53,8 @@ canvas{display:block;width:100%;height:100%}
 
 <!-- Game Over -->
 <div class="overlay hidden" id="gameOverScreen">
-  <div class="go-title">ЗАВАЛ!</div>
-  <div class="go-sub">Стол не выдержал!</div>
+  <div class="go-title">ПОСУДОМОЙКА ПОЛНАЯ!</div>
+  <div class="go-sub">Виталик проиграл — посуда попала в посудомойку!</div>
   <div class="joke-text" id="goJoke"></div>
   <div class="score-display" id="goScore">0</div>
   <div class="highscore" id="goHigh">Рекорд: 0</div>
@@ -87,14 +88,14 @@ const WAVE_JOKES = [
 ];
 
 const GO_JOKES = [
-  'Виталик: «Ну вот, опять. Завтра уберу»',
-  'Посуда победила. Как и всегда',
-  'Виталик ушёл думать о покупке квартиры.\nПосуда осталась',
-  'Друзья больше не зовут на ужин',
-  'Виталик: «Проще купить новую посуду».\nНо сначала надо подумать...',
-  'Виталик: «В новой квартире буду убирать!»\nКвартиры: нет. Уборки: нет',
-  'Посудомойка плачет в углу',
-  'Виталик: «Я интроверт, мне не нужна чистая посуда»'
+  'Виталик: «Нет! Только не посудомойка!»',
+  'Посуда попала в посудомойку. Виталик в шоке',
+  'Виталик проиграл битву с чистотой',
+  'Друзья тайком загрузили посудомойку',
+  'Виталик: «Руками мыть — это традиция!»',
+  'Посудомойка: 1, Виталик: 0',
+  'Виталик: «Я же говорил — она сама загрузится»',
+  'Виталик ушёл думать о покупке квартиры.\nПосудомойка осталась полной'
 ];
 
 // Dish types: name, color, width (relative), height (relative), slots, speed multiplier, points, rarity weight
@@ -115,6 +116,8 @@ let dishes = [], bonuses = [], particles = [], tableDishes = [];
 let baseSpeed = 1, spawnInterval = 1800, spawnTimer = 0;
 let freezeEnd = 0, nextBonusTime = 0;
 let lastTime = 0, gameTime = 0;
+let gameElapsed = 0, speedMultiplier = 1, lastSpeedTick = 0;
+let speedFlashTimer = 0;
 let nextWaveAt = WAVE_THRESHOLD;
 let waveActive = false, waveTimer = 0;
 let animId = null;
@@ -195,6 +198,7 @@ function startGame() {
   dishes = []; bonuses = []; particles = []; tableDishes = [];
   baseSpeed = 1; spawnInterval = 1800; spawnTimer = 0;
   freezeEnd = 0; nextWaveAt = WAVE_THRESHOLD;
+  gameElapsed = 0; speedMultiplier = 1; lastSpeedTick = 0; speedFlashTimer = 0;
   waveActive = false; waveTimer = 0;
   nextBonusTime = performance.now() + rand(BONUS_INTERVAL_MIN, BONUS_INTERVAL_MAX);
   lastTime = 0;
@@ -362,6 +366,16 @@ function loop(ts) {
   let dt = Math.min((ts - lastTime) / 1000, 0.05);
   lastTime = ts;
   gameTime += dt;
+  gameElapsed += dt;
+  if (speedFlashTimer > 0) speedFlashTimer -= dt;
+
+  // Speed increase every 10 seconds
+  let currentTick = Math.floor(gameElapsed / 10);
+  if (currentTick > lastSpeedTick) {
+    speedMultiplier *= 1.1;
+    lastSpeedTick = currentTick;
+    speedFlashTimer = 1.5;
+  }
 
   let frozen = performance.now() < freezeEnd;
 
@@ -393,7 +407,7 @@ function loop(ts) {
       d.alpha -= dt * 4;
       if (d.alpha <= 0) { dishes.splice(i, 1); continue; }
     } else if (!frozen) {
-      d.y += d.speed * dt * baseSpeed;
+      d.y += d.speed * dt * baseSpeed * speedMultiplier;
       if (d.y - d.h / 2 > tableZone) {
         // Missed — add to table
         tablePile += d.type.slots;
@@ -541,7 +555,7 @@ function draw(frozen) {
     ctx.roundRect(b.x - bw / 2, b.y - bh / 2, bw, bh, 10);
     ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold ' + Math.max(12, bh * 0.38) + 'px "Courier New", monospace';
+    ctx.font = 'bold ' + Math.max(12, bh * 0.38) + 'px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(b.text, b.x, b.y);
@@ -559,10 +573,22 @@ function draw(frozen) {
     ctx.restore();
   }
 
+  // Speed flash text
+  if (speedFlashTimer > 0) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, speedFlashTimer / 0.3);
+    ctx.fillStyle = '#ffab40';
+    ctx.font = 'bold ' + Math.max(18, W * 0.05) + 'px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Посуда летит быстрее!', W / 2, H * 0.4);
+    ctx.restore();
+  }
+
   // HUD
   let hudY = 16;
   let fontSize = Math.max(14, Math.min(20, W * 0.04));
-  ctx.font = 'bold ' + fontSize + 'px "Courier New", monospace';
+  ctx.font = 'bold ' + fontSize + 'px monospace';
   ctx.textBaseline = 'top';
 
   // Score top-left
@@ -571,7 +597,7 @@ function draw(frozen) {
   ctx.fillText('Счёт: ' + score, 12, hudY);
 
   // Record top-right (offset for pause button)
-  ctx.fillStyle = '#888';
+  ctx.fillStyle = '#ffd700';
   ctx.textAlign = 'right';
   ctx.fillText('Рекорд: ' + highScore, W - 60, hudY);
 
@@ -579,7 +605,7 @@ function draw(frozen) {
   let meterY = hudY + fontSize + 8;
   ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffab40' : '#00e676';
   ctx.textAlign = 'left';
-  ctx.fillText('Стол: ' + tablePile + '/' + TABLE_MAX, 12, meterY);
+  ctx.fillText('Посудомойка: ' + tablePile + '/' + TABLE_MAX, 12, meterY);
 
   // Meter bar
   let barX = 12, barY = meterY + fontSize + 4, barW = Math.min(160, W * 0.35), barH = 8;
