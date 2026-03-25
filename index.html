@@ -5,6 +5,220 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Игры про друзей</title>
 <link rel="stylesheet" href="shared/hub-styles.css">
+<style>
+/* === Mobile-first size overrides === */
+
+/* Login form: larger input & buttons */
+.login-form input[type="text"] {
+  min-height: 54px;
+  font-size: 20px;
+  padding: 16px 20px;
+}
+
+.login-form .btn {
+  min-height: 54px;
+  font-size: 20px;
+  padding: 16px 32px;
+}
+
+.btn-anon {
+  background: rgba(255,255,255,0.15);
+  color: var(--text-secondary);
+}
+.btn-anon:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* Header links: large tap targets */
+.hub-header-right {
+  gap: 8px;
+}
+
+.hub-nickname {
+  font-size: 16px;
+}
+
+.hub-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  transition: background 0.2s, color 0.2s;
+}
+
+.hub-link:hover {
+  background: rgba(255,255,255,0.15);
+  color: var(--accent-green);
+}
+
+.hub-link-logout {
+  background: rgba(231,76,60,0.2);
+  color: #ff6b6b;
+}
+.hub-link-logout:hover {
+  background: rgba(231,76,60,0.35);
+  color: #ff4444;
+}
+
+/* Game cards: generous padding & text */
+.game-card {
+  padding: 28px;
+}
+.game-card-icon {
+  font-size: 44px;
+}
+.game-card-name {
+  font-size: 20px;
+}
+.game-card-desc {
+  font-size: 14px;
+}
+.game-card-score {
+  font-size: 14px;
+}
+
+/* Section titles */
+.section-title {
+  font-size: 22px;
+}
+.section-subtitle {
+  font-size: 15px;
+}
+
+/* Profile section: scores list larger */
+.profile-scores-list li {
+  padding: 14px 18px;
+  min-height: 50px;
+  font-size: 16px;
+}
+
+/* Back link larger */
+.back-link {
+  font-size: 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+}
+.back-link:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Profile nickname edit area */
+.profile-nick-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.profile-nick-row .profile-nickname {
+  margin-bottom: 0;
+}
+
+.profile-nick-edit-btn,
+.profile-nick-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-nick-edit-btn {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+}
+.profile-nick-edit-btn:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.profile-nick-save-btn {
+  background: var(--accent-green);
+  color: #0a1628;
+}
+.profile-nick-save-btn:hover {
+  background: var(--accent-green-dark);
+}
+
+.profile-nick-input {
+  background: rgba(255,255,255,0.08);
+  border: 2px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+  font-size: 18px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  max-width: 260px;
+}
+.profile-nick-input:focus {
+  border-color: var(--accent-green);
+}
+
+/* Logout button in profile */
+#profile-logout-btn {
+  min-height: 54px;
+  min-width: 160px;
+  font-size: 18px !important;
+  padding: 14px 36px !important;
+  border-radius: 12px !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .hub-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .hub-header h1 {
+    font-size: 18px;
+    width: 100%;
+  }
+  .hub-header-right {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .hub-nickname {
+    width: 100%;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+  .game-card {
+    padding: 22px;
+  }
+  .profile-nick-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .profile-nick-input {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+</style>
 </head>
 <body>
 
@@ -14,7 +228,8 @@
   <div class="login-subtitle">Мини-игры с шутками про ваших друзей</div>
   <div class="login-form">
     <input type="text" id="nickname-input" placeholder="Введите ник" maxlength="20" autocomplete="off">
-    <button class="btn btn-primary" id="login-btn">Играть</button>
+    <button class="btn btn-primary" id="login-btn">ИГРАТЬ</button>
+    <button class="btn btn-anon" id="anon-login-btn">ИГРАТЬ АНОНИМНО</button>
   </div>
 </div>
 
@@ -25,7 +240,7 @@
     <div class="hub-header-right">
       <span class="hub-nickname" id="header-nickname"></span>
       <a class="hub-link" id="profile-toggle">Профиль</a>
-      <a class="hub-link" id="logout-link">Выйти</a>
+      <a class="hub-link hub-link-logout" id="logout-link">Выйти</a>
     </div>
   </header>
 
@@ -40,13 +255,16 @@
   <div id="profile-section" class="hub-screen">
     <a class="back-link" id="back-to-catalog">&larr; Назад к играм</a>
     <div class="profile-section">
-      <div class="profile-nickname" id="profile-nickname"></div>
+      <div class="profile-nick-row" id="profile-nick-row">
+        <div class="profile-nickname" id="profile-nickname"></div>
+        <button class="profile-nick-edit-btn" id="profile-nick-edit-btn">Изменить</button>
+      </div>
       <div id="profile-stats" style="margin-top:16px;"></div>
     </div>
     <div class="section-title">Лучшие результаты</div>
     <ul class="profile-scores-list" id="profile-scores"></ul>
     <div style="margin-top:32px;text-align:center;">
-      <button id="profile-logout-btn" style="background:#e74c3c;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:16px;cursor:pointer;font-weight:600;">ВЫЙТИ</button>
+      <button id="profile-logout-btn" style="background:#e74c3c;color:#fff;border:none;padding:14px 36px;border-radius:12px;font-size:18px;cursor:pointer;font-weight:600;">ВЫЙТИ</button>
     </div>
   </div>
 </div>
@@ -64,6 +282,7 @@ const loginScreen = document.getElementById('login-screen');
 const hubMain = document.getElementById('hub-main');
 const nicknameInput = document.getElementById('nickname-input');
 const loginBtn = document.getElementById('login-btn');
+const anonLoginBtn = document.getElementById('anon-login-btn');
 const headerNickname = document.getElementById('header-nickname');
 const profileToggle = document.getElementById('profile-toggle');
 const logoutLink = document.getElementById('logout-link');
@@ -74,11 +293,14 @@ const gamesGrid = document.getElementById('games-grid');
 const profileNickname = document.getElementById('profile-nickname');
 const profileStats = document.getElementById('profile-stats');
 const profileScores = document.getElementById('profile-scores');
+const profileNickRow = document.getElementById('profile-nick-row');
+const profileNickEditBtn = document.getElementById('profile-nick-edit-btn');
 
 // ============ ROUTING ============
 function showLogin() {
   loginScreen.classList.add('active');
   hubMain.classList.remove('active');
+  nicknameInput.value = '';
   nicknameInput.focus();
 }
 
@@ -118,7 +340,13 @@ function doLogin() {
   showHub();
 }
 
+function doAnonLogin() {
+  GameHub.setPlayer('Аноним');
+  showHub();
+}
+
 loginBtn.addEventListener('click', doLogin);
+anonLoginBtn.addEventListener('click', doAnonLogin);
 nicknameInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
@@ -150,10 +378,26 @@ function renderGames() {
 }
 
 // ============ PROFILE ============
+var _editingNick = false;
+
 function renderProfile() {
   var player = GameHub.getPlayer();
   if (!player) return;
-  profileNickname.textContent = player.nickname;
+
+  _editingNick = false;
+  profileNickRow.innerHTML = '';
+
+  var nickEl = document.createElement('div');
+  nickEl.className = 'profile-nickname';
+  nickEl.id = 'profile-nickname';
+  nickEl.textContent = player.nickname;
+  profileNickRow.appendChild(nickEl);
+
+  var editBtn = document.createElement('button');
+  editBtn.className = 'profile-nick-edit-btn';
+  editBtn.textContent = 'Изменить';
+  editBtn.addEventListener('click', startEditNick);
+  profileNickRow.appendChild(editBtn);
 
   var allScores = GameHub.getAllMyScores();
   var gamesPlayed = new Set(allScores.map(function(s) { return s.gameSlug; })).size;
@@ -172,6 +416,47 @@ function renderProfile() {
       '<span class="best-score">' + (best !== null ? best : '—') + '</span>';
     profileScores.appendChild(li);
   });
+}
+
+function startEditNick() {
+  if (_editingNick) return;
+  _editingNick = true;
+
+  var player = GameHub.getPlayer();
+  var currentNick = player ? player.nickname : '';
+
+  profileNickRow.innerHTML = '';
+
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'profile-nick-input';
+  input.value = currentNick === 'Аноним' ? '' : currentNick;
+  input.placeholder = 'Введите новый ник';
+  input.maxLength = 20;
+  profileNickRow.appendChild(input);
+
+  var saveBtn = document.createElement('button');
+  saveBtn.className = 'profile-nick-save-btn';
+  saveBtn.textContent = 'Сохранить';
+  saveBtn.addEventListener('click', function() {
+    saveNick(input.value);
+  });
+  profileNickRow.appendChild(saveBtn);
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') saveNick(input.value);
+    if (e.key === 'Escape') renderProfile();
+  });
+
+  input.focus();
+}
+
+function saveNick(newNick) {
+  newNick = (newNick || '').trim();
+  if (!newNick) newNick = 'Аноним';
+  GameHub.setPlayer(newNick);
+  updateHeader();
+  renderProfile();
 }
 
 // ============ TOGGLE ============
