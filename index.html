@@ -499,6 +499,13 @@ async function doLogin() {
         if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
         return;
       }
+      if (nick === 'Админ') {
+        // Admin knows their PIN — skip display, go straight to hub
+        GameHub.setPlayer(nick);
+        hideAllScreens();
+        showHub();
+        return;
+      }
       showPinDisplay(nick, reg.pin);
     }
   } catch (e) {
