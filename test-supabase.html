@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест Supabase — Ломатель</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a1628;color:#e0e0e0;font-family:monospace;padding:20px;max-width:700px;margin:0 auto}
+h1{color:#00e676;margin-bottom:20px;font-size:24px}
+.test{padding:12px 16px;margin:8px 0;border-radius:8px;background:rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px}
+.test .icon{font-size:20px;min-width:28px;text-align:center}
+.test .name{flex:1}
+.test .detail{font-size:12px;color:#a0c4ff;margin-top:4px}
+.pass{border-left:4px solid #00e676}
+.fail{border-left:4px solid #ff1744}
+.wait{border-left:4px solid #ffa726}
+.summary{margin-top:24px;padding:16px;border-radius:12px;font-size:18px;font-weight:bold;text-align:center}
+.summary.ok{background:rgba(0,230,118,0.15);color:#00e676}
+.summary.bad{background:rgba(255,23,68,0.15);color:#ff1744}
+.btn{display:inline-block;margin-top:20px;padding:14px 32px;background:#00e676;color:#0a1628;border:none;border-radius:12px;font-family:monospace;font-size:16px;font-weight:bold;cursor:pointer}
+.btn:active{transform:scale(0.95)}
+</style>
+</head>
+<body>
+<h1>Ломатель: Тест Supabase</h1>
+<div id="results"></div>
+<div id="summary"></div>
+<button class="btn" onclick="runTests()">ЗАПУСТИТЬ ТЕСТЫ</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="shared/supabase-config.js"></script>
+<script src="shared/hub-sdk.js"></script>
+<script>
+var results = document.getElementById('results');
+var summaryDiv = document.getElementById('summary');
+var passed = 0;
+var failed = 0;
+var testNick = '_test_lomatel_' + Date.now();
+
+function log(name, ok, detail) {
+  var div = document.createElement('div');
+  div.className = 'test ' + (ok ? 'pass' : 'fail');
+  div.innerHTML = '<div class="icon">' + (ok ? '\u2705' : '\u274c') + '</div><div><div class="name">' + name + '</div>' + (detail ? '<div class="detail">' + detail + '</div>' : '') + '</div>';
+  results.appendChild(div);
+  if (ok) passed++; else failed++;
+}
+
+function logWait(name) {
+  var div = document.createElement('div');
+  div.className = 'test wait';
+  div.id = 'wait-' + name.replace(/\s/g, '-');
+  div.innerHTML = '<div class="icon">\u23f3</div><div class="name">' + name + '...</div>';
+  results.appendChild(div);
+  return div;
+}
+
+function resolveWait(div, name, ok, detail) {
+  div.className = 'test ' + (ok ? 'pass' : 'fail');
+  div.innerHTML = '<div class="icon">' + (ok ? '\u2705' : '\u274c') + '</div><div><div class="name">' + name + '</div>' + (detail ? '<div class="detail">' + detail + '</div>' : '') + '</div>';
+  if (ok) passed++; else failed++;
+}
+
+function showSummary() {
+  var total = passed + failed;
+  summaryDiv.className = 'summary ' + (failed === 0 ? 'ok' : 'bad');
+  summaryDiv.textContent = passed + '/' + total + ' тестов пройдено' + (failed === 0 ? ' — ВСЁ ОК!' : ' — ЕСТЬ ОШИБКИ');
+}
+
+async function runTests() {
+  results.innerHTML = '';
+  summaryDiv.innerHTML = '';
+  passed = 0;
+  failed = 0;
+
+  // 1. Config loaded
+  var cfg = window.SUPABASE_CONFIG;
+  log('Конфиг загружен', !!cfg && !!cfg.url && !!cfg.anonKey,
+    cfg ? 'url: ' + (cfg.url || 'ПУСТО') + ', key: ' + (cfg.anonKey ? cfg.anonKey.substring(0, 20) + '...' : 'ПУСТО') : 'SUPABASE_CONFIG не найден');
+
+  // 2. Supabase client available
+  log('Supabase JS загружен', typeof window.supabase !== 'undefined' && !!window.supabase.createClient,
+    typeof window.supabase !== 'undefined' ? 'supabase.createClient доступен' : 'window.supabase не определён');
+
+  // 3. SDK recognizes Supabase
+  log('SDK видит Supabase', GameHub.isSupabaseReady(),
+    GameHub.isSupabaseReady() ? 'isSupabaseReady() = true' : 'isSupabaseReady() = false — проверь конфиг');
+
+  if (!GameHub.isSupabaseReady()) {
+    log('СТОП: Supabase не подключён', false, 'Дальнейшие тесты невозможны');
+    showSummary();
+    return;
+  }
+
+  var sb = window.supabase.createClient(cfg.url, cfg.anonKey);
+
+  // 4. Players table — read
+  var w4 = logWait('Чтение таблицы players');
+  var res4 = await sb.from('players').select('*').limit(1);
+  resolveWait(w4, 'Чтение таблицы players', !res4.error,
+    res4.error ? 'Ошибка: ' + res4.error.message : 'OK, записей: ' + (res4.data ? res4.data.length : 0));
+
+  // 5. Scores table — read
+  var w5 = logWait('Чтение таблицы scores');
+  var res5 = await sb.from('scores').select('*').limit(1);
+  resolveWait(w5, 'Чтение таблицы scores', !res5.error,
+    res5.error ? 'Ошибка: ' + res5.error.message : 'OK, записей: ' + (res5.data ? res5.data.length : 0));
+
+  // 6. Leaderboard view — read
+  var w6 = logWait('Чтение view leaderboard');
+  var res6 = await sb.from('leaderboard').select('*').limit(1);
+  resolveWait(w6, 'Чтение view leaderboard', !res6.error,
+    res6.error ? 'Ошибка: ' + res6.error.message : 'OK');
+
+  // 7. Insert test player
+  var w7 = logWait('Создание тестового игрока');
+  var res7 = await sb.from('players').insert({ nickname: testNick }).select('id, nickname').single();
+  resolveWait(w7, 'Создание тестового игрока', !res7.error && !!res7.data,
+    res7.error ? 'Ошибка: ' + res7.error.message : 'Ник: ' + res7.data.nickname + ', ID: ' + res7.data.id);
+
+  if (res7.error || !res7.data) {
+    log('СТОП: Не удалось создать игрока', false, 'Дальнейшие тесты невозможны');
+    showSummary();
+    return;
+  }
+
+  var playerId = res7.data.id;
+
+  // 8. Insert test score
+  var w8 = logWait('Запись тестового результата');
+  var res8 = await sb.from('scores').insert({ player_id: playerId, game_slug: 'flappy-sanya', score: 42 }).select().single();
+  resolveWait(w8, 'Запись тестового результата', !res8.error,
+    res8.error ? 'Ошибка: ' + res8.error.message : 'score=42 для flappy-sanya');
+
+  // 9. Insert second score
+  var w9 = logWait('Запись второго результата');
+  var res9 = await sb.from('scores').insert({ player_id: playerId, game_slug: 'flappy-sanya', score: 99 }).select().single();
+  resolveWait(w9, 'Запись второго результата', !res9.error,
+    res9.error ? 'Ошибка: ' + res9.error.message : 'score=99 для flappy-sanya');
+
+  // 10. Leaderboard returns best score
+  var w10 = logWait('Лидерборд возвращает лучший результат');
+  var res10 = await sb.from('leaderboard').select('*').eq('game_slug', 'flappy-sanya').eq('nickname', testNick);
+  var best = res10.data && res10.data.length > 0 ? res10.data[0].score : null;
+  resolveWait(w10, 'Лидерборд возвращает лучший результат', best === 99,
+    best === 99 ? 'Лучший: 99 — правильно!' : 'Ожидали 99, получили: ' + best);
+
+  // 11. SDK getLeaderboardAsync works
+  var w11 = logWait('SDK getLeaderboardAsync');
+  GameHub.setPlayer(testNick);
+  try {
+    var lb = await GameHub.getLeaderboardAsync('flappy-sanya', 10);
+    var found = lb.some(function(r) { return r.nickname === testNick; });
+    resolveWait(w11, 'SDK getLeaderboardAsync', found,
+      found ? 'Тестовый игрок найден в лидерборде' : 'Тестовый игрок НЕ найден. Данные: ' + JSON.stringify(lb));
+  } catch (e) {
+    resolveWait(w11, 'SDK getLeaderboardAsync', false, 'Exception: ' + e.message);
+  }
+
+  // 12. SDK getMyBestScoreAsync works
+  var w12 = logWait('SDK getMyBestScoreAsync');
+  try {
+    var myBest = await GameHub.getMyBestScoreAsync('flappy-sanya');
+    resolveWait(w12, 'SDK getMyBestScoreAsync', myBest === 99,
+      myBest === 99 ? 'Лучший: 99 — правильно!' : 'Ожидали 99, получили: ' + myBest);
+  } catch (e) {
+    resolveWait(w12, 'SDK getMyBestScoreAsync', false, 'Exception: ' + e.message);
+  }
+
+  // 13. Cleanup — delete test data
+  var w13 = logWait('Очистка тестовых данных');
+  var resDel = await sb.from('players').delete().eq('nickname', testNick);
+  resolveWait(w13, 'Очистка тестовых данных', !resDel.error,
+    resDel.error ? 'Ошибка: ' + resDel.error.message : 'Тестовый игрок и его очки удалены (CASCADE)');
+
+  // Restore player state
+  localStorage.removeItem('gamehub_player');
+
+  showSummary();
+}
+</script>
+</body>
+</html>

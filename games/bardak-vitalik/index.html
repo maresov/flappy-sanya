@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Бардак Виталика</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a1628;font-family:monospace;color:#e0e0e0;touch-action:none;user-select:none;-webkit-user-select:none}
+canvas{display:block;width:100%;height:100%}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;background:rgba(0,0,0,0.85);padding:max(24px,env(safe-area-inset-top)) 20px 0 20px;overflow-y:auto}
+.overlay.hidden{display:none}
+.title{font-size:clamp(24px,6vw,48px);font-weight:bold;color:#00e676;text-align:center;margin-bottom:8px}
+.subtitle{font-size:clamp(12px,3vw,18px);color:#a0c4ff;text-align:center;max-width:calc(100% - 40px);margin-bottom:20px;line-height:1.4}
+.btn{display:block;width:min(280px,80vw);min-height:52px;padding:14px 20px;margin:6px auto;border:none;border-radius:12px;font-family:monospace;font-size:clamp(14px,3.5vw,20px);font-weight:bold;cursor:pointer;text-align:center;transition:transform .1s}
+.btn:active{transform:scale(0.95)}
+.btn-green{background:#00e676;color:#0a1628}
+.btn-gray{background:#546e7a;color:#ccc}
+.btn-red{background:#ff1744;color:#fff}
+.score-display{font-size:clamp(16px,4vw,28px);color:#00e676;margin:8px 0}
+.joke-text{font-size:clamp(12px,3vw,16px);color:#ffa726;text-align:center;max-width:85%;margin:10px auto;line-height:1.4;white-space:pre-line}
+.go-title{font-size:clamp(28px,7vw,56px);font-weight:bold;color:#ff1744;margin-bottom:4px}
+.go-sub{font-size:clamp(13px,3vw,18px);color:#fff;margin-bottom:8px}
+.highscore{font-size:clamp(12px,2.8vw,16px);color:#ffd700;margin-bottom:10px}
+.pause-buttons{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:12px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- Start Screen -->
+<div class="overlay" id="startScreen">
+  <div class="title">Бардак Виталика</div>
+  <div class="subtitle" style="white-space:pre-line">После дружеского ужина кто-то должен убирать.
+Но Виталик так не думает...</div>
+  <div class="highscore" id="startHigh">Рекорд: 0</div>
+  <div style="margin-top:auto;padding-bottom:max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center">
+    <button class="btn btn-green" onclick="startGame()">ИГРАТЬ</button>
+    <button class="btn btn-gray" onclick="goHub()">← ХАБ</button>
+  </div>
+</div>
+
+<!-- Pause Overlay -->
+<div class="overlay hidden" id="pauseScreen">
+  <div class="title" style="font-size:clamp(20px,5vw,36px)">⏸ ПАУЗА</div>
+  <div class="pause-buttons">
+    <button class="btn btn-green" onclick="resumeGame()">ПРОДОЛЖИТЬ</button>
+    <button class="btn btn-gray" onclick="goMenu()">МЕНЮ ИГРЫ</button>
+    <button class="btn btn-gray" onclick="goHub()">ХАБ</button>
+    <button class="btn btn-gray" onclick="goProfile()">ПРОФИЛЬ</button>
+  </div>
+</div>
+
+<!-- Game Over -->
+<div class="overlay hidden" id="gameOverScreen" style="justify-content:flex-start;padding-top:max(60px,env(safe-area-inset-top))">
+  <div class="go-title" style="text-align:center">ПОСУДОМОЙКА ПОЛНАЯ!</div>
+  <div class="go-sub" style="text-align:center;max-width:calc(100% - 40px);margin:8px auto">Виталик проиграл — посуда всё-таки попала в посудомойку!</div>
+  <div class="joke-text" id="goJoke"></div>
+  <div class="score-display" id="goScore">0</div>
+  <div class="highscore" id="goHigh">Рекорд: 0</div>
+  <div style="margin-top:auto;padding-bottom:max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center">
+    <button class="btn btn-green" onclick="startGame()">ЗАНОВО</button>
+    <button class="btn btn-gray" onclick="goHub()">← ХАБ</button>
+  </div>
+</div>
+
+<!-- Wave Joke Overlay -->
+<div class="overlay hidden" id="waveScreen">
+  <div class="joke-text" id="waveJoke" style="font-size:clamp(16px,4vw,24px);color:#ffa726"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../../shared/supabase-config.js"></script>
+<script src="../../shared/hub-sdk.js"></script>
+<script>
+// ===== CONSTANTS =====
+const TABLE_MAX = 10;
+const FREEZE_DURATION = 5000;
+const BONUS_INTERVAL_MIN = 12000;
+const BONUS_INTERVAL_MAX = 22000;
+const WAVE_THRESHOLD = 20;
+
+const WAVE_JOKES = [
+  'Виталик: «Да я потом уберу»',
+  'Виталик: «Это замачивается!»',
+  'Виталик: «Завтра поеду смотреть квартиру... наверное»',
+  'Виталик выбирает квартиру уже 3-й год',
+  'Виталик: «Посудомойка? Зачем, если есть потом»',
+  'Виталик ушёл на перекур вместо уборки',
+  'Виталик: «Сначала покурю, потом уберу»',
+  'Виталик: «Машину тоже пока не буду брать»',
+  'Виталик думает. Долго думает. Очень долго',
+  'Виталик: «А может квартиру через годик?»',
+  'Виталик вышел покурить и забыл про посуду',
+  'Виталик: «Уборка — это не моё. Моё — думать»',
+];
+
+const GO_JOKES = [
+  'Виталик: «Нет! Только не посудомойка!»',
+  'Посуда попала в посудомойку. Виталик в шоке',
+  'Виталик проиграл битву с чистотой',
+  'Друзья тайком загрузили посудомойку',
+  'Виталик: «Руками мыть — это традиция!»',
+  'Посудомойка: 1, Виталик: 0',
+  'Виталик: «Я же говорил — она сама загрузится»',
+  'Виталик ушёл думать о покупке квартиры.\nПосудомойка осталась полной',
+  'Виталик ушёл на перекур.\nПосуда осталась грязной',
+  'Виталик копил на квартиру.\nНо купил только сигареты',
+  'Виталик: «Это знак! Пойду покурю»',
+  'Виталик так долго выбирал квартиру,\nчто посуда сама загрузилась',
+];
+
+// Dish types: name, color, width (relative), height (relative), slots, speed multiplier, points, rarity weight
+const DISH_TYPES = [
+  { name: 'plate',  color: '#e0e0e0', wRatio: 0.18, hRatio: 0.05,  shape: 'ellipse', slots: 1, speedMul: 0.7,  points: 1, weight: 40 },
+  { name: 'cup',    color: '#90caf9', wRatio: 0.12, hRatio: 0.09,  shape: 'rect',    slots: 1, speedMul: 1.0,  points: 1, weight: 35 },
+  { name: 'pan',    color: '#616161', wRatio: 0.28, hRatio: 0.07,  shape: 'rect',    slots: 2, speedMul: 1.3,  points: 2, weight: 18 },
+  { name: 'pot',    color: '#8d6e63', wRatio: 0.24, hRatio: 0.14,  shape: 'rect',    slots: 3, speedMul: 0.6,  points: 3, weight: 7  }
+];
+
+// ===== GLOBALS =====
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, dpr;
+let state = 'start'; // start, playing, paused, gameover, wave
+let score = 0, highScore = 0, tablePile = 0;
+let dishes = [], bonuses = [], particles = [], tableDishes = [];
+let baseSpeed = 1, spawnInterval = 1800, spawnTimer = 0;
+let freezeEnd = 0, nextBonusTime = 0;
+let lastTime = 0, gameTime = 0;
+let gameElapsed = 0, speedMultiplier = 1, lastSpeedTick = 0;
+let speedFlashTimer = 0;
+let speedFlashText = '';
+const SPEED_JOKES = [
+  'Виталик отвлёкся на перекур!',
+  'Виталик: «Может квартиру завтра?»',
+  'Виталик опять вышел покурить!',
+  'Друзья подкинули посуды!',
+  'Виталик: «Я ещё думаю...»',
+  'Виталик: «А машину точно не надо?»',
+  'Пока Виталик курил — посуда ускорилась!',
+  'Виталик: «Решу после перекура»',
+  'Виталик думает уже 3 года...',
+  'Виталик опять откладывает уборку!',
+  'Виталик: «Ещё одну сигаретку и начну»',
+  'Виталик: «Квартира подождёт, и посуда тоже»',
+  'Перекур затянулся — посуда летит быстрее!',
+  'Виталик: «Может, евреи знают лайфхак?»',
+  'Виталик рассказывает анекдот вместо уборки',
+];
+let nextWaveAt = WAVE_THRESHOLD;
+let waveTimeout = null;
+let waveActive = false, waveTimer = 0;
+let animId = null;
+
+// ===== RESIZE =====
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ===== HELPERS =====
+function rand(a, b) { return a + Math.random() * (b - a); }
+function randInt(a, b) { return Math.floor(rand(a, b + 1)); }
+function pick(arr) { return arr[randInt(0, arr.length - 1)]; }
+
+function weightedPick(types) {
+  let total = types.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * total;
+  for (let t of types) { r -= t.weight; if (r <= 0) return t; }
+  return types[0];
+}
+
+function loadHigh() {
+  try {
+    let best = null;
+    if (window.GameHub) best = window.GameHub.getMyBestScore('bardak-vitalik');
+    if (best != null) { highScore = best; return; }
+    let v = localStorage.getItem('bardak_vitalik_high');
+    if (v) highScore = parseInt(v) || 0;
+  } catch(e) {}
+}
+
+function saveHigh() {
+  try {
+    localStorage.setItem('bardak_vitalik_high', highScore);
+    if (window.GameHub) window.GameHub.submitScore('bardak-vitalik', score);
+  } catch(e) {}
+}
+
+function showScreen(id) {
+  ['startScreen','pauseScreen','gameOverScreen','waveScreen'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+function goHub() { if (window.GameHub) window.GameHub.backToHub(); else window.location.href = '../../'; }
+function goProfile() { window.location.href = '../../#profile'; }
+function goMenu() { if (waveTimeout) { clearTimeout(waveTimeout); waveTimeout = null; } state = 'start'; showStart(); }
+
+// ===== SCREENS =====
+function showStart() {
+  loadHigh();
+  document.getElementById('startHigh').textContent = 'Рекорд: ' + highScore;
+  showScreen('startScreen');
+  state = 'start';
+  if (animId) { cancelAnimationFrame(animId); animId = null; }
+}
+
+function showGameOver() {
+  if (score > highScore) highScore = score;
+  saveHigh();
+  document.getElementById('goScore').textContent = 'Счёт: ' + score;
+  document.getElementById('goHigh').textContent = 'Рекорд: ' + highScore;
+  document.getElementById('goJoke').textContent = pick(GO_JOKES);
+  showScreen('gameOverScreen');
+  state = 'gameover';
+}
+
+// ===== GAME INIT =====
+function startGame() {
+  if (waveTimeout) { clearTimeout(waveTimeout); waveTimeout = null; }
+  score = 0; tablePile = 0; gameTime = 0;
+  dishes = []; bonuses = []; particles = []; tableDishes = [];
+  baseSpeed = 1; spawnInterval = 1800; spawnTimer = 0;
+  freezeEnd = 0; nextWaveAt = WAVE_THRESHOLD;
+  gameElapsed = 0; speedMultiplier = 1; lastSpeedTick = 0; speedFlashTimer = 0;
+  waveActive = false; waveTimer = 0;
+  nextBonusTime = performance.now() + rand(BONUS_INTERVAL_MIN, BONUS_INTERVAL_MAX);
+  lastTime = 0;
+  state = 'playing';
+  showScreen(null);
+  if (animId) cancelAnimationFrame(animId);
+  animId = requestAnimationFrame(loop);
+}
+
+function pauseGame() {
+  if (state !== 'playing') return;
+  state = 'paused';
+  showScreen('pauseScreen');
+}
+
+function resumeGame() {
+  if (state !== 'paused') return;
+  state = 'playing';
+  lastTime = 0;
+  showScreen(null);
+  animId = requestAnimationFrame(loop);
+}
+
+// ===== SPAWN =====
+function spawnDish() {
+  let type = weightedPick(DISH_TYPES);
+  let w = type.wRatio * W;
+  let h = type.hRatio * H;
+  // Ensure minimum visible size (doubled)
+  w = Math.max(w, 60);
+  h = Math.max(h, 32);
+  let x = rand(w / 2 + 10, W - w / 2 - 10);
+  let speed = (60 + rand(20, 50) * baseSpeed) * type.speedMul;
+  dishes.push({
+    type, x, y: -h, w, h, speed,
+    caught: false, alpha: 1
+  });
+}
+
+function spawnWave() {
+  let count = randInt(5, 8);
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => { if (state === 'playing') spawnDish(); }, i * 200);
+  }
+}
+
+function spawnBonus() {
+  let isFreeze = Math.random() < 0.5;
+  let bh = 36;
+  let y = rand(H * 0.15, H * 0.5);
+  let fromLeft = Math.random() < 0.5;
+  bonuses.push({
+    type: isFreeze ? 'freeze' : 'clear',
+    text: isFreeze ? '📱 Срочно ответить!' : '🤝 Друзья помогают',
+    x: fromLeft ? -200 : W + 200,
+    y: y,
+    speed: (fromLeft ? 1 : -1) * rand(60, 100),
+    w: 180, h: bh, alpha: 1
+  });
+}
+
+// ===== PARTICLES =====
+function addCatchParticles(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x, y, vx: rand(-80, 80), vy: rand(-120, -20),
+      life: 0.6, maxLife: 0.6, color, r: rand(2, 5), type: 'normal'
+    });
+  }
+}
+
+function addBreakParticles(x, y, color) {
+  // Impact flash
+  particles.push({
+    x, y, vx: 0, vy: 0,
+    life: 0.2, maxLife: 0.2, color: '#ffffff', r: 30, type: 'flash'
+  });
+  // Colored shards (12-15 particles)
+  let count = randInt(12, 15);
+  for (let i = 0; i < count; i++) {
+    let angle = (Math.PI * 2 / count) * i + rand(-0.3, 0.3);
+    let speed = rand(100, 250);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - rand(50, 120),
+      life: 0.8, maxLife: 0.8,
+      color: color,
+      r: rand(4, 8),
+      type: 'shard'
+    });
+  }
+  // White/yellow sparkle particles
+  for (let i = 0; i < 5; i++) {
+    let angle = rand(0, Math.PI * 2);
+    let speed = rand(60, 180);
+    particles.push({
+      x: x + rand(-10, 10), y: y + rand(-10, 10),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - rand(30, 80),
+      life: 0.8, maxLife: 0.8,
+      color: Math.random() < 0.5 ? '#ffffff' : '#ffd700',
+      r: rand(2, 5),
+      type: 'sparkle'
+    });
+  }
+}
+
+// ===== TABLE DRAWING =====
+function addTableDish(type) {
+  let tw = type.wRatio * W * 0.6;
+  let th = type.hRatio * H * 0.5;
+  tw = Math.max(tw, 36); th = Math.max(th, 20);
+  tableDishes.push({
+    type, x: rand(W * 0.1, W * 0.9 - tw), w: tw, h: th,
+    rotation: rand(-0.3, 0.3)
+  });
+}
+
+// ===== INPUT =====
+function handleClick(cx, cy) {
+  if (state !== 'playing') return;
+
+  // Check pause button
+  let pauseSize = 44;
+  let pauseX = W - pauseSize - 10;
+  let pauseY = 10;
+  if (cx >= pauseX && cx <= pauseX + pauseSize && cy >= pauseY && cy <= pauseY + pauseSize) {
+    pauseGame(); return;
+  }
+
+  // Check bonuses first
+  for (let i = bonuses.length - 1; i >= 0; i--) {
+    let b = bonuses[i];
+    if (cx >= b.x - b.w / 2 && cx <= b.x + b.w / 2 && cy >= b.y - b.h / 2 && cy <= b.y + b.h / 2) {
+      if (b.type === 'freeze') {
+        freezeEnd = performance.now() + FREEZE_DURATION;
+      } else {
+        tablePile = Math.max(0, tablePile - 3);
+        for (let j = 0; j < 3 && tableDishes.length > 0; j++) tableDishes.pop();
+      }
+      addCatchParticles(b.x, b.y, '#ffa726');
+      bonuses.splice(i, 1);
+      return;
+    }
+  }
+
+  // Check dishes (top to bottom, last spawned first)
+  for (let i = dishes.length - 1; i >= 0; i--) {
+    let d = dishes[i];
+    if (d.caught) continue;
+    let tapPad = 10; // extra tap area for mobile
+    if (cx >= d.x - d.w / 2 - tapPad && cx <= d.x + d.w / 2 + tapPad && cy >= d.y - d.h / 2 - tapPad && cy <= d.y + d.h / 2 + tapPad) {
+      d.caught = true;
+      score += d.type.points;
+      addCatchParticles(d.x, d.y, d.type.color);
+      // Check wave threshold
+      if (score >= nextWaveAt) {
+        nextWaveAt += WAVE_THRESHOLD;
+        triggerWave();
+      }
+      return;
+    }
+  }
+}
+
+canvas.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  let rect = canvas.getBoundingClientRect();
+  handleClick(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+// Keyboard pause
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' || e.key === 'p') {
+    if (state === 'playing') pauseGame();
+    else if (state === 'paused') resumeGame();
+  }
+});
+
+// ===== WAVE =====
+function triggerWave() {
+  waveActive = true;
+  waveTimer = 2.5;
+  state = 'wave';
+  document.getElementById('waveJoke').textContent = pick(WAVE_JOKES);
+  showScreen('waveScreen');
+  waveTimeout = setTimeout(() => {
+    waveTimeout = null;
+    if (state === 'wave') {
+      state = 'playing';
+      showScreen(null);
+      spawnWave();
+      lastTime = 0;
+      animId = requestAnimationFrame(loop);
+    }
+  }, 2500);
+}
+
+// ===== GAME LOOP =====
+function loop(ts) {
+  if (state !== 'playing') return;
+  if (!lastTime) { lastTime = ts; animId = requestAnimationFrame(loop); return; }
+  let dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
+  gameTime += dt;
+  gameElapsed += dt;
+  if (speedFlashTimer > 0) speedFlashTimer -= dt;
+
+  // Speed increase every 10 seconds
+  let currentTick = Math.floor(gameElapsed / 10);
+  if (currentTick > lastSpeedTick) {
+    speedMultiplier *= 1.1;
+    lastSpeedTick = currentTick;
+    speedFlashTimer = 1.5;
+    speedFlashText = SPEED_JOKES[Math.floor(Math.random() * SPEED_JOKES.length)];
+  }
+
+  let frozen = performance.now() < freezeEnd;
+
+  // Difficulty ramp
+  baseSpeed = 1 + gameTime / 40;
+  spawnInterval = Math.max(500, 1800 - gameTime * 8);
+
+  // Spawn dishes
+  spawnTimer -= dt * 1000;
+  if (spawnTimer <= 0) {
+    spawnDish();
+    // Chance to spawn multiple
+    if (gameTime > 30 && Math.random() < 0.3) spawnDish();
+    if (gameTime > 60 && Math.random() < 0.2) spawnDish();
+    spawnTimer = spawnInterval + rand(-200, 200);
+  }
+
+  // Spawn bonuses
+  if (performance.now() >= nextBonusTime) {
+    spawnBonus();
+    nextBonusTime = performance.now() + rand(BONUS_INTERVAL_MIN, BONUS_INTERVAL_MAX);
+  }
+
+  // Update dishes
+  let tableZone = H * 0.85;
+  for (let i = dishes.length - 1; i >= 0; i--) {
+    let d = dishes[i];
+    if (d.caught) {
+      d.alpha -= dt * 4;
+      if (d.alpha <= 0) { dishes.splice(i, 1); continue; }
+    } else if (!frozen) {
+      d.y += d.speed * dt * baseSpeed * speedMultiplier;
+      if (d.y - d.h / 2 > tableZone) {
+        // Missed — add to table with dramatic break
+        addBreakParticles(d.x, tableZone, d.type.color);
+        tablePile += d.type.slots;
+        addTableDish(d.type);
+        dishes.splice(i, 1);
+        if (tablePile >= TABLE_MAX) {
+          showGameOver();
+          return;
+        }
+      }
+    }
+  }
+
+  // Update bonuses
+  for (let i = bonuses.length - 1; i >= 0; i--) {
+    let b = bonuses[i];
+    b.x += b.speed * dt;
+    if (b.x < -250 || b.x > W + 250) { bonuses.splice(i, 1); }
+  }
+
+  // Update particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 200 * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  draw(frozen);
+  animId = requestAnimationFrame(loop);
+}
+
+// ===== DRAW =====
+function draw(frozen) {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#0a1628';
+  ctx.fillRect(0, 0, W, H);
+
+  // Table zone
+  let tableY = H * 0.85;
+  ctx.fillStyle = '#1a2a44';
+  ctx.fillRect(0, tableY, W, H - tableY);
+  ctx.fillStyle = '#2a3a5c';
+  ctx.fillRect(0, tableY, W, 3);
+
+  // Dishwasher rack visual at bottom 60px
+  let rackTop = H - 60;
+  ctx.fillStyle = '#1e1e1e';
+  ctx.fillRect(0, rackTop, W, 60);
+  // Rack grid lines
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.lineWidth = 1;
+  // Horizontal bars
+  for (let ry = rackTop + 15; ry < H; ry += 15) {
+    ctx.beginPath();
+    ctx.moveTo(0, ry);
+    ctx.lineTo(W, ry);
+    ctx.stroke();
+  }
+  // Vertical bars
+  for (let rx = 20; rx < W; rx += 20) {
+    ctx.beginPath();
+    ctx.moveTo(rx, rackTop);
+    ctx.lineTo(rx, H);
+    ctx.stroke();
+  }
+  // Label
+  ctx.fillStyle = '#555';
+  ctx.font = 'bold ' + Math.max(10, W * 0.025) + 'px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('ПОСУДОМОЙКА', W / 2, H - 4);
+
+  // Table pile dishes
+  for (let td of tableDishes) {
+    ctx.save();
+    ctx.translate(td.x + td.w / 2, tableY + 10 + td.h / 2);
+    ctx.rotate(td.rotation);
+    ctx.fillStyle = td.type.color;
+    ctx.globalAlpha = 0.7;
+    if (td.type.shape === 'ellipse') {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, td.w / 2, td.h / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(-td.w / 2, -td.h / 2, td.w, td.h);
+      ctx.strokeStyle = '#0a1628';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-td.w / 2, -td.h / 2, td.w, td.h);
+    }
+    ctx.restore();
+  }
+
+  // Freeze overlay
+  if (frozen) {
+    ctx.fillStyle = 'rgba(0, 100, 255, 0.08)';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Dishes
+  for (let d of dishes) {
+    ctx.save();
+    ctx.globalAlpha = d.alpha;
+    ctx.fillStyle = d.type.color;
+    let x = d.x, y = d.y, w = d.w, h = d.h;
+    if (d.type.shape === 'ellipse') {
+      ctx.beginPath();
+      ctx.ellipse(x, y, w / 2, h / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Inner ring for plate
+      ctx.beginPath();
+      ctx.ellipse(x, y, w / 3, h / 3, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = '#bbb';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    } else if (d.type.name === 'cup') {
+      // Cup shape
+      ctx.fillRect(x - w / 2, y - h / 2, w, h);
+      ctx.strokeStyle = '#5c9bd4';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+      // Handle
+      ctx.beginPath();
+      ctx.arc(x + w / 2 + 4, y, h / 3, -Math.PI / 2, Math.PI / 2);
+      ctx.strokeStyle = '#90caf9';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else if (d.type.name === 'pan') {
+      // Pan body
+      ctx.fillRect(x - w / 2, y - h / 2, w * 0.7, h);
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x - w / 2, y - h / 2, w * 0.7, h);
+      // Handle
+      ctx.fillStyle = '#4e342e';
+      ctx.fillRect(x - w / 2 + w * 0.7, y - h / 4, w * 0.3, h / 2);
+    } else if (d.type.name === 'pot') {
+      // Pot body
+      ctx.fillRect(x - w / 2, y - h / 3, w, h * 0.7);
+      ctx.strokeStyle = '#5d4037';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - w / 2, y - h / 3, w, h * 0.7);
+      // Lid
+      ctx.fillStyle = '#a1887f';
+      ctx.fillRect(x - w / 2 - 4, y - h / 3 - 4, w + 8, 6);
+      // Handles
+      ctx.fillStyle = '#5d4037';
+      ctx.fillRect(x - w / 2 - 8, y, 8, 6);
+      ctx.fillRect(x + w / 2, y, 8, 6);
+      // Lid knob
+      ctx.beginPath();
+      ctx.arc(x, y - h / 3 - 6, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#4e342e';
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Bonuses
+  for (let b of bonuses) {
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = b.type === 'freeze' ? 'rgba(160, 196, 255, 0.85)' : 'rgba(0, 230, 118, 0.85)';
+    let bw = b.w, bh = b.h;
+    ctx.beginPath();
+    ctx.roundRect(b.x - bw / 2, b.y - bh / 2, bw, bh, 10);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold ' + Math.max(12, bh * 0.38) + 'px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(b.text, b.x, b.y);
+    ctx.restore();
+  }
+
+  // Particles
+  for (let p of particles) {
+    ctx.save();
+    let alpha = p.life / p.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    if (p.type === 'flash') {
+      // Expanding flash circle
+      let progress = 1 - (p.life / p.maxLife);
+      let flashR = p.r * (0.5 + progress * 0.5);
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, flashR, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * Math.min(1, alpha + 0.3), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Speed flash text
+  if (speedFlashTimer > 0) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, speedFlashTimer / 0.3);
+    ctx.fillStyle = '#ffa726';
+    ctx.font = 'bold ' + Math.max(18, W * 0.05) + 'px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(speedFlashText || 'Посуда летит быстрее!', W / 2, H * 0.4);
+    ctx.restore();
+  }
+
+  // HUD
+  let hudY = 16;
+  let fontSize = Math.max(14, Math.min(20, W * 0.04));
+  ctx.font = 'bold ' + fontSize + 'px monospace';
+  ctx.textBaseline = 'top';
+
+  // Score top-left
+  ctx.fillStyle = '#00e676';
+  ctx.textAlign = 'left';
+  ctx.fillText('Счёт: ' + score, 20, hudY);
+
+  // Record top-right (offset for pause button)
+  ctx.fillStyle = '#ffd700';
+  ctx.textAlign = 'right';
+  ctx.fillText('Рекорд: ' + highScore, W - 60, hudY);
+
+  // Table meter
+  let meterY = hudY + fontSize + 8;
+  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffa726' : '#00e676';
+  ctx.textAlign = 'left';
+  ctx.fillText('Посудомойка: ' + tablePile + '/' + TABLE_MAX, 20, meterY);
+
+  // Meter bar
+  let barX = 20, barY = meterY + fontSize + 4, barW = Math.min(160, W * 0.35), barH = 8;
+  ctx.fillStyle = '#1a2a44';
+  ctx.fillRect(barX, barY, barW, barH);
+  let fill = (tablePile / TABLE_MAX) * barW;
+  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffa726' : '#00e676';
+  ctx.fillRect(barX, barY, fill, barH);
+
+  // Freeze timer
+  if (frozen) {
+    let remaining = Math.ceil((freezeEnd - performance.now()) / 1000);
+    ctx.fillStyle = '#a0c4ff';
+    ctx.textAlign = 'center';
+    ctx.fillText('❄ ' + remaining + 'с', W / 2, hudY);
+  }
+
+  // Pause button
+  let ps = 44;
+  let px = W - ps - 20, py = 8;
+  ctx.fillStyle = 'rgba(42, 58, 92, 0.8)';
+  ctx.beginPath();
+  ctx.roundRect(px, py, ps, ps, 8);
+  ctx.fill();
+  ctx.fillStyle = '#e0e0e0';
+  ctx.fillRect(px + 14, py + 12, 6, 20);
+  ctx.fillRect(px + 24, py + 12, 6, 20);
+}
+
+// ===== INIT =====
+loadHigh();
+showStart();
+</script>
+</body>
+</html>
