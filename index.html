@@ -354,6 +354,7 @@ nicknameInput.addEventListener('keydown', function(e) {
 
 function doLogout() {
   localStorage.removeItem('gamehub_player');
+  localStorage.removeItem('gamehub_scores');
   window.location.hash = '';
   showLogin();
 }

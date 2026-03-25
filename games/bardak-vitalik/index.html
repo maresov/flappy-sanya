@@ -119,6 +119,7 @@ let lastTime = 0, gameTime = 0;
 let gameElapsed = 0, speedMultiplier = 1, lastSpeedTick = 0;
 let speedFlashTimer = 0;
 let nextWaveAt = WAVE_THRESHOLD;
+let waveTimeout = null;
 let waveActive = false, waveTimer = 0;
 let animId = null;
 
@@ -171,7 +172,7 @@ function showScreen(id) {
 
 function goHub() { if (window.GameHub) window.GameHub.backToHub(); else window.location.href = '../../'; }
 function goProfile() { window.location.href = '../../#profile'; }
-function goMenu() { state = 'start'; showStart(); }
+function goMenu() { if (waveTimeout) { clearTimeout(waveTimeout); waveTimeout = null; } state = 'start'; showStart(); }
 
 // ===== SCREENS =====
 function showStart() {
@@ -194,6 +195,7 @@ function showGameOver() {
 
 // ===== GAME INIT =====
 function startGame() {
+  if (waveTimeout) { clearTimeout(waveTimeout); waveTimeout = null; }
   score = 0; tablePile = 0; gameTime = 0;
   dishes = []; bonuses = []; particles = []; tableDishes = [];
   baseSpeed = 1; spawnInterval = 1800; spawnTimer = 0;
@@ -386,7 +388,8 @@ function triggerWave() {
   state = 'wave';
   document.getElementById('waveJoke').textContent = pick(WAVE_JOKES);
   showScreen('waveScreen');
-  setTimeout(() => {
+  waveTimeout = setTimeout(() => {
+    waveTimeout = null;
     if (state === 'wave') {
       state = 'playing';
       showScreen(null);
