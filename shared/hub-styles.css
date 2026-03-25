@@ -30,7 +30,7 @@ html, body {
 .hub-container {
   max-width: 720px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 24px 20px 48px;
 }
 
 /* ---- Header ---- */
@@ -374,7 +374,7 @@ html, body {
 /* ---- Responsive ---- */
 @media (max-width: 480px) {
   .hub-container {
-    padding: 16px 12px 40px;
+    padding: 16px 20px 40px;
   }
 
   .hub-header h1 {
