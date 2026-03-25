@@ -1162,7 +1162,7 @@ function drawMenu() {
   const P = IS_PORTRAIT;
   const cx = CANVAS_W / 2;
   const skins = ['Ракета', 'Машина', 'Пешком'];
-  const skinColors = ['#e63946', '#2E7D32', '#4CAF50'];
+  const skinColors = ['#ff1744', '#2E7D32', '#4CAF50'];
 
   if (P) {
     // ===== PORTRAIT: Fill entire screen, button pinned to bottom =====
@@ -1386,7 +1386,7 @@ function drawMenu() {
 
     // Hub button — below start, same width
     const hubBtnY = btnY + btnH + 10;
-    const hubBtnH2 = 40;
+    const hubBtnH2 = 44;
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, hubBtnY, btnW, hubBtnH2, 10); ctx.fill();
     ctx.fillStyle = '#fff';
@@ -1503,7 +1503,7 @@ function drawGameOver() {
     const jLines = drawWrappedText(currentJoke, cx, y + 18, textW, 26);
     y += jLines * 26 + 14;
 
-    ctx.fillStyle = '#81d4fa';
+    ctx.fillStyle = '#a0c4ff';
     ctx.font = '15px monospace';
     const sqLines = drawWrappedText(currentSanyaQuip, cx, y + 15, textW, 20);
     y += sqLines * 20 + 20;
@@ -1570,7 +1570,7 @@ function drawGameOver() {
     const jLines = drawWrappedText(currentJoke, cx, jY, CANVAS_W * 0.85, 16);
 
     const sqY = jY + jLines * 16 + 10;
-    ctx.fillStyle = '#81d4fa';
+    ctx.fillStyle = '#a0c4ff';
     ctx.font = '11px monospace';
     const sqLinesD = drawWrappedText(currentSanyaQuip, cx, sqY, CANVAS_W * 0.85, 14);
 

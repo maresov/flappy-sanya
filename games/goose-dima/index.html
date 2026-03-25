@@ -47,7 +47,7 @@ const DARK_GRAY = '#546e7a';
 
 // ============ SKINS ============
 const SKINS = ['В очках', 'С ракеткой', 'С ключами'];
-const SKIN_COLORS = ['#4CAF50', '#ff5722', '#ffd700'];
+const SKIN_COLORS = ['#00e676', '#ffa726', '#ffd700'];
 let selectedSkin = 0;
 
 const SKIN_JOKES = [
@@ -251,7 +251,7 @@ function spawnGoose() {
 // ============ DRAWING FUNCTIONS ============
 
 function drawBackground() {
-  ctx.fillStyle = '#0d2210';
+  ctx.fillStyle = '#0a1628';
   ctx.fillRect(0, 0, W, H);
 
   // Grass blades
@@ -819,7 +819,7 @@ function drawGameOverScreen() {
   const jokeEndY = cy + 10 + jokeLines.length * 22 + 8;
 
   // Quip
-  ctx.fillStyle = '#81d4fa';
+  ctx.fillStyle = '#a0c4ff';
   ctx.font = '14px monospace';
   ctx.fillText(currentQuip, cx, jokeEndY + 10);
 
