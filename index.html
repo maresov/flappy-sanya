@@ -486,6 +486,12 @@ async function doLogin() {
   try {
     var result = await GameHub.checkNickname(nick);
     if (result.exists) {
+      if (nick === 'Админ') {
+        GameHub.setPlayer(nick);
+        hideAllScreens();
+        showHub();
+        return;
+      }
       // Returning user — ask for PIN
       showPinEntry(nick);
     } else {
