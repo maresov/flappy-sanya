@@ -750,16 +750,16 @@ function drawStartScreen() {
 
     // Skin name below card
     ctx.fillStyle = isSelected ? SKIN_COLORS[i] : '#aaa';
-    ctx.font = 'bold 16px monospace';
+    ctx.font = `bold ${Math.max(16, Math.min(20, W / 22))}px monospace`;
     ctx.textAlign = 'center';
-    ctx.fillText(SKINS[i], cardX + cardSize / 2, cardsY + cardSize + 14);
+    ctx.fillText(SKINS[i], cardX + cardSize / 2, cardsY + cardSize + 16);
 
     skinCards.push({ x: cardX, y: cardsY, w: cardSize, h: cardSize, idx: i });
   }
 
   // Skin joke
   ctx.fillStyle = '#ffa726';
-  ctx.font = '16px monospace';
+  ctx.font = `${Math.max(16, Math.min(20, W / 22))}px monospace`;
   ctx.textAlign = 'center';
   // Truncate skin joke if it exceeds available width
   const maxJokeWidth = W - 40;
@@ -806,7 +806,7 @@ function drawStartScreen() {
   // High score
   if (highScore > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = `16px monospace`;
+    ctx.font = `bold ${Math.max(18, Math.min(22, W / 20))}px monospace`;
     ctx.fillText(`Рекорд: ${highScore}`, cx, btnY - 20);
   }
 
@@ -814,8 +814,8 @@ function drawStartScreen() {
   const player = window.GameHub?.getPlayer?.();
   if (player?.nickname) {
     ctx.fillStyle = DARK_GRAY;
-    ctx.font = `16px monospace`;
-    ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY - 45);
+    ctx.font = `${Math.max(18, Math.min(20, W / 22))}px monospace`;
+    ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY - 48);
   }
 }
 
@@ -853,17 +853,18 @@ function drawGameOverScreen() {
 
   // Joke
   ctx.fillStyle = ORANGE;
-  ctx.font = `${Math.max(16, Math.min(18, W / 25))}px monospace`;
+  const jokeSize = Math.max(18, Math.min(22, W / 20));
+  ctx.font = `${jokeSize}px monospace`;
   const jokeLines = currentJoke.split('\n');
   jokeLines.forEach((line, i) => {
-    ctx.fillText(line, cx, cy + 10 + i * 22);
+    ctx.fillText(line, cx, cy + 10 + i * (jokeSize + 6));
   });
 
-  const jokeEndY = cy + 10 + jokeLines.length * 22 + 8;
+  const jokeEndY = cy + 10 + jokeLines.length * (jokeSize + 6) + 8;
 
   // Quip
   ctx.fillStyle = '#a0c4ff';
-  ctx.font = '16px monospace';
+  ctx.font = `${Math.max(18, Math.min(20, W / 22))}px monospace`;
   ctx.fillText(currentQuip, cx, jokeEndY + 10);
 
   const quipEndY = jokeEndY + 24;
