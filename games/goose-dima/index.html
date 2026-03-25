@@ -42,7 +42,7 @@ const GRASS_LIGHT = '#224422';
 const ACCENT = '#00e676';
 const RED = '#ff1744';
 const WHITE = '#ffffff';
-const GRAY = '#ffa726';
+const ORANGE = '#ffa726';
 const DARK_GRAY = '#546e7a';
 
 // ============ SKINS ============
@@ -125,11 +125,13 @@ let currentJoke = '';
 
 // ============ HIGH SCORE ============
 function loadHighScore() {
-  try {
-    const hs = localStorage.getItem('goose_dima_highscore');
-    highScore = hs ? parseInt(hs, 10) : 0;
-    if (isNaN(highScore)) highScore = 0;
-  } catch(e) { highScore = 0; }
+  var best = 0;
+  try { best = parseInt(localStorage.getItem('goose_dima_highscore')) || 0; } catch(e) {}
+  if (window.GameHub && GameHub.getMyBestScore) {
+    var sdk = GameHub.getMyBestScore('goose-dima');
+    if (sdk && sdk > best) best = sdk;
+  }
+  highScore = best;
 }
 
 function saveHighScore() {
@@ -142,8 +144,12 @@ function saveHighScore() {
 function resize() {
   W = window.innerWidth;
   H = window.innerHeight;
-  canvas.width = W;
-  canvas.height = H;
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   generateGrass();
 }
 
@@ -515,7 +521,7 @@ function drawHUD() {
   ctx.fillText(`Очки: ${score}`, 15, 30);
 
   // High score
-  ctx.fillStyle = '#a0c4ff';
+  ctx.fillStyle = '#ffd700';
   ctx.textAlign = 'right';
   ctx.fillText(`Рекорд: ${highScore}`, W - 15, 30);
 
@@ -621,7 +627,7 @@ function drawPauseMenu() {
 
   // Game menu button
   const exitY = contY + btnH + 15;
-  ctx.fillStyle = '#ff5722';
+  ctx.fillStyle = '#546e7a';
   ctx.beginPath();
   ctx.roundRect(cx - btnW / 2, exitY, btnW, btnH, 12);
   ctx.fill();
@@ -663,7 +669,7 @@ function drawStartScreen() {
 
   // Subtitle
   const subSize = Math.max(12, Math.min(16, W / 30));
-  ctx.fillStyle = GRAY;
+  ctx.fillStyle = ORANGE;
   ctx.font = `${subSize}px monospace`;
   const subtitle1 = 'В детстве Диму напугал гусь.';
   const subtitle2 = 'С тех пор они преследуют его повсюду...';
@@ -803,7 +809,7 @@ function drawGameOverScreen() {
   }
 
   // Joke
-  ctx.fillStyle = GRAY;
+  ctx.fillStyle = ORANGE;
   ctx.font = `${Math.max(12, Math.min(15, W / 32))}px monospace`;
   const jokeLines = currentJoke.split('\n');
   jokeLines.forEach((line, i) => {
@@ -1102,6 +1108,8 @@ function handlePointerDown(e) {
     } else if (hitTest(hubButton, pos.x, pos.y)) {
       if (window.GameHub?.backToHub) {
         window.GameHub.backToHub();
+      } else {
+        window.location.href = '../../';
       }
     }
     return;
