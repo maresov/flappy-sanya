@@ -876,12 +876,27 @@ function drawGameOverScreen() {
 
   const jokeEndY = cy + 10 + jokeLines.length * (jokeSize + 6) + 8;
 
-  // Quip
+  // Quip (word-wrapped)
   ctx.fillStyle = '#a0c4ff';
-  ctx.font = `${Math.max(18, Math.min(20, W / 22))}px monospace`;
-  ctx.fillText(currentQuip, cx, jokeEndY + 10);
+  const quipSize = Math.max(16, Math.min(18, W / 24));
+  ctx.font = `${quipSize}px monospace`;
+  const maxQuipW = W - 40;
+  const qWords = currentQuip.split(' ');
+  const qLines = [];
+  let qCur = '';
+  for (let qi = 0; qi < qWords.length; qi++) {
+    const qTest = qCur ? qCur + ' ' + qWords[qi] : qWords[qi];
+    if (ctx.measureText(qTest).width > maxQuipW) {
+      if (qCur) qLines.push(qCur);
+      qCur = qWords[qi];
+    } else { qCur = qTest; }
+  }
+  if (qCur) qLines.push(qCur);
+  for (let qi = 0; qi < qLines.length; qi++) {
+    ctx.fillText(qLines[qi], cx, jokeEndY + 10 + qi * (quipSize + 4));
+  }
 
-  const quipEndY = jokeEndY + 24;
+  const quipEndY = jokeEndY + 10 + qLines.length * (quipSize + 4) + 4;
 
   // Retry button
   const btnW = 200;
