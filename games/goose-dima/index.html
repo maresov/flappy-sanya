@@ -13,7 +13,7 @@ html, body {
   align-items: center;
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: monospace;
   overflow: hidden;
   touch-action: manipulation;
   -webkit-touch-callout: none;
@@ -42,12 +42,12 @@ const GRASS_LIGHT = '#224422';
 const ACCENT = '#00e676';
 const RED = '#ff1744';
 const WHITE = '#ffffff';
-const GRAY = '#888888';
-const DARK_GRAY = '#555555';
+const GRAY = '#ffa726';
+const DARK_GRAY = '#546e7a';
 
-const DIMA_RADIUS = 22;
-const GOOSE_RADIUS = 17;
-const COLLISION_GRACE = 5;
+const DIMA_RADIUS = 44;
+const GOOSE_RADIUS = 34;
+const COLLISION_GRACE = 10;
 
 const BASE_GOOSE_SPEED = 3.0;
 const BASE_SPAWN_INTERVAL = 2000;
@@ -380,12 +380,12 @@ function drawHUD() {
 
   // Score
   ctx.fillStyle = ACCENT;
-  ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+  ctx.font = `bold ${fontSize}px monospace`;
   ctx.textAlign = 'left';
   ctx.fillText(`Очки: ${score}`, 15, 30);
 
   // High score
-  ctx.fillStyle = GRAY;
+  ctx.fillStyle = '#a0c4ff';
   ctx.textAlign = 'right';
   ctx.fillText(`Рекорд: ${highScore}`, W - 15, 30);
 
@@ -393,7 +393,7 @@ function drawHUD() {
   const player = window.GameHub?.getPlayer?.();
   if (player?.nickname) {
     ctx.fillStyle = DARK_GRAY;
-    ctx.font = `${fontSize - 4}px 'Courier New', monospace`;
+    ctx.font = `${fontSize - 4}px monospace`;
     ctx.textAlign = 'left';
     ctx.fillText(player.nickname, 15, 55);
   }
@@ -409,15 +409,15 @@ function drawStartScreen() {
 
   // Title
   const titleSize = Math.max(28, Math.min(48, W / 12));
-  ctx.fillStyle = ACCENT;
-  ctx.font = `bold ${titleSize}px 'Courier New', monospace`;
+  ctx.fillStyle = WHITE;
+  ctx.font = `bold ${titleSize}px monospace`;
   ctx.textAlign = 'center';
   ctx.fillText('ГУСИ vs ДИМА', cx, cy - 100);
 
   // Subtitle
   const subSize = Math.max(12, Math.min(16, W / 30));
   ctx.fillStyle = GRAY;
-  ctx.font = `${subSize}px 'Courier New', monospace`;
+  ctx.font = `${subSize}px monospace`;
   const subtitle1 = 'В детстве Диму напугал гусь.';
   const subtitle2 = 'С тех пор они преследуют его повсюду...';
   ctx.fillText(subtitle1, cx, cy - 55);
@@ -438,8 +438,8 @@ function drawStartScreen() {
   ctx.roundRect(btnX, btnY, btnW, btnH, 10);
   ctx.fill();
 
-  ctx.fillStyle = '#000';
-  ctx.font = `bold 22px 'Courier New', monospace`;
+  ctx.fillStyle = '#0a1628';
+  ctx.font = `bold 22px monospace`;
   ctx.fillText('ИГРАТЬ', cx, btnY + 33);
 
   // Store button bounds for click detection
@@ -447,8 +447,8 @@ function drawStartScreen() {
 
   // High score
   if (highScore > 0) {
-    ctx.fillStyle = GRAY;
-    ctx.font = `16px 'Courier New', monospace`;
+    ctx.fillStyle = '#ffd700';
+    ctx.font = `16px monospace`;
     ctx.fillText(`Рекорд: ${highScore}`, cx, btnY + btnH + 35);
   }
 
@@ -456,14 +456,14 @@ function drawStartScreen() {
   const player = window.GameHub?.getPlayer?.();
   if (player?.nickname) {
     ctx.fillStyle = DARK_GRAY;
-    ctx.font = `14px 'Courier New', monospace`;
+    ctx.font = `14px monospace`;
     ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY + btnH + 60);
   }
 }
 
 function drawGameOverScreen() {
   // Dim the field
-  ctx.fillStyle = 'rgba(10, 22, 40, 0.85)';
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
   ctx.fillRect(0, 0, W, H);
 
   const cx = W / 2;
@@ -472,30 +472,30 @@ function drawGameOverScreen() {
   // Title
   const titleSize = Math.max(32, Math.min(56, W / 10));
   ctx.fillStyle = RED;
-  ctx.font = `bold ${titleSize}px 'Courier New', monospace`;
+  ctx.font = `bold ${titleSize}px monospace`;
   ctx.textAlign = 'center';
   ctx.fillText('ГА-ГА-ГА!', cx, cy - 120);
 
   // Subtitle
   const subSize = Math.max(14, Math.min(20, W / 25));
   ctx.fillStyle = WHITE;
-  ctx.font = `${subSize}px 'Courier New', monospace`;
+  ctx.font = `${subSize}px monospace`;
   ctx.fillText('Гуси поймали Диму!', cx, cy - 80);
 
   // Score
   ctx.fillStyle = ACCENT;
-  ctx.font = `bold 28px 'Courier New', monospace`;
+  ctx.font = `bold 28px monospace`;
   ctx.fillText(`Очки: ${score}`, cx, cy - 45);
 
   if (score >= highScore && score > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = `16px 'Courier New', monospace`;
+    ctx.font = `16px monospace`;
     ctx.fillText('Новый рекорд!', cx, cy - 22);
   }
 
   // Joke
   ctx.fillStyle = GRAY;
-  ctx.font = `${Math.max(12, Math.min(15, W / 32))}px 'Courier New', monospace`;
+  ctx.font = `${Math.max(12, Math.min(15, W / 32))}px monospace`;
   const jokeLines = currentJoke.split('\n');
   jokeLines.forEach((line, i) => {
     ctx.fillText(line, cx, cy + 10 + i * 22);
@@ -513,24 +513,24 @@ function drawGameOverScreen() {
   ctx.beginPath();
   ctx.roundRect(retryX, retryY, btnW, btnH, 10);
   ctx.fill();
-  ctx.fillStyle = '#000';
-  ctx.font = `bold 20px 'Courier New', monospace`;
+  ctx.fillStyle = '#0a1628';
+  ctx.font = `bold 20px monospace`;
   ctx.fillText('ЗАНОВО', cx, retryY + 31);
 
   retryButton = { x: retryX, y: retryY, w: btnW, h: btnH };
 
   // Hub button
   const hubY = retryY + btnH + 15;
-  const hubW = 160;
-  const hubH = 40;
+  const hubW = 200;
+  const hubH = 48;
   const hubX = cx - hubW / 2;
 
   ctx.fillStyle = DARK_GRAY;
   ctx.beginPath();
-  ctx.roundRect(hubX, hubY, hubW, hubH, 8);
+  ctx.roundRect(hubX, hubY, hubW, hubH, 12);
   ctx.fill();
   ctx.fillStyle = WHITE;
-  ctx.font = `bold 16px 'Courier New', monospace`;
+  ctx.font = `bold 16px monospace`;
   ctx.fillText('← ХАБ', cx, hubY + 26);
 
   hubButton = { x: hubX, y: hubY, w: hubW, h: hubH };
@@ -555,8 +555,8 @@ function startGame() {
 
 function gameOver() {
   state = 'gameover';
-  shakeTimer = 300;
-  shakeIntensity = 8;
+  shakeTimer = 0;
+  shakeIntensity = 0;
   currentJoke = JOKES[Math.floor(Math.random() * JOKES.length)];
   if (score > highScore) {
     highScore = score;
