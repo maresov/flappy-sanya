@@ -1124,7 +1124,7 @@ function drawHUD() {
 
   // Pause button (top-right corner)
   if (state === 'playing') {
-    const pbSize = P ? 44 : 34;
+    const pbSize = P ? 44 : 44;
     const pbX = CANVAS_W - pbSize - (P ? 8 : 6);
     const pbY = P ? 8 : 6;
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -1293,7 +1293,7 @@ function drawMenu() {
     // Hint — pinned below buttons
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '12px monospace';
-    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, hubBtnY + hubBtnH + 20);
+    ctx.fillText('Тап — прыгать  |  ⏸ — пауза', cx, hubBtnY + hubBtnH + 20);
     ctx.textAlign = 'left';
 
     window._menuBtns = {
@@ -1419,49 +1419,40 @@ function drawPauseMenu() {
   ctx.fillText('ПАУЗА', cx, CANVAS_H * (P ? 0.22 : 0.2));
 
   const btnW = P ? CANVAS_W * 0.7 : 240;
-  const btnH = P ? 50 : 42;
+  const btnH = P ? 50 : 48;
   const btnGap = P ? 14 : 11;
-  const totalBtnsH = btnH * 4 + btnGap * 3;
-  const btnY1 = CANVAS_H * (P ? 0.3 : 0.28);
+  const totalBtnsH = btnH * 3 + btnGap * 2;
+  const btnY1 = CANVAS_H * (P ? 0.32 : 0.3);
   const btnY2 = btnY1 + btnH + btnGap;
   const btnY3 = btnY2 + btnH + btnGap;
-  const btnY4 = btnY3 + btnH + btnGap;
 
   // ПРОДОЛЖИТЬ
   ctx.fillStyle = '#00e676';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#0a1628';
-  ctx.font = `bold ${P ? 20 : 16}px monospace`;
+  ctx.font = `bold ${P ? 20 : 18}px monospace`;
   ctx.fillText('ПРОДОЛЖИТЬ', cx, btnY1 + btnH * 0.63);
 
   // МЕНЮ ИГРЫ
   ctx.fillStyle = '#ff5722';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.font = `bold ${P ? 18 : 15}px monospace`;
+  ctx.font = `bold ${P ? 18 : 16}px monospace`;
   ctx.fillText('МЕНЮ ИГРЫ', cx, btnY2 + btnH * 0.63);
 
-  // ХАБ
+  // ← ХАБ
   ctx.fillStyle = '#546e7a';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.font = `bold ${P ? 18 : 15}px monospace`;
-  ctx.fillText('ХАБ', cx, btnY3 + btnH * 0.63);
-
-  // ПРОФИЛЬ
-  ctx.fillStyle = '#546e7a';
-  ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY4, btnW, btnH, 10); ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.font = `bold ${P ? 18 : 15}px monospace`;
-  ctx.fillText('ПРОФИЛЬ', cx, btnY4 + btnH * 0.63);
+  ctx.font = `bold ${P ? 18 : 16}px monospace`;
+  ctx.fillText('← ХАБ', cx, btnY3 + btnH * 0.63);
 
   ctx.textAlign = 'left';
 
   window._pauseBtns = {
     cont: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
     exit: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH },
-    hub: { x: cx - btnW / 2, y: btnY3, w: btnW, h: btnH },
-    profile: { x: cx - btnW / 2, y: btnY4, w: btnW, h: btnH }
+    hub: { x: cx - btnW / 2, y: btnY3, w: btnW, h: btnH }
   };
 }
 
@@ -1723,7 +1714,6 @@ function handleClick(clientX, clientY) {
     if (hitTest(mx, my, window._pauseBtns.cont)) { state = 'playing'; return; }
     if (hitTest(mx, my, window._pauseBtns.exit)) { menuJoke = getRandomJoke(JOKES_START,0,0); skinJoke = getRandomJoke(JOKES_SKIN[selectedSkin],0,0); state = 'menu'; return; }
     if (hitTest(mx, my, window._pauseBtns.hub)) { goToHub(); return; }
-    if (hitTest(mx, my, window._pauseBtns.profile)) { goToProfile(); return; }
   }
   if (state === 'gameover' && window._goBtns) {
     if (hitTest(mx, my, window._goBtns.retry)) { startGame(); return; }
@@ -1738,11 +1728,6 @@ canvas.addEventListener('touchstart', (e) => {
   if (e.touches.length > 0) handleClick(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: false });
 document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-canvas.addEventListener('dblclick', (e) => {
-  e.preventDefault();
-  if (state === 'playing') state = 'paused';
-  else if (state === 'paused') state = 'playing';
-});
 
 // ============ START ============
 gameLoop();
