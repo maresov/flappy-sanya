@@ -96,6 +96,10 @@ html, body {
   display: flex;
 }
 
+.login-screen.active {
+  display: flex;
+}
+
 .login-title {
   font-size: 36px;
   font-weight: 700;
