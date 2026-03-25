@@ -100,10 +100,10 @@ const GO_JOKES = [
 
 // Dish types: name, color, width (relative), height (relative), slots, speed multiplier, points, rarity weight
 const DISH_TYPES = [
-  { name: 'plate',  color: '#e0e0e0', wRatio: 0.09, hRatio: 0.025, shape: 'ellipse', slots: 1, speedMul: 0.7,  points: 1, weight: 40 },
-  { name: 'cup',    color: '#90caf9', wRatio: 0.06, hRatio: 0.045, shape: 'rect',    slots: 1, speedMul: 1.0,  points: 1, weight: 35 },
-  { name: 'pan',    color: '#616161', wRatio: 0.14, hRatio: 0.035, shape: 'rect',    slots: 2, speedMul: 1.3,  points: 2, weight: 18 },
-  { name: 'pot',    color: '#8d6e63', wRatio: 0.12, hRatio: 0.07,  shape: 'rect',    slots: 3, speedMul: 0.6,  points: 3, weight: 7  }
+  { name: 'plate',  color: '#e0e0e0', wRatio: 0.18, hRatio: 0.05,  shape: 'ellipse', slots: 1, speedMul: 0.7,  points: 1, weight: 40 },
+  { name: 'cup',    color: '#90caf9', wRatio: 0.12, hRatio: 0.09,  shape: 'rect',    slots: 1, speedMul: 1.0,  points: 1, weight: 35 },
+  { name: 'pan',    color: '#616161', wRatio: 0.28, hRatio: 0.07,  shape: 'rect',    slots: 2, speedMul: 1.3,  points: 2, weight: 18 },
+  { name: 'pot',    color: '#8d6e63', wRatio: 0.24, hRatio: 0.14,  shape: 'rect',    slots: 3, speedMul: 0.6,  points: 3, weight: 7  }
 ];
 
 // ===== GLOBALS =====
@@ -227,9 +227,9 @@ function spawnDish() {
   let type = weightedPick(DISH_TYPES);
   let w = type.wRatio * W;
   let h = type.hRatio * H;
-  // Ensure minimum visible size
-  w = Math.max(w, 30);
-  h = Math.max(h, 16);
+  // Ensure minimum visible size (doubled)
+  w = Math.max(w, 60);
+  h = Math.max(h, 32);
   let x = rand(w / 2 + 10, W - w / 2 - 10);
   let speed = (60 + rand(20, 50) * baseSpeed) * type.speedMul;
   dishes.push({
@@ -265,7 +265,44 @@ function addCatchParticles(x, y, color) {
   for (let i = 0; i < 8; i++) {
     particles.push({
       x, y, vx: rand(-80, 80), vy: rand(-120, -20),
-      life: 0.6, maxLife: 0.6, color, r: rand(2, 5)
+      life: 0.6, maxLife: 0.6, color, r: rand(2, 5), type: 'normal'
+    });
+  }
+}
+
+function addBreakParticles(x, y, color) {
+  // Impact flash
+  particles.push({
+    x, y, vx: 0, vy: 0,
+    life: 0.2, maxLife: 0.2, color: '#ffffff', r: 30, type: 'flash'
+  });
+  // Colored shards (12-15 particles)
+  let count = randInt(12, 15);
+  for (let i = 0; i < count; i++) {
+    let angle = (Math.PI * 2 / count) * i + rand(-0.3, 0.3);
+    let speed = rand(100, 250);
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - rand(50, 120),
+      life: 0.8, maxLife: 0.8,
+      color: color,
+      r: rand(4, 8),
+      type: 'shard'
+    });
+  }
+  // White/yellow sparkle particles
+  for (let i = 0; i < 5; i++) {
+    let angle = rand(0, Math.PI * 2);
+    let speed = rand(60, 180);
+    particles.push({
+      x: x + rand(-10, 10), y: y + rand(-10, 10),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - rand(30, 80),
+      life: 0.8, maxLife: 0.8,
+      color: Math.random() < 0.5 ? '#ffffff' : '#ffd740',
+      r: rand(2, 5),
+      type: 'sparkle'
     });
   }
 }
@@ -274,7 +311,7 @@ function addCatchParticles(x, y, color) {
 function addTableDish(type) {
   let tw = type.wRatio * W * 0.6;
   let th = type.hRatio * H * 0.5;
-  tw = Math.max(tw, 18); th = Math.max(th, 10);
+  tw = Math.max(tw, 36); th = Math.max(th, 20);
   tableDishes.push({
     type, x: rand(W * 0.1, W * 0.9 - tw), w: tw, h: th,
     rotation: rand(-0.3, 0.3)
@@ -313,7 +350,8 @@ function handleClick(cx, cy) {
   for (let i = dishes.length - 1; i >= 0; i--) {
     let d = dishes[i];
     if (d.caught) continue;
-    if (cx >= d.x - d.w / 2 && cx <= d.x + d.w / 2 && cy >= d.y - d.h / 2 && cy <= d.y + d.h / 2) {
+    let tapPad = 10; // extra tap area for mobile
+    if (cx >= d.x - d.w / 2 - tapPad && cx <= d.x + d.w / 2 + tapPad && cy >= d.y - d.h / 2 - tapPad && cy <= d.y + d.h / 2 + tapPad) {
       d.caught = true;
       score += d.type.points;
       addCatchParticles(d.x, d.y, d.type.color);
@@ -409,7 +447,8 @@ function loop(ts) {
     } else if (!frozen) {
       d.y += d.speed * dt * baseSpeed * speedMultiplier;
       if (d.y - d.h / 2 > tableZone) {
-        // Missed — add to table
+        // Missed — add to table with dramatic break
+        addBreakParticles(d.x, tableZone, d.type.color);
         tablePile += d.type.slots;
         addTableDish(d.type);
         dishes.splice(i, 1);
@@ -456,6 +495,34 @@ function draw(frozen) {
   ctx.fillRect(0, tableY, W, H - tableY);
   ctx.fillStyle = '#2a3a5c';
   ctx.fillRect(0, tableY, W, 3);
+
+  // Dishwasher rack visual at bottom 60px
+  let rackTop = H - 60;
+  ctx.fillStyle = '#1e1e1e';
+  ctx.fillRect(0, rackTop, W, 60);
+  // Rack grid lines
+  ctx.strokeStyle = '#3a3a3a';
+  ctx.lineWidth = 1;
+  // Horizontal bars
+  for (let ry = rackTop + 15; ry < H; ry += 15) {
+    ctx.beginPath();
+    ctx.moveTo(0, ry);
+    ctx.lineTo(W, ry);
+    ctx.stroke();
+  }
+  // Vertical bars
+  for (let rx = 20; rx < W; rx += 20) {
+    ctx.beginPath();
+    ctx.moveTo(rx, rackTop);
+    ctx.lineTo(rx, H);
+    ctx.stroke();
+  }
+  // Label
+  ctx.fillStyle = '#555';
+  ctx.font = 'bold ' + Math.max(10, W * 0.025) + 'px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('ПОСУДОМОЙКА', W / 2, H - 4);
 
   // Table pile dishes
   for (let td of tableDishes) {
@@ -565,11 +632,22 @@ function draw(frozen) {
   // Particles
   for (let p of particles) {
     ctx.save();
-    ctx.globalAlpha = p.life / p.maxLife;
+    let alpha = p.life / p.maxLife;
+    ctx.globalAlpha = alpha;
     ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fill();
+    if (p.type === 'flash') {
+      // Expanding flash circle
+      let progress = 1 - (p.life / p.maxLife);
+      let flashR = p.r * (0.5 + progress * 0.5);
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, flashR, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * Math.min(1, alpha + 0.3), 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
 
