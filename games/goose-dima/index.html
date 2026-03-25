@@ -563,7 +563,7 @@ function drawHUD() {
   const player = window.GameHub?.getPlayer?.();
   if (player?.nickname) {
     ctx.fillStyle = DARK_GRAY;
-    ctx.font = `${fontSize - 4}px monospace`;
+    ctx.font = `${Math.max(16, fontSize - 4)}px monospace`;
     ctx.textAlign = 'left';
     ctx.fillText(player.nickname, 20, 55);
   }
@@ -702,7 +702,7 @@ function drawStartScreen() {
   ctx.fillText('ГУСИ vs ДИМА', cx, cy - 100);
 
   // Subtitle
-  const subSize = Math.max(12, Math.min(16, W / 30));
+  const subSize = Math.max(16, Math.min(18, W / 30));
   ctx.fillStyle = ORANGE;
   ctx.font = `${subSize}px monospace`;
   const subtitle1 = 'В детстве Диму напугал гусь.';
@@ -711,8 +711,8 @@ function drawStartScreen() {
   ctx.fillText(subtitle2, cx, cy - 35);
 
   // Skin selection
-  const cardSize = 70;
-  const cardGap = 14;
+  const cardSize = 76;
+  const cardGap = 18;
   const totalCardsW = SKINS.length * cardSize + (SKINS.length - 1) * cardGap;
   const cardsStartX = cx - totalCardsW / 2;
   const skinLabelY = cy - 10;
@@ -750,7 +750,7 @@ function drawStartScreen() {
 
     // Skin name below card
     ctx.fillStyle = isSelected ? SKIN_COLORS[i] : '#aaa';
-    ctx.font = '11px monospace';
+    ctx.font = 'bold 16px monospace';
     ctx.textAlign = 'center';
     ctx.fillText(SKINS[i], cardX + cardSize / 2, cardsY + cardSize + 14);
 
@@ -759,9 +759,18 @@ function drawStartScreen() {
 
   // Skin joke
   ctx.fillStyle = '#ffa726';
-  ctx.font = '13px monospace';
+  ctx.font = '16px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(skinJoke, cx, cardsY + cardSize + 34);
+  // Truncate skin joke if it exceeds available width
+  const maxJokeWidth = W - 40;
+  let jokeText = skinJoke;
+  if (ctx.measureText(jokeText).width > maxJokeWidth) {
+    while (ctx.measureText(jokeText + '…').width > maxJokeWidth && jokeText.length > 0) {
+      jokeText = jokeText.slice(0, -1);
+    }
+    jokeText += '…';
+  }
+  ctx.fillText(jokeText, cx, cardsY + cardSize + 36);
 
   // Play button (near bottom)
   const btnW = 200;
@@ -805,7 +814,7 @@ function drawStartScreen() {
   const player = window.GameHub?.getPlayer?.();
   if (player?.nickname) {
     ctx.fillStyle = DARK_GRAY;
-    ctx.font = `14px monospace`;
+    ctx.font = `16px monospace`;
     ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY - 45);
   }
 }
@@ -826,7 +835,7 @@ function drawGameOverScreen() {
   ctx.fillText('ГА-ГА-ГА!', cx, cy - 120);
 
   // Subtitle
-  const subSize = Math.max(14, Math.min(20, W / 25));
+  const subSize = Math.max(16, Math.min(20, W / 25));
   ctx.fillStyle = WHITE;
   ctx.font = `${subSize}px monospace`;
   ctx.fillText('Гуси поймали Диму!', cx, cy - 80);
@@ -844,7 +853,7 @@ function drawGameOverScreen() {
 
   // Joke
   ctx.fillStyle = ORANGE;
-  ctx.font = `${Math.max(12, Math.min(15, W / 32))}px monospace`;
+  ctx.font = `${Math.max(16, Math.min(18, W / 25))}px monospace`;
   const jokeLines = currentJoke.split('\n');
   jokeLines.forEach((line, i) => {
     ctx.fillText(line, cx, cy + 10 + i * 22);
@@ -854,7 +863,7 @@ function drawGameOverScreen() {
 
   // Quip
   ctx.fillStyle = '#a0c4ff';
-  ctx.font = '14px monospace';
+  ctx.font = '16px monospace';
   ctx.fillText(currentQuip, cx, jokeEndY + 10);
 
   const quipEndY = jokeEndY + 24;
