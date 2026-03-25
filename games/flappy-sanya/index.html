@@ -1125,20 +1125,20 @@ function drawHUD() {
   ctx.textAlign = 'center';
   ctx.fillText(`${score} нед.`, CANVAS_W / 2, hudY);
 
-  ctx.font = `${P ? 16 : 11}px monospace`;
+  ctx.font = `${P ? 20 : 14}px monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.fillText(`${currentDate}  |  $1 = ${currentRate.toFixed(2)}₽`, CANVAS_W / 2, hudY + (P ? 26 : 18));
 
   if (highScore > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = `${P ? 14 : 10}px monospace`;
+    ctx.font = `${P ? 20 : 14}px monospace`;
     ctx.fillText(`Рекорд: ${highScore} нед.`, CANVAS_W / 2, hudY + (P ? 46 : 32));
   }
   ctx.textAlign = 'left';
 
   // Pause button (top-right corner)
   if (state === 'playing') {
-    const pbSize = P ? 44 : 44;
+    const pbSize = P ? 52 : 48;
     const pbX = CANVAS_W - pbSize - 20;
     const pbY = P ? 8 : 6;
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -1164,9 +1164,24 @@ function drawHUD() {
 
 function drawWrappedText(text, x, y, maxW, lineH) {
   ctx.textAlign = 'center';
-  const lines = text.split('\n');
-  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
-  return lines.length;
+  const paragraphs = text.split('\n');
+  const allLines = [];
+  paragraphs.forEach(para => {
+    const words = para.split(' ');
+    let line = '';
+    words.forEach(word => {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width > maxW && line) {
+        allLines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    });
+    if (line) allLines.push(line);
+  });
+  allLines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+  return allLines.length;
 }
 
 // ============ MENU ============
@@ -1223,16 +1238,16 @@ function drawMenu() {
     y += 52 + gap;
 
     // Subtitle
-    ctx.font = '18px monospace';
+    ctx.font = '20px monospace';
     ctx.fillStyle = '#a0c4ff';
-    const subLines = drawWrappedText('Тапай чтобы лететь вверх, уворачиваясь от курса!', cx, y + 16, textW, 22);
-    y += subLines * 22 + gap;
+    const subLines = drawWrappedText('Тапай чтобы лететь вверх, уворачиваясь от курса!', cx, y + 16, textW, 26);
+    y += subLines * 26 + gap;
 
     // Menu joke
     ctx.fillStyle = '#ffa726';
-    ctx.font = '16px monospace';
-    const jLines = drawWrappedText(menuJoke, cx, y + 14, textW, 20);
-    y += jLines * 20 + gap;
+    ctx.font = '20px monospace';
+    const jLines = drawWrappedText(menuJoke, cx, y + 14, textW, 26);
+    y += jLines * 26 + gap;
 
     // Record
     if (highScore > 0) {
@@ -1273,7 +1288,7 @@ function drawMenu() {
       ctx.restore();
 
       ctx.fillStyle = selectedSkin === i ? skinColors[i] : '#ccc';
-      ctx.font = 'bold 16px monospace';
+      ctx.font = 'bold 20px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(skins[i], bx + cardSize / 2, by + cardSize - 8);
     }
@@ -1306,7 +1321,7 @@ function drawMenu() {
 
     // Hint — pinned below buttons
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '12px monospace';
+    ctx.font = '16px monospace';
     ctx.fillText('Тап — прыгать  |  ⏸ — пауза', cx, hubBtnY + hubBtnH + 20);
     ctx.textAlign = 'left';
 
@@ -1333,25 +1348,25 @@ function drawMenu() {
     }
     ctx.fillText('FLAPPY САНЯ', cx, offsetY + 45);
 
-    ctx.font = '16px monospace';
+    ctx.font = '20px monospace';
     ctx.fillStyle = '#a0c4ff';
-    ctx.fillText('Тапай чтобы лететь вверх, уворачиваясь от курса!', cx, offsetY + 72);
+    drawWrappedText('Тапай чтобы лететь вверх, уворачиваясь от курса!', cx, offsetY + 72, CANVAS_W * 0.92, 24);
 
     ctx.fillStyle = '#ffa726';
-    ctx.font = '14px monospace';
-    const jokeStart = offsetY + 95;
-    const jLines = drawWrappedText(menuJoke, cx, jokeStart, CANVAS_W * 0.92, 18);
-    let nextY = jokeStart + jLines * 18 + 6;
+    ctx.font = '20px monospace';
+    const jokeStart = offsetY + 100;
+    const jLines = drawWrappedText(menuJoke, cx, jokeStart, CANVAS_W * 0.92, 24);
+    let nextY = jokeStart + jLines * 24 + 6;
 
     if (highScore > 0) {
       ctx.fillStyle = '#ffd700';
-      ctx.font = '16px monospace';
+      ctx.font = '20px monospace';
       ctx.fillText(`Рекорд: ${highScore} нед.`, cx, nextY + 6);
-      nextY += 18;
+      nextY += 22;
     }
 
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 16px monospace';
+    ctx.font = 'bold 20px monospace';
     ctx.fillText('Выберите лук:', cx, nextY + 20);
     const skinStartY = nextY + 32;
 
@@ -1374,7 +1389,7 @@ function drawMenu() {
       ctx.restore();
 
       ctx.fillStyle = selectedSkin === i ? skinColors[i] : '#888';
-      ctx.font = 'bold 14px monospace';
+      ctx.font = 'bold 18px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(skins[i], bx + bw / 2, by + bh - 8);
     }
