@@ -45,6 +45,9 @@
     </div>
     <div class="section-title">Лучшие результаты</div>
     <ul class="profile-scores-list" id="profile-scores"></ul>
+    <div style="margin-top:32px;text-align:center;">
+      <button id="profile-logout-btn" style="background:#e74c3c;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:16px;cursor:pointer;font-weight:600;">ВЫЙТИ</button>
+    </div>
   </div>
 </div>
 
@@ -90,6 +93,7 @@ function showCatalog() {
   catalogSection.classList.add('active');
   profileSection.classList.remove('active');
   profileToggle.textContent = 'Профиль';
+  window.location.hash = '';
   renderGames();
 }
 
@@ -97,6 +101,7 @@ function showProfile() {
   catalogSection.classList.remove('active');
   profileSection.classList.add('active');
   profileToggle.textContent = 'Игры';
+  window.location.hash = 'profile';
   renderProfile();
 }
 
@@ -118,10 +123,14 @@ nicknameInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
 
-logoutLink.addEventListener('click', function() {
+function doLogout() {
   localStorage.removeItem('gamehub_player');
+  window.location.hash = '';
   showLogin();
-});
+}
+
+logoutLink.addEventListener('click', doLogout);
+document.getElementById('profile-logout-btn').addEventListener('click', doLogout);
 
 // ============ CATALOG ============
 function renderGames() {
@@ -178,11 +187,37 @@ backToCatalog.addEventListener('click', function() {
   showCatalog();
 });
 
+// ============ HASH ROUTING ============
+var _handlingHash = false;
+
+function handleHash() {
+  var player = GameHub.getPlayer();
+  if (!player) return;
+  _handlingHash = true;
+  if (window.location.hash === '#profile') {
+    showProfile();
+  } else {
+    showCatalog();
+  }
+  _handlingHash = false;
+}
+
+window.addEventListener('hashchange', function() {
+  if (_handlingHash) return;
+  var player = GameHub.getPlayer();
+  if (!player) return;
+  if (!hubMain.classList.contains('active')) return;
+  handleHash();
+});
+
 // ============ INIT ============
 (function init() {
   var player = GameHub.getPlayer();
   if (player) {
-    showHub();
+    loginScreen.classList.remove('active');
+    hubMain.classList.add('active');
+    updateHeader();
+    handleHash();
   } else {
     showLogin();
   }
