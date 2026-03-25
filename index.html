@@ -190,7 +190,7 @@ const RATE_AMPLIFY = 2.0; // amplify swings for more challenging gameplay
 const CEILING_RATE = 118;
 let GRAVITY = 0.35;
 let JUMP_FORCE = -6.5;
-let SCROLL_SPEED = 2.5;
+let SCROLL_SPEED = 3.0;
 let DAY_WIDTH = 60;
 let PLAYER_X = 150;
 let PLAYER_SCALE = 2;
@@ -211,7 +211,7 @@ function resizeCanvas() {
     if (CANVAS_H > 860) CANVAS_H = 860;
     GRAVITY = 0.3;
     JUMP_FORCE = -6.0;
-    SCROLL_SPEED = 2.0;
+    SCROLL_SPEED = 2.4;
     DAY_WIDTH = 45;
     PLAYER_X = 80;
     PLAYER_SCALE = 1.4;
@@ -220,7 +220,7 @@ function resizeCanvas() {
     CANVAS_H = 500;
     GRAVITY = 0.35;
     JUMP_FORCE = -6.5;
-    SCROLL_SPEED = 2.5;
+    SCROLL_SPEED = 3.0;
     DAY_WIDTH = 60;
     PLAYER_X = 150;
     PLAYER_SCALE = 2;
@@ -1563,7 +1563,9 @@ function update() {
   if (state !== 'playing') return;
   playerVY += GRAVITY;
   playerY += playerVY;
-  scrollX += SCROLL_SPEED;
+  const weeksPlayed = Math.floor((scrollX / DAY_WIDTH) - START_WEEK);
+  const speedBoosts = Math.floor(Math.max(0, weeksPlayed) / 20);
+  scrollX += SCROLL_SPEED * (1 + speedBoosts * 0.1);
   score = getCurrentDay() - START_WEEK;
 
   // Ensure procedural data exists ahead of the player
