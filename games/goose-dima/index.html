@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Гуси vs Дима</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: #0a1628;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  font-family: 'Courier New', Courier, monospace;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script src="../../shared/hub-sdk.js"></script>
+<script>
+// ============ ГУСИ vs ДИМА ============
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+// ============ CONSTANTS ============
+const BG_COLOR = '#0a1628';
+const GRASS_COLOR = '#1a3a1a';
+const GRASS_LIGHT = '#224422';
+const ACCENT = '#00e676';
+const RED = '#ff1744';
+const WHITE = '#ffffff';
+const GRAY = '#888888';
+const DARK_GRAY = '#555555';
+
+const DIMA_RADIUS = 22;
+const GOOSE_RADIUS = 17;
+const COLLISION_GRACE = 5;
+
+const BASE_GOOSE_SPEED = 2.0;
+const BASE_SPAWN_INTERVAL = 2000;
+const SPEED_INCREMENT = 0.3;
+const SPAWN_DECREMENT = 150;
+const WOBBLE_THRESHOLD = 30;
+const ANGRY_THRESHOLD = 50;
+
+// ============ GAME STATE ============
+let W, H;
+let state = 'start'; // start, playing, gameover
+let score = 0;
+let highScore = 0;
+let dima = { x: 0, y: 0 };
+let geese = [];
+let lastSpawnTime = 0;
+let gameStartTime = 0;
+let dragging = false;
+let dragOffset = { x: 0, y: 0 };
+let keys = {};
+let grassPatches = [];
+let shakeTimer = 0;
+let shakeIntensity = 0;
+
+// ============ JOKES ============
+const JOKES = [
+  "Дима: «Я больше не пойду в парк»\nГуси: «А мы к тебе сами придём»",
+  "Диме посоветовали не бояться.\nГуси посоветовали бояться сильнее",
+  "Гуси 1 — Дима 0.\nКак обычно",
+  "Дима думал, что перерос свой страх.\nГуси так не думали",
+  "Гуси не злые.\nПросто Дима им нравится",
+  "Дима побежал, но гуси быстрее.\nОни всегда быстрее",
+  "«Может завести гуся?» — друзья.\n«МОЖЕТ НЕТ» — Дима",
+  "Дима хотел покормить уточек.\nПришли гуси. План провалился"
+];
+let currentJoke = '';
+
+// ============ HIGH SCORE ============
+function loadHighScore() {
+  try {
+    const hs = localStorage.getItem('goose_dima_highscore');
+    highScore = hs ? parseInt(hs, 10) : 0;
+    if (isNaN(highScore)) highScore = 0;
+  } catch(e) { highScore = 0; }
+}
+
+function saveHighScore() {
+  try {
+    localStorage.setItem('goose_dima_highscore', highScore.toString());
+  } catch(e) {}
+}
+
+// ============ RESIZE ============
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
+  generateGrass();
+}
+
+function generateGrass() {
+  grassPatches = [];
+  const count = Math.floor((W * H) / 3000);
+  for (let i = 0; i < count; i++) {
+    grassPatches.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      w: 2 + Math.random() * 4,
+      h: 8 + Math.random() * 12,
+      angle: (Math.random() - 0.5) * 0.4,
+      shade: Math.random() > 0.5 ? GRASS_COLOR : GRASS_LIGHT
+    });
+  }
+}
+
+// ============ DIFFICULTY ============
+function getDifficultyLevel() {
+  return Math.floor(score / 10);
+}
+
+function getCurrentGooseSpeed() {
+  return BASE_GOOSE_SPEED + getDifficultyLevel() * SPEED_INCREMENT;
+}
+
+function getCurrentSpawnInterval() {
+  return Math.max(400, BASE_SPAWN_INTERVAL - getDifficultyLevel() * SPAWN_DECREMENT);
+}
+
+// ============ GOOSE SPAWNING ============
+function spawnGoose() {
+  const edge = Math.floor(Math.random() * 4); // 0=top, 1=bottom, 2=left, 3=right
+  let x, y, vx, vy;
+  const speed = getCurrentGooseSpeed();
+  const isAngry = score >= ANGRY_THRESHOLD && Math.random() < 0.2;
+  const wobbles = score >= WOBBLE_THRESHOLD && Math.random() < 0.3;
+
+  const margin = 30;
+  switch (edge) {
+    case 0: // top
+      x = margin + Math.random() * (W - 2 * margin);
+      y = -GOOSE_RADIUS;
+      vx = (Math.random() - 0.5) * speed * 0.5;
+      vy = speed;
+      break;
+    case 1: // bottom
+      x = margin + Math.random() * (W - 2 * margin);
+      y = H + GOOSE_RADIUS;
+      vx = (Math.random() - 0.5) * speed * 0.5;
+      vy = -speed;
+      break;
+    case 2: // left
+      x = -GOOSE_RADIUS;
+      y = margin + Math.random() * (H - 2 * margin);
+      vx = speed;
+      vy = (Math.random() - 0.5) * speed * 0.5;
+      break;
+    case 3: // right
+      x = W + GOOSE_RADIUS;
+      y = margin + Math.random() * (H - 2 * margin);
+      vx = -speed;
+      vy = (Math.random() - 0.5) * speed * 0.5;
+      break;
+  }
+
+  const gooseSpeed = isAngry ? speed * 1.4 : speed;
+  // Normalize direction and apply speed
+  const mag = Math.sqrt(vx * vx + vy * vy);
+  vx = (vx / mag) * gooseSpeed;
+  vy = (vy / mag) * gooseSpeed;
+
+  geese.push({
+    x, y, vx, vy,
+    angry: isAngry,
+    wobbles: wobbles,
+    wobblePhase: Math.random() * Math.PI * 2,
+    radius: isAngry ? GOOSE_RADIUS + 5 : GOOSE_RADIUS,
+    rotation: Math.atan2(vy, vx)
+  });
+}
+
+// ============ DRAWING FUNCTIONS ============
+
+function drawBackground() {
+  ctx.fillStyle = '#0d2210';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grass blades
+  for (const g of grassPatches) {
+    ctx.save();
+    ctx.translate(g.x, g.y);
+    ctx.rotate(g.angle);
+    ctx.fillStyle = g.shade;
+    ctx.fillRect(-g.w / 2, -g.h, g.w, g.h);
+    ctx.restore();
+  }
+}
+
+function drawDima(x, y) {
+  const r = DIMA_RADIUS;
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Body (blue shirt)
+  ctx.fillStyle = '#3366cc';
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.4, r * 0.6, r * 0.7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs
+  ctx.strokeStyle = '#2a2a5a';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-6, r * 0.9);
+  ctx.lineTo(-8, r * 1.4);
+  ctx.moveTo(6, r * 0.9);
+  ctx.lineTo(8, r * 1.4);
+  ctx.stroke();
+
+  // Arms (waving in fear)
+  ctx.strokeStyle = '#ffcc99';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.5, r * 0.2);
+  ctx.lineTo(-r * 0.9, -r * 0.3);
+  ctx.moveTo(r * 0.5, r * 0.2);
+  ctx.lineTo(r * 0.9, -r * 0.3);
+  ctx.stroke();
+
+  // Head
+  ctx.fillStyle = '#ffcc99';
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.3, r * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair
+  ctx.fillStyle = '#553311';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.65, r * 0.5, r * 0.25, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes (scared, wide open)
+  ctx.fillStyle = WHITE;
+  ctx.beginPath();
+  ctx.ellipse(-6, -r * 0.35, 5, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(6, -r * 0.35, 5, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupils (tiny, scared)
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(-6, -r * 0.33, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(6, -r * 0.33, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth (scared O shape)
+  ctx.strokeStyle = '#cc6644';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.05, 4, 5, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Eyebrows (worried)
+  ctx.strokeStyle = '#553311';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-10, -r * 0.6);
+  ctx.lineTo(-3, -r * 0.55);
+  ctx.moveTo(10, -r * 0.6);
+  ctx.lineTo(3, -r * 0.55);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawGoose(goose) {
+  const { x, y, angry, radius, rotation } = goose;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation - Math.PI / 2); // Face direction of movement
+
+  const r = radius;
+
+  if (angry) {
+    // Red tinted angry goose
+    ctx.fillStyle = '#ffaaaa';
+  } else {
+    ctx.fillStyle = '#eeeeee';
+  }
+
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.2, r * 0.65, r * 0.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Neck
+  ctx.fillStyle = angry ? '#ffaaaa' : '#eeeeee';
+  ctx.beginPath();
+  ctx.ellipse(0, -r * 0.5, r * 0.25, r * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(0, -r * 0.85, r * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Beak
+  ctx.fillStyle = '#ff8800';
+  ctx.beginPath();
+  ctx.moveTo(0, -r * 0.85);
+  ctx.lineTo(-r * 0.15, -r * 1.15);
+  ctx.lineTo(r * 0.15, -r * 1.15);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eye
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(angry ? -2 : -3, -r * 0.88, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(angry ? 2 : 3, -r * 0.88, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Angry eyebrows
+  if (angry) {
+    ctx.strokeStyle = '#cc0000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-6, -r * 1.0);
+    ctx.lineTo(-1, -r * 0.95);
+    ctx.moveTo(6, -r * 1.0);
+    ctx.lineTo(1, -r * 0.95);
+    ctx.stroke();
+  }
+
+  // Wings (small triangles on sides)
+  ctx.fillStyle = angry ? '#ff9999' : '#dddddd';
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.6, r * 0.1);
+  ctx.lineTo(-r * 1.0, r * 0.3);
+  ctx.lineTo(-r * 0.5, r * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(r * 0.6, r * 0.1);
+  ctx.lineTo(r * 1.0, r * 0.3);
+  ctx.lineTo(r * 0.5, r * 0.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Feet
+  ctx.fillStyle = '#ff8800';
+  ctx.beginPath();
+  ctx.ellipse(-4, r * 0.95, 4, 3, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(4, r * 0.95, 4, 3, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawHUD() {
+  const fontSize = Math.max(16, Math.min(24, W / 25));
+
+  // Score
+  ctx.fillStyle = ACCENT;
+  ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
+  ctx.textAlign = 'left';
+  ctx.fillText(`Очки: ${score}`, 15, 30);
+
+  // High score
+  ctx.fillStyle = GRAY;
+  ctx.textAlign = 'right';
+  ctx.fillText(`Рекорд: ${highScore}`, W - 15, 30);
+
+  // Player name
+  const player = window.GameHub?.getPlayer?.();
+  if (player?.nickname) {
+    ctx.fillStyle = DARK_GRAY;
+    ctx.font = `${fontSize - 4}px 'Courier New', monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillText(player.nickname, 15, 55);
+  }
+}
+
+// ============ SCREENS ============
+
+function drawStartScreen() {
+  drawBackground();
+
+  const cx = W / 2;
+  const cy = H / 2;
+
+  // Title
+  const titleSize = Math.max(28, Math.min(48, W / 12));
+  ctx.fillStyle = ACCENT;
+  ctx.font = `bold ${titleSize}px 'Courier New', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('ГУСИ vs ДИМА', cx, cy - 100);
+
+  // Subtitle
+  const subSize = Math.max(12, Math.min(16, W / 30));
+  ctx.fillStyle = GRAY;
+  ctx.font = `${subSize}px 'Courier New', monospace`;
+  const subtitle1 = 'В детстве Диму напугал гусь.';
+  const subtitle2 = 'С тех пор они преследуют его повсюду...';
+  ctx.fillText(subtitle1, cx, cy - 55);
+  ctx.fillText(subtitle2, cx, cy - 35);
+
+  // Draw a small Dima and goose for fun
+  drawDima(cx - 40, cy + 20);
+  drawGoose({ x: cx + 40, y: cy + 20, angry: false, radius: GOOSE_RADIUS, rotation: -Math.PI / 4 });
+
+  // Play button
+  const btnW = 200;
+  const btnH = 50;
+  const btnX = cx - btnW / 2;
+  const btnY = cy + 70;
+
+  ctx.fillStyle = ACCENT;
+  ctx.beginPath();
+  ctx.roundRect(btnX, btnY, btnW, btnH, 10);
+  ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.font = `bold 22px 'Courier New', monospace`;
+  ctx.fillText('ИГРАТЬ', cx, btnY + 33);
+
+  // Store button bounds for click detection
+  startButton = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+  // High score
+  if (highScore > 0) {
+    ctx.fillStyle = GRAY;
+    ctx.font = `16px 'Courier New', monospace`;
+    ctx.fillText(`Рекорд: ${highScore}`, cx, btnY + btnH + 35);
+  }
+
+  // Player name
+  const player = window.GameHub?.getPlayer?.();
+  if (player?.nickname) {
+    ctx.fillStyle = DARK_GRAY;
+    ctx.font = `14px 'Courier New', monospace`;
+    ctx.fillText(`Игрок: ${player.nickname}`, cx, btnY + btnH + 60);
+  }
+}
+
+function drawGameOverScreen() {
+  // Dim the field
+  ctx.fillStyle = 'rgba(10, 22, 40, 0.85)';
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2;
+  const cy = H / 2;
+
+  // Title
+  const titleSize = Math.max(32, Math.min(56, W / 10));
+  ctx.fillStyle = RED;
+  ctx.font = `bold ${titleSize}px 'Courier New', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('ГА-ГА-ГА!', cx, cy - 120);
+
+  // Subtitle
+  const subSize = Math.max(14, Math.min(20, W / 25));
+  ctx.fillStyle = WHITE;
+  ctx.font = `${subSize}px 'Courier New', monospace`;
+  ctx.fillText('Гуси поймали Диму!', cx, cy - 80);
+
+  // Score
+  ctx.fillStyle = ACCENT;
+  ctx.font = `bold 28px 'Courier New', monospace`;
+  ctx.fillText(`Очки: ${score}`, cx, cy - 45);
+
+  if (score >= highScore && score > 0) {
+    ctx.fillStyle = '#ffd700';
+    ctx.font = `16px 'Courier New', monospace`;
+    ctx.fillText('Новый рекорд!', cx, cy - 22);
+  }
+
+  // Joke
+  ctx.fillStyle = GRAY;
+  ctx.font = `${Math.max(12, Math.min(15, W / 32))}px 'Courier New', monospace`;
+  const jokeLines = currentJoke.split('\n');
+  jokeLines.forEach((line, i) => {
+    ctx.fillText(line, cx, cy + 10 + i * 22);
+  });
+
+  const jokeEndY = cy + 10 + jokeLines.length * 22 + 20;
+
+  // Retry button
+  const btnW = 200;
+  const btnH = 48;
+  const retryX = cx - btnW / 2;
+  const retryY = jokeEndY + 10;
+
+  ctx.fillStyle = ACCENT;
+  ctx.beginPath();
+  ctx.roundRect(retryX, retryY, btnW, btnH, 10);
+  ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.font = `bold 20px 'Courier New', monospace`;
+  ctx.fillText('ЗАНОВО', cx, retryY + 31);
+
+  retryButton = { x: retryX, y: retryY, w: btnW, h: btnH };
+
+  // Hub button
+  const hubY = retryY + btnH + 15;
+  const hubW = 160;
+  const hubH = 40;
+  const hubX = cx - hubW / 2;
+
+  ctx.fillStyle = DARK_GRAY;
+  ctx.beginPath();
+  ctx.roundRect(hubX, hubY, hubW, hubH, 8);
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.font = `bold 16px 'Courier New', monospace`;
+  ctx.fillText('← ХАБ', cx, hubY + 26);
+
+  hubButton = { x: hubX, y: hubY, w: hubW, h: hubH };
+}
+
+let startButton = null;
+let retryButton = null;
+let hubButton = null;
+
+// ============ GAME LOGIC ============
+
+function startGame() {
+  state = 'playing';
+  score = 0;
+  geese = [];
+  dima.x = W / 2;
+  dima.y = H / 2;
+  lastSpawnTime = performance.now();
+  gameStartTime = performance.now();
+  dragging = false;
+}
+
+function gameOver() {
+  state = 'gameover';
+  shakeTimer = 300;
+  shakeIntensity = 8;
+  currentJoke = JOKES[Math.floor(Math.random() * JOKES.length)];
+  if (score > highScore) {
+    highScore = score;
+    saveHighScore();
+  }
+  // Submit to hub
+  if (window.GameHub?.submitScore) {
+    window.GameHub.submitScore('goose-dima', score);
+  }
+}
+
+function checkCollision(goose) {
+  const dx = dima.x - goose.x;
+  const dy = dima.y - goose.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  return dist < (DIMA_RADIUS + goose.radius - COLLISION_GRACE);
+}
+
+function isOffScreen(goose) {
+  const margin = goose.radius + 10;
+  return goose.x < -margin || goose.x > W + margin ||
+         goose.y < -margin || goose.y > H + margin;
+}
+
+function update(dt) {
+  if (state !== 'playing') return;
+
+  const now = performance.now();
+
+  // Keyboard movement
+  const moveSpeed = 4;
+  if (keys['ArrowLeft'] || keys['KeyA']) dima.x -= moveSpeed;
+  if (keys['ArrowRight'] || keys['KeyD']) dima.x += moveSpeed;
+  if (keys['ArrowUp'] || keys['KeyW']) dima.y -= moveSpeed;
+  if (keys['ArrowDown'] || keys['KeyS']) dima.y += moveSpeed;
+
+  // Clamp Dima to field
+  dima.x = Math.max(DIMA_RADIUS, Math.min(W - DIMA_RADIUS, dima.x));
+  dima.y = Math.max(DIMA_RADIUS + 10, Math.min(H - DIMA_RADIUS, dima.y));
+
+  // Spawn geese
+  if (now - lastSpawnTime > getCurrentSpawnInterval()) {
+    spawnGoose();
+    lastSpawnTime = now;
+  }
+
+  // Update geese
+  const toRemove = [];
+  for (let i = 0; i < geese.length; i++) {
+    const g = geese[i];
+
+    // Wobble
+    if (g.wobbles) {
+      g.wobblePhase += 0.05;
+      const wobbleAmount = Math.sin(g.wobblePhase) * 0.5;
+      // Perpendicular wobble
+      const perpX = -g.vy;
+      const perpY = g.vx;
+      const mag = Math.sqrt(perpX * perpX + perpY * perpY);
+      if (mag > 0) {
+        g.x += (perpX / mag) * wobbleAmount;
+        g.y += (perpY / mag) * wobbleAmount;
+      }
+    }
+
+    g.x += g.vx;
+    g.y += g.vy;
+    g.rotation = Math.atan2(g.vy, g.vx);
+
+    // Collision
+    if (checkCollision(g)) {
+      gameOver();
+      return;
+    }
+
+    // Off screen
+    if (isOffScreen(g)) {
+      toRemove.push(i);
+      score++;
+    }
+  }
+
+  // Remove off-screen geese (reverse order)
+  for (let i = toRemove.length - 1; i >= 0; i--) {
+    geese.splice(toRemove[i], 1);
+  }
+
+  // Screen shake
+  if (shakeTimer > 0) {
+    shakeTimer -= dt;
+    shakeIntensity *= 0.95;
+  }
+}
+
+// ============ RENDER ============
+
+let lastTime = 0;
+
+function render(time) {
+  const dt = time - lastTime;
+  lastTime = time;
+
+  update(dt);
+
+  ctx.save();
+
+  // Screen shake
+  if (shakeTimer > 0 && state === 'gameover') {
+    const sx = (Math.random() - 0.5) * shakeIntensity;
+    const sy = (Math.random() - 0.5) * shakeIntensity;
+    ctx.translate(sx, sy);
+  }
+
+  if (state === 'start') {
+    drawStartScreen();
+  } else if (state === 'playing') {
+    drawBackground();
+    for (const g of geese) drawGoose(g);
+    drawDima(dima.x, dima.y);
+    drawHUD();
+  } else if (state === 'gameover') {
+    drawBackground();
+    for (const g of geese) drawGoose(g);
+    drawDima(dima.x, dima.y);
+    drawHUD();
+    drawGameOverScreen();
+  }
+
+  ctx.restore();
+
+  requestAnimationFrame(render);
+}
+
+// ============ INPUT HANDLING ============
+
+function getEventPos(e) {
+  if (e.touches && e.touches.length > 0) {
+    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  return { x: e.clientX, y: e.clientY };
+}
+
+function hitTest(btn, px, py) {
+  if (!btn) return false;
+  return px >= btn.x && px <= btn.x + btn.w && py >= btn.y && py <= btn.y + btn.h;
+}
+
+function handlePointerDown(e) {
+  e.preventDefault();
+  const pos = getEventPos(e);
+
+  if (state === 'start') {
+    if (hitTest(startButton, pos.x, pos.y)) {
+      startGame();
+    }
+    return;
+  }
+
+  if (state === 'gameover') {
+    if (hitTest(retryButton, pos.x, pos.y)) {
+      startGame();
+    } else if (hitTest(hubButton, pos.x, pos.y)) {
+      if (window.GameHub?.backToHub) {
+        window.GameHub.backToHub();
+      }
+    }
+    return;
+  }
+
+  if (state === 'playing') {
+    dragging = true;
+    dragOffset.x = dima.x - pos.x;
+    dragOffset.y = dima.y - pos.y;
+  }
+}
+
+function handlePointerMove(e) {
+  e.preventDefault();
+  if (state === 'playing' && dragging) {
+    const pos = getEventPos(e);
+    dima.x = pos.x + dragOffset.x;
+    dima.y = pos.y + dragOffset.y;
+    // Clamp
+    dima.x = Math.max(DIMA_RADIUS, Math.min(W - DIMA_RADIUS, dima.x));
+    dima.y = Math.max(DIMA_RADIUS + 10, Math.min(H - DIMA_RADIUS, dima.y));
+  }
+}
+
+function handlePointerUp(e) {
+  dragging = false;
+}
+
+// Mouse events
+canvas.addEventListener('mousedown', handlePointerDown);
+canvas.addEventListener('mousemove', handlePointerMove);
+canvas.addEventListener('mouseup', handlePointerUp);
+canvas.addEventListener('mouseleave', handlePointerUp);
+
+// Touch events
+canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
+canvas.addEventListener('touchend', handlePointerUp);
+canvas.addEventListener('touchcancel', handlePointerUp);
+
+// Keyboard
+window.addEventListener('keydown', (e) => {
+  keys[e.code] = true;
+
+  if (state === 'start' && (e.code === 'Space' || e.code === 'Enter')) {
+    startGame();
+  }
+  if (state === 'gameover' && (e.code === 'Space' || e.code === 'Enter')) {
+    startGame();
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  keys[e.code] = false;
+});
+
+// Prevent context menu on long press
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ============ INIT ============
+window.addEventListener('resize', resize);
+loadHighScore();
+resize();
+requestAnimationFrame(render);
+
+</script>
+</body>
+</html>
