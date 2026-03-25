@@ -250,7 +250,8 @@ function goToProfile() {
 // ============ GAME STATE ============
 let state = 'menu';
 let selectedSkin = 0;
-let highScore = 0; // resets on page reload, persists within session
+let highScore = parseInt(localStorage.getItem('flappy_sanya_high')) || 0;
+if (window.GameHub && GameHub.getMyBestScore) { var sdk = GameHub.getMyBestScore('flappy-sanya'); if (sdk && sdk > highScore) highScore = sdk; }
 let score = 0;
 let playerY = CANVAS_H / 2;
 let playerVY = 0;
@@ -1618,7 +1619,7 @@ function drawGameOver() {
 function endGame() {
   if (score > highScore) {
     highScore = score;
-    // highScore lives in memory only — resets on page reload
+    localStorage.setItem('flappy_sanya_high', highScore);
   }
   const day = getCurrentDay();
   ensureRateData(day);
@@ -1722,10 +1723,17 @@ function handleClick(clientX, clientY) {
   }
 }
 
-canvas.addEventListener('click', (e) => { e.preventDefault(); handleClick(e.clientX, e.clientY); });
+var lastInputTime = 0;
+function handleInput(x, y) {
+  var now = Date.now();
+  if (now - lastInputTime < 100) return;
+  lastInputTime = now;
+  handleClick(x, y);
+}
+canvas.addEventListener('click', (e) => { e.preventDefault(); handleInput(e.clientX, e.clientY); });
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
-  if (e.touches.length > 0) handleClick(e.touches[0].clientX, e.touches[0].clientY);
+  if (e.touches.length > 0) handleInput(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: false });
 document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
