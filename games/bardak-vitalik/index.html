@@ -18,7 +18,7 @@ canvas{display:block;width:100%;height:100%}
 .btn-gray{background:#546e7a;color:#ccc}
 .btn-red{background:#ff1744;color:#fff}
 .score-display{font-size:clamp(16px,4vw,28px);color:#00e676;margin:8px 0}
-.joke-text{font-size:clamp(12px,3vw,16px);color:#ffab40;text-align:center;max-width:85%;margin:10px auto;line-height:1.4;white-space:pre-line}
+.joke-text{font-size:clamp(12px,3vw,16px);color:#ffa726;text-align:center;max-width:85%;margin:10px auto;line-height:1.4;white-space:pre-line}
 .go-title{font-size:clamp(28px,7vw,56px);font-weight:bold;color:#ff1744;margin-bottom:4px}
 .go-sub{font-size:clamp(13px,3vw,18px);color:#fff;margin-bottom:8px}
 .highscore{font-size:clamp(12px,2.8vw,16px);color:#ffd700;margin-bottom:10px}
@@ -66,7 +66,7 @@ canvas{display:block;width:100%;height:100%}
 
 <!-- Wave Joke Overlay -->
 <div class="overlay hidden" id="waveScreen">
-  <div class="joke-text" id="waveJoke" style="font-size:clamp(16px,4vw,24px);color:#ffab40"></div>
+  <div class="joke-text" id="waveJoke" style="font-size:clamp(16px,4vw,24px);color:#ffa726"></div>
 </div>
 
 <script src="../../shared/hub-sdk.js"></script>
@@ -302,7 +302,7 @@ function addBreakParticles(x, y, color) {
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed - rand(30, 80),
       life: 0.8, maxLife: 0.8,
-      color: Math.random() < 0.5 ? '#ffffff' : '#ffd740',
+      color: Math.random() < 0.5 ? '#ffffff' : '#ffd700',
       r: rand(2, 5),
       type: 'sparkle'
     });
@@ -342,7 +342,7 @@ function handleClick(cx, cy) {
         tablePile = Math.max(0, tablePile - 3);
         for (let j = 0; j < 3 && tableDishes.length > 0; j++) tableDishes.pop();
       }
-      addCatchParticles(b.x, b.y, '#ffab40');
+      addCatchParticles(b.x, b.y, '#ffa726');
       bonuses.splice(i, 1);
       return;
     }
@@ -658,7 +658,7 @@ function draw(frozen) {
   if (speedFlashTimer > 0) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, speedFlashTimer / 0.3);
-    ctx.fillStyle = '#ffab40';
+    ctx.fillStyle = '#ffa726';
     ctx.font = 'bold ' + Math.max(18, W * 0.05) + 'px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -684,7 +684,7 @@ function draw(frozen) {
 
   // Table meter
   let meterY = hudY + fontSize + 8;
-  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffab40' : '#00e676';
+  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffa726' : '#00e676';
   ctx.textAlign = 'left';
   ctx.fillText('Посудомойка: ' + tablePile + '/' + TABLE_MAX, 12, meterY);
 
@@ -693,13 +693,13 @@ function draw(frozen) {
   ctx.fillStyle = '#1a2a44';
   ctx.fillRect(barX, barY, barW, barH);
   let fill = (tablePile / TABLE_MAX) * barW;
-  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffab40' : '#00e676';
+  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffa726' : '#00e676';
   ctx.fillRect(barX, barY, fill, barH);
 
   // Freeze timer
   if (frozen) {
     let remaining = Math.ceil((freezeEnd - performance.now()) / 1000);
-    ctx.fillStyle = '#2196f3';
+    ctx.fillStyle = '#a0c4ff';
     ctx.textAlign = 'center';
     ctx.fillText('❄ ' + remaining + 'с', W / 2, hudY);
   }
