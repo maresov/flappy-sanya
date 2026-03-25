@@ -292,6 +292,28 @@
   </div>
 </div>
 
+<!-- ===== PIN DISPLAY (for new users) ===== -->
+<div id="pin-display-screen" class="login-screen" style="display:none">
+  <div class="login-title">Запомните ваш код!</div>
+  <div id="pin-code" style="font-size:48px;color:#ffd700;margin:20px 0;letter-spacing:4px"></div>
+  <div class="login-subtitle">Этот код нужен для входа в ваш профиль</div>
+  <div class="login-form">
+    <button class="btn btn-primary" id="pin-understood-btn">ПОНЯТНО, ЗАПОМНИЛ</button>
+  </div>
+</div>
+
+<!-- ===== PIN ENTRY (for returning users) ===== -->
+<div id="pin-entry-screen" class="login-screen" style="display:none">
+  <div class="login-title" id="pin-entry-title">Введите код</div>
+  <div class="login-subtitle" id="pin-entry-subtitle"></div>
+  <div id="pin-error" style="color:#ff1744;margin:8px 0;display:none"></div>
+  <div class="login-form">
+    <input type="text" id="pin-input" placeholder="XX-XX" maxlength="5" autocomplete="off" style="text-align:center;font-size:28px;letter-spacing:4px">
+    <button class="btn btn-primary" id="pin-verify-btn">ВОЙТИ</button>
+    <button class="btn btn-anon" id="pin-back-btn">&larr; Другой ник</button>
+  </div>
+</div>
+
 <!-- ===== MAIN HUB (catalog + profile) ===== -->
 <div id="hub-main" class="hub-screen" style="padding:0 20px">
   <header class="hub-header">
@@ -367,6 +389,15 @@ const profileNickEditBtn = document.getElementById('profile-nick-edit-btn');
 function showLogin() {
   loginScreen.classList.add('active');
   hubMain.classList.remove('active');
+  // Hide PIN screens if visible
+  if (document.getElementById('pin-display-screen')) {
+    document.getElementById('pin-display-screen').style.display = 'none';
+    document.getElementById('pin-display-screen').classList.remove('active');
+  }
+  if (document.getElementById('pin-entry-screen')) {
+    document.getElementById('pin-entry-screen').style.display = 'none';
+    document.getElementById('pin-entry-screen').classList.remove('active');
+  }
   nicknameInput.value = '';
   nicknameInput.focus();
 }
@@ -400,13 +431,117 @@ function updateHeader() {
   headerNickname.textContent = player ? player.nickname : '';
 }
 
+// ============ PIN SCREEN ELEMENTS ============
+var pinDisplayScreen = document.getElementById('pin-display-screen');
+var pinCode = document.getElementById('pin-code');
+var pinUnderstoodBtn = document.getElementById('pin-understood-btn');
+var pinEntryScreen = document.getElementById('pin-entry-screen');
+var pinEntryTitle = document.getElementById('pin-entry-title');
+var pinEntrySubtitle = document.getElementById('pin-entry-subtitle');
+var pinError = document.getElementById('pin-error');
+var pinInput = document.getElementById('pin-input');
+var pinVerifyBtn = document.getElementById('pin-verify-btn');
+var pinBackBtn = document.getElementById('pin-back-btn');
+
+var _pendingNick = '';
+
+function hideAllScreens() {
+  loginScreen.classList.remove('active');
+  loginScreen.style.display = '';
+  pinDisplayScreen.style.display = 'none';
+  pinDisplayScreen.classList.remove('active');
+  pinEntryScreen.style.display = 'none';
+  pinEntryScreen.classList.remove('active');
+  hubMain.classList.remove('active');
+}
+
+function showPinDisplay(nick, pin) {
+  hideAllScreens();
+  pinCode.textContent = pin;
+  pinDisplayScreen.style.display = '';
+  pinDisplayScreen.classList.add('active');
+  _pendingNick = nick;
+}
+
+function showPinEntry(nick) {
+  hideAllScreens();
+  pinEntryTitle.textContent = 'Введите код';
+  pinEntrySubtitle.textContent = 'для ' + nick;
+  pinError.style.display = 'none';
+  pinInput.value = '';
+  pinEntryScreen.style.display = '';
+  pinEntryScreen.classList.add('active');
+  _pendingNick = nick;
+  pinInput.focus();
+}
+
 // ============ LOGIN ============
-function doLogin() {
+async function doLogin() {
   var nick = nicknameInput.value.trim();
   if (!nick) { nicknameInput.focus(); return; }
-  GameHub.setPlayer(nick);
+
+  // If SDK PIN methods are not available or Supabase is down, fall back to simple login
+  if (!GameHub.checkNickname || !GameHub.registerPlayer || !GameHub.verifyPin) {
+    GameHub.setPlayer(nick);
+    showHub();
+    if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
+    return;
+  }
+
+  try {
+    var result = await GameHub.checkNickname(nick);
+    if (result.exists) {
+      // Returning user — ask for PIN
+      showPinEntry(nick);
+    } else {
+      // New user — register and show PIN
+      var reg = await GameHub.registerPlayer(nick);
+      if (reg.error) {
+        // Registration failed, fall back to simple login
+        GameHub.setPlayer(nick);
+        showHub();
+        if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
+        return;
+      }
+      showPinDisplay(nick, reg.pin);
+    }
+  } catch (e) {
+    // Offline / Supabase unavailable — fall back to simple login
+    GameHub.setPlayer(nick);
+    showHub();
+    if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
+  }
+}
+
+async function doPinVerify() {
+  var pin = pinInput.value.trim();
+  if (!pin) { pinInput.focus(); return; }
+
+  try {
+    var result = await GameHub.verifyPin(_pendingNick, pin);
+    if (result.ok) {
+      GameHub.setPlayer(_pendingNick);
+      hideAllScreens();
+      showHub();
+      if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
+    } else {
+      pinError.textContent = 'Неверный код, попробуйте ещё';
+      pinError.style.display = 'block';
+      pinInput.value = '';
+      pinInput.focus();
+    }
+  } catch (e) {
+    // Offline fallback — let them in
+    GameHub.setPlayer(_pendingNick);
+    hideAllScreens();
+    showHub();
+  }
+}
+
+function doPinUnderstood() {
+  GameHub.setPlayer(_pendingNick);
+  hideAllScreens();
   showHub();
-  // Migrate local scores to Supabase on first login
   if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
 }
 
@@ -415,8 +550,29 @@ function doAnonLogin() {
   showHub();
 }
 
+// PIN input auto-format: insert dash after 2 digits
+pinInput.addEventListener('input', function() {
+  var raw = pinInput.value.replace(/[^0-9]/g, '');
+  if (raw.length > 4) raw = raw.substring(0, 4);
+  if (raw.length > 2) {
+    pinInput.value = raw.substring(0, 2) + '-' + raw.substring(2);
+  } else {
+    pinInput.value = raw;
+  }
+});
+
 loginBtn.addEventListener('click', doLogin);
 anonLoginBtn.addEventListener('click', doAnonLogin);
+pinUnderstoodBtn.addEventListener('click', doPinUnderstood);
+pinVerifyBtn.addEventListener('click', doPinVerify);
+pinBackBtn.addEventListener('click', function() {
+  hideAllScreens();
+  loginScreen.classList.add('active');
+  nicknameInput.focus();
+});
+pinInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doPinVerify();
+});
 nicknameInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') doLogin();
 });
