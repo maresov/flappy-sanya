@@ -1280,27 +1280,26 @@ function drawMenu() {
     ctx.textAlign = 'center';
     ctx.fillText('СТАРТ', cx, startBtnY + btnH * 0.65);
 
-    // Hint — pinned below button
+    // Hub button — below start, same width
+    const hubBtnY = startBtnY + btnH + 12;
+    const hubBtnH = btnH;
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, hubBtnY, btnW, hubBtnH, 14); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('← ХАБ', cx, hubBtnY + hubBtnH * 0.65);
+
+    // Hint — pinned below buttons
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '12px monospace';
-    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, hintY);
-    ctx.textAlign = 'left';
-
-    // Hub button (top-left)
-    const hubBtnW = P ? 100 : 90, hubBtnH = P ? 36 : 30;
-    const hubBtnX = 10, hubBtnY2 = 10;
-    ctx.fillStyle = '#546e7a';
-    ctx.beginPath(); ctx.roundRect(hubBtnX, hubBtnY2, hubBtnW, hubBtnH, 8); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = `bold ${P ? 16 : 13}px monospace`;
-    ctx.textAlign = 'center';
-    ctx.fillText('← ХАБ', hubBtnX + hubBtnW / 2, hubBtnY2 + hubBtnH * 0.65);
+    ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, hubBtnY + hubBtnH + 20);
     ctx.textAlign = 'left';
 
     window._menuBtns = {
       skins: window._skinBtns,
       start: { x: cx - btnW / 2, y: startBtnY, w: btnW, h: btnH },
-      hub: { x: hubBtnX, y: hubBtnY2, w: hubBtnW, h: hubBtnH }
+      hub: { x: cx - btnW / 2, y: hubBtnY, w: btnW, h: hubBtnH }
     };
 
   } else {
@@ -1384,26 +1383,25 @@ function drawMenu() {
     ctx.textAlign = 'center';
     ctx.fillText('СТАРТ', cx, btnY + btnH * 0.65);
 
+    // Hub button — below start, same width
+    const hubBtnY = btnY + btnH + 10;
+    const hubBtnH2 = 40;
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, hubBtnY, btnW, hubBtnH2, 10); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('← ХАБ', cx, hubBtnY + hubBtnH2 * 0.65);
+
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '11px monospace';
-    ctx.fillText('↑ / Пробел / Тап — прыгать  |  ESC — пауза', cx, btnY + btnH + 22);
-    ctx.textAlign = 'left';
-
-    // Hub button (top-left)
-    const hubBtnW = 90, hubBtnH = 30;
-    const hubBtnX = 10, hubBtnY2 = 10;
-    ctx.fillStyle = '#546e7a';
-    ctx.beginPath(); ctx.roundRect(hubBtnX, hubBtnY2, hubBtnW, hubBtnH, 8); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('← ХАБ', hubBtnX + hubBtnW / 2, hubBtnY2 + hubBtnH * 0.65);
+    ctx.fillText('↑ / Пробел / Тап — прыгать  |  ESC — пауза', cx, hubBtnY + hubBtnH2 + 18);
     ctx.textAlign = 'left';
 
     window._menuBtns = {
       skins: window._skinBtns,
       start: { x: cx - btnW / 2, y: btnY, w: btnW, h: btnH },
-      hub: { x: hubBtnX, y: hubBtnY2, w: hubBtnW, h: hubBtnH }
+      hub: { x: cx - btnW / 2, y: hubBtnY, w: btnW, h: hubBtnH2 }
     };
   }
 }
