@@ -566,7 +566,7 @@ function drawHUD() {
   // High score
   ctx.fillStyle = '#ffd700';
   ctx.textAlign = 'right';
-  ctx.fillText(`Рекорд: ${highScore}`, W - 74, 30);
+  ctx.fillText(`Рекорд: ${highScore}`, W - 60, 30);
 
   // Player name
   const player = window.GameHub?.getPlayer?.();
@@ -585,11 +585,11 @@ function drawHUD() {
     ctx.fillText('Гуси ускоряются!', W / 2, 65);
   }
 
-  // Pause button
+  // Pause button (min 48x48 touch target)
   if (state === 'playing') {
-    const pbX = W - 68;
+    const pbS = 52;
+    const pbX = W - pbS - 12;
     const pbY = 8;
-    const pbS = 48;
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath();
     ctx.roundRect(pbX, pbY, pbS, pbS, 8);
@@ -701,14 +701,18 @@ function drawStartScreen() {
   drawBackground();
 
   const cx = W / 2;
-  const cy = H / 2;
+
+  // Distribute elements evenly across screen height
+  // Sections: title, subtitle, skin label + cards + joke, player/record, buttons
+  const topPad = H * 0.06;
 
   // Title
-  const titleSize = Math.max(28, Math.min(48, W / 12));
+  const titleSize = Math.max(36, Math.min(42, W / 12));
   ctx.fillStyle = WHITE;
   ctx.font = `bold ${titleSize}px monospace`;
   ctx.textAlign = 'center';
-  ctx.fillText('ГУСИ vs ДИМА', cx, cy - 100);
+  const titleY = topPad + titleSize;
+  ctx.fillText('ГУСИ vs ДИМА', cx, titleY);
 
   // Subtitle
   const subSize = Math.max(20, Math.min(22, W / 25));
@@ -716,15 +720,16 @@ function drawStartScreen() {
   ctx.font = `${subSize}px monospace`;
   const subtitle1 = 'Перетаскивай Диму пальцем,';
   const subtitle2 = 'уворачиваясь от гусей!';
-  ctx.fillText(subtitle1, cx, cy - 55);
-  ctx.fillText(subtitle2, cx, cy - 32);
+  const subY1 = titleY + titleSize * 0.8 + 10;
+  ctx.fillText(subtitle1, cx, subY1);
+  ctx.fillText(subtitle2, cx, subY1 + subSize + 6);
 
   // Skin selection
   const cardSize = 76;
   const cardGap = 18;
   const totalCardsW = SKINS.length * cardSize + (SKINS.length - 1) * cardGap;
   const cardsStartX = cx - totalCardsW / 2;
-  const skinLabelY = cy - 10;
+  const skinLabelY = subY1 + subSize + 6 + 32;
 
   ctx.fillStyle = WHITE;
   ctx.font = 'bold 22px monospace';
@@ -785,10 +790,10 @@ function drawStartScreen() {
   }
 
   // Play button (near bottom)
-  const btnW = 200;
-  const btnH = 50;
+  const btnW = 220;
+  const btnH = 54;
   const btnX = cx - btnW / 2;
-  const btnY = H - 170;
+  const btnY = H - 180;
 
   ctx.fillStyle = ACCENT;
   ctx.beginPath();
@@ -803,8 +808,8 @@ function drawStartScreen() {
   startButton = { x: btnX, y: btnY, w: btnW, h: btnH };
 
   // Hub button below play
-  const hubBtnY = btnY + btnH + 12;
-  const hubBtnH = 48;
+  const hubBtnY = btnY + btnH + 14;
+  const hubBtnH = 52;
   ctx.fillStyle = '#546e7a';
   ctx.beginPath();
   ctx.roundRect(btnX, hubBtnY, btnW, hubBtnH, 12);
@@ -863,11 +868,25 @@ function drawGameOverScreen() {
     ctx.fillText('Новый рекорд!', cx, cy - 22);
   }
 
-  // Joke
+  // Joke (word-wrapped)
   ctx.fillStyle = ORANGE;
   const jokeSize = Math.max(20, Math.min(22, W / 20));
   ctx.font = `${jokeSize}px monospace`;
-  const jokeLines = currentJoke.split('\n');
+  const maxJokeW = W - 40;
+  const rawJokeLines = currentJoke.split('\n');
+  const jokeLines = [];
+  for (let rli = 0; rli < rawJokeLines.length; rli++) {
+    const jWords = rawJokeLines[rli].split(' ');
+    let jCur = '';
+    for (let jwi = 0; jwi < jWords.length; jwi++) {
+      const jTest = jCur ? jCur + ' ' + jWords[jwi] : jWords[jwi];
+      if (ctx.measureText(jTest).width > maxJokeW) {
+        if (jCur) jokeLines.push(jCur);
+        jCur = jWords[jwi];
+      } else { jCur = jTest; }
+    }
+    if (jCur) jokeLines.push(jCur);
+  }
   jokeLines.forEach((line, i) => {
     ctx.fillText(line, cx, cy + 10 + i * (jokeSize + 6));
   });
@@ -876,7 +895,7 @@ function drawGameOverScreen() {
 
   // Quip (word-wrapped)
   ctx.fillStyle = '#a0c4ff';
-  const quipSize = Math.max(16, Math.min(18, W / 24));
+  const quipSize = Math.max(20, Math.min(22, W / 24));
   ctx.font = `${quipSize}px monospace`;
   const maxQuipW = W - 40;
   const qWords = currentQuip.split(' ');
@@ -897,8 +916,8 @@ function drawGameOverScreen() {
   const quipEndY = jokeEndY + 10 + qLines.length * (quipSize + 4) + 4;
 
   // Retry button
-  const btnW = 200;
-  const btnH = 48;
+  const btnW = 220;
+  const btnH = 52;
   const retryX = cx - btnW / 2;
   const retryY = quipEndY + 10;
 
@@ -907,15 +926,15 @@ function drawGameOverScreen() {
   ctx.roundRect(retryX, retryY, btnW, btnH, 10);
   ctx.fill();
   ctx.fillStyle = '#0a1628';
-  ctx.font = `bold 20px monospace`;
-  ctx.fillText('ЗАНОВО', cx, retryY + 31);
+  ctx.font = `bold 24px monospace`;
+  ctx.fillText('ЗАНОВО', cx, retryY + 32);
 
   retryButton = { x: retryX, y: retryY, w: btnW, h: btnH };
 
   // Hub button
   const hubY = retryY + btnH + 15;
-  const hubW = 200;
-  const hubH = 48;
+  const hubW = 220;
+  const hubH = 52;
   const hubX = cx - hubW / 2;
 
   ctx.fillStyle = DARK_GRAY;
@@ -923,8 +942,8 @@ function drawGameOverScreen() {
   ctx.roundRect(hubX, hubY, hubW, hubH, 12);
   ctx.fill();
   ctx.fillStyle = WHITE;
-  ctx.font = `bold 16px monospace`;
-  ctx.fillText('← ХАБ', cx, hubY + 26);
+  ctx.font = `bold 24px monospace`;
+  ctx.fillText('← ХАБ', cx, hubY + 31);
 
   hubButton = { x: hubX, y: hubY, w: hubW, h: hubH };
 }

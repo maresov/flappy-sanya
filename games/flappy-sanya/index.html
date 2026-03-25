@@ -1107,7 +1107,7 @@ function drawCeiling() {
   ctx.setLineDash([]);
   // Label
   ctx.fillStyle = '#ff1744';
-  ctx.font = `bold ${IS_PORTRAIT ? 14 : 11}px monospace`;
+  ctx.font = `bold ${IS_PORTRAIT ? 18 : 14}px monospace`;
   ctx.fillText('118₽ — ВЫ КУПИЛИ ТУТ', 20, ceilingY - (IS_PORTRAIT ? 8 : 5));
 }
 
@@ -1125,13 +1125,13 @@ function drawHUD() {
   ctx.textAlign = 'center';
   ctx.fillText(`${score} нед.`, CANVAS_W / 2, hudY);
 
-  ctx.font = `${P ? 20 : 14}px monospace`;
+  ctx.font = `${P ? 20 : 16}px monospace`;
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.fillText(`${currentDate}  |  $1 = ${currentRate.toFixed(2)}₽`, CANVAS_W / 2, hudY + (P ? 26 : 18));
 
   if (highScore > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = `${P ? 20 : 14}px monospace`;
+    ctx.font = `${P ? 20 : 16}px monospace`;
     ctx.fillText(`Рекорд: ${highScore} нед.`, CANVAS_W / 2, hudY + (P ? 46 : 32));
   }
   ctx.textAlign = 'left';
@@ -1144,7 +1144,7 @@ function drawHUD() {
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath(); ctx.roundRect(pbX, pbY, pbSize, pbSize, 8); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = `${P ? 24 : 18}px monospace`;
+    ctx.font = `${P ? 26 : 20}px monospace`;
     ctx.textAlign = 'center';
     ctx.fillText('⏸', pbX + pbSize / 2, pbY + pbSize * 0.7);
     ctx.textAlign = 'left';
@@ -1588,21 +1588,21 @@ function drawGameOver() {
     ensureRateData(day);
     if (day > 0) {
       ctx.fillStyle = '#a0c4ff';
-      ctx.font = '18px monospace';
-      ctx.fillText(`Врезался при курсе ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`, cx, CANVAS_H * 0.32);
+      ctx.font = '20px monospace';
+      drawWrappedText(`Врезался при курсе ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`, cx, CANVAS_H * 0.32, CANVAS_W * 0.85, 24);
     }
 
     ctx.fillStyle = '#ffa726';
-    ctx.font = '18px monospace';
+    ctx.font = '20px monospace';
     const jY = CANVAS_H * 0.39;
-    const jLines = drawWrappedText(currentJoke, cx, jY, CANVAS_W * 0.85, 22);
+    const jLines = drawWrappedText(currentJoke, cx, jY, CANVAS_W * 0.85, 24);
 
-    const sqY = jY + jLines * 22 + 10;
+    const sqY = jY + jLines * 24 + 10;
     ctx.fillStyle = '#a0c4ff';
-    ctx.font = '18px monospace';
-    const sqLinesD = drawWrappedText(currentSanyaQuip, cx, sqY, CANVAS_W * 0.85, 22);
+    ctx.font = '20px monospace';
+    const sqLinesD = drawWrappedText(currentSanyaQuip, cx, sqY, CANVAS_W * 0.85, 24);
 
-    const afterSq = sqY + sqLinesD * 22 + 12;
+    const afterSq = sqY + sqLinesD * 24 + 12;
     if (score >= highScore && score > 0) {
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 20px monospace';
