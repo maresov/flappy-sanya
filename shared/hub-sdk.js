@@ -46,12 +46,51 @@
   }
 
   function _syncPlayerToSupabase(nickname) {
-    if (!_hasSupabase() || nickname === 'Аноним') return;
-    sb.from('players')
-      .upsert({ nickname: nickname }, { onConflict: 'nickname' })
-      .then(function (res) {
-        if (res.error) console.warn('[GameHub] Player sync error:', res.error.message);
-      });
+    // No-op: player creation is now handled by registerPlayer/verifyPin
+  }
+
+  // ============ PIN-BASED AUTH ============
+
+  function _generatePin() {
+    var a = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+    var b = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+    return a + '-' + b;
+  }
+
+  function checkNickname(nickname) {
+    if (!_hasSupabase()) return Promise.resolve({exists: false});
+    return sb.from('players').select('id').eq('nickname', nickname).then(function(res) {
+      return {exists: !res.error && res.data && res.data.length > 0};
+    });
+  }
+
+  function registerPlayer(nickname) {
+    var pin = _generatePin();
+    if (!_hasSupabase()) {
+      // Offline fallback: just set locally, no pin
+      setPlayer(nickname);
+      return Promise.resolve({pin: null, offline: true});
+    }
+    return sb.from('players').insert({nickname: nickname, pin: pin}).select('id, nickname, pin').single().then(function(res) {
+      if (res.error) {
+        if (res.error.code === '23505') return {error: 'nickname_taken'};
+        return {error: res.error.message};
+      }
+      localStorage.setItem(STORAGE_PLAYER, JSON.stringify({nickname: nickname}));
+      return {pin: res.data.pin};
+    });
+  }
+
+  function verifyPin(nickname, pin) {
+    if (!_hasSupabase()) return Promise.resolve({ok: true});
+    return sb.from('players').select('id, pin').eq('nickname', nickname).single().then(function(res) {
+      if (res.error || !res.data) return {ok: false, error: 'not_found'};
+      if (res.data.pin === pin) {
+        localStorage.setItem(STORAGE_PLAYER, JSON.stringify({nickname: nickname}));
+        return {ok: true};
+      }
+      return {ok: false, error: 'wrong_pin'};
+    });
   }
 
   // ============ ANONYMOUS CHECK ============
@@ -316,6 +355,9 @@
     getAllMyScores: getAllMyScores,
     getMyBestScore: getMyBestScore,
     getMyBestScoreAsync: getMyBestScoreAsync,
+    checkNickname: checkNickname,
+    registerPlayer: registerPlayer,
+    verifyPin: verifyPin,
     backToHub: backToHub,
     migrateToSupabase: migrateToSupabase,
     isSupabaseReady: _hasSupabase
