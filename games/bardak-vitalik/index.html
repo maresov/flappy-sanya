@@ -189,20 +189,16 @@ function weightedPick(types) {
 }
 
 function loadHigh() {
-  try {
-    let best = null;
-    if (window.GameHub) best = window.GameHub.getMyBestScore('bardak-vitalik');
-    if (best != null) { highScore = best; return; }
-    let v = localStorage.getItem('bardak_vitalik_high');
-    if (v) highScore = parseInt(v) || 0;
-  } catch(e) {}
+  highScore = 0;
+  if (window.GameHub && GameHub.getMyBestScoreAsync) {
+    GameHub.getMyBestScoreAsync('bardak-vitalik').then(function(s) {
+      if (s && s > highScore) highScore = s;
+    });
+  }
 }
 
 function saveHigh() {
-  try {
-    localStorage.setItem('bardak_vitalik_high', highScore);
-    if (window.GameHub) window.GameHub.submitScore('bardak-vitalik', score);
-  } catch(e) {}
+  if (window.GameHub) window.GameHub.submitScore('bardak-vitalik', score);
 }
 
 function showScreen(id) {

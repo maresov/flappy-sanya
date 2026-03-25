@@ -263,8 +263,8 @@ function goToProfile() {
 // ============ GAME STATE ============
 let state = 'menu';
 let selectedSkin = 0;
-let highScore = parseInt(localStorage.getItem('flappy_sanya_high')) || 0;
-if (window.GameHub && GameHub.getMyBestScore) { var sdk = GameHub.getMyBestScore('flappy-sanya'); if (sdk && sdk > highScore) highScore = sdk; }
+let highScore = 0;
+if (window.GameHub && GameHub.getMyBestScoreAsync) { GameHub.getMyBestScoreAsync('flappy-sanya').then(function(s) { if (s && s > highScore) highScore = s; }); }
 let score = 0;
 let playerY = CANVAS_H / 2;
 let playerVY = 0;
@@ -1632,7 +1632,6 @@ function drawGameOver() {
 function endGame() {
   if (score > highScore) {
     highScore = score;
-    localStorage.setItem('flappy_sanya_high', highScore);
   }
   const day = getCurrentDay();
   ensureRateData(day);

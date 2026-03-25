@@ -170,19 +170,17 @@ let currentJoke = '';
 
 // ============ HIGH SCORE ============
 function loadHighScore() {
-  var best = 0;
-  try { best = parseInt(localStorage.getItem('goose_dima_highscore')) || 0; } catch(e) {}
-  if (window.GameHub && GameHub.getMyBestScore) {
-    var sdk = GameHub.getMyBestScore('goose-dima');
-    if (sdk && sdk > best) best = sdk;
+  highScore = 0;
+  // Load from Supabase async
+  if (window.GameHub && GameHub.getMyBestScoreAsync) {
+    GameHub.getMyBestScoreAsync('goose-dima').then(function(s) {
+      if (s && s > highScore) highScore = s;
+    });
   }
-  highScore = best;
 }
 
 function saveHighScore() {
-  try {
-    localStorage.setItem('goose_dima_highscore', highScore.toString());
-  } catch(e) {}
+  // No-op: scores submitted via GameHub.submitScore in gameOver()
 }
 
 // ============ RESIZE ============

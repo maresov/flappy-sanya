@@ -1,10 +1,9 @@
-// GameHub SDK — Supabase backend + localStorage fallback
+// GameHub SDK — Supabase-only backend
 (function () {
   var STORAGE_PLAYER = 'gamehub_player';
-  var STORAGE_SCORES = 'gamehub_scores';
 
   // ============ SUPABASE CLIENT ============
-  var sb = null; // Supabase client instance
+  var sb = null;
 
   function _initSupabase() {
     if (sb) return sb;
@@ -24,7 +23,7 @@
     return !!_initSupabase();
   }
 
-  // ============ PLAYER (local + Supabase sync) ============
+  // ============ PLAYER ============
 
   function getPlayer() {
     try {
@@ -41,12 +40,6 @@
     if (!nickname || typeof nickname !== 'string') return;
     var trimmed = nickname.trim();
     localStorage.setItem(STORAGE_PLAYER, JSON.stringify({ nickname: trimmed }));
-    // Sync to Supabase (fire and forget)
-    _syncPlayerToSupabase(trimmed);
-  }
-
-  function _syncPlayerToSupabase(nickname) {
-    // No-op: player creation is now handled by registerPlayer/verifyPin
   }
 
   // ============ PIN-BASED AUTH ============
@@ -67,7 +60,6 @@
   function registerPlayer(nickname) {
     var pin = (nickname === ADMIN_NICK) ? ADMIN_PIN : _generatePin();
     if (!_hasSupabase()) {
-      // Offline fallback: just set locally, no pin
       setPlayer(nickname);
       return Promise.resolve({pin: null, offline: true});
     }
@@ -100,62 +92,23 @@
     return !player || player.nickname === 'Аноним';
   }
 
-  var _sessionScores = [];
-
-  // ============ LOCAL STORAGE SCORES (fallback) ============
-
-  function _loadLocalScores() {
-    try {
-      var raw = localStorage.getItem(STORAGE_SCORES);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function _saveLocalScores(scores) {
-    localStorage.setItem(STORAGE_SCORES, JSON.stringify(scores));
-  }
-
   // ============ SUBMIT SCORE ============
 
   function submitScore(gameSlug, score) {
     var player = getPlayer();
-    if (!player) return;
-
-    var entry = {
-      gameSlug: gameSlug,
-      nickname: player.nickname,
-      score: score,
-      date: new Date().toISOString()
-    };
-
-    // Anonymous: session only
-    if (_isAnonymous()) {
-      _sessionScores.push(entry);
-      return;
-    }
-
-    // Always save locally (instant, offline-safe)
-    var localScores = _loadLocalScores();
-    localScores.push(entry);
-    _saveLocalScores(localScores);
-
-    // Also push to Supabase
-    if (_hasSupabase()) {
-      _submitToSupabase(player.nickname, gameSlug, score);
-    }
+    if (!player || _isAnonymous()) return;
+    if (!_hasSupabase()) return;
+    _submitToSupabase(player.nickname, gameSlug, score);
   }
 
   function _submitToSupabase(nickname, gameSlug, score) {
-    // First get player_id
     sb.from('players')
       .select('id')
       .eq('nickname', nickname)
       .single()
       .then(function (res) {
         if (res.error || !res.data) {
-          // Player not found in Supabase — create for score tracking
+          // Player not found — create for score tracking
           sb.from('players')
             .insert({ nickname: nickname })
             .select('id')
@@ -180,20 +133,12 @@
   // ============ LEADERBOARD ============
 
   function getLeaderboard(gameSlug, limit) {
-    limit = limit || 10;
-
-    // If Supabase available, return a promise-like that also works sync
-    // For backwards compat, we return local data immediately
-    // and provide an async version
-    return _getLocalLeaderboard(gameSlug, limit);
+    return []; // Sync version returns empty — use async
   }
 
-  // Async version — returns Promise with Supabase data
   function getLeaderboardAsync(gameSlug, limit) {
     limit = limit || 10;
-    if (!_hasSupabase()) {
-      return Promise.resolve(_getLocalLeaderboard(gameSlug, limit));
-    }
+    if (!_hasSupabase()) return Promise.resolve([]);
 
     return sb.from('leaderboard')
       .select('nickname, score, created_at')
@@ -201,65 +146,34 @@
       .order('score', { ascending: false })
       .limit(limit)
       .then(function (res) {
-        if (res.error || !res.data) {
-          return _getLocalLeaderboard(gameSlug, limit);
-        }
+        if (res.error || !res.data) return [];
         return res.data.map(function (row) {
           return { nickname: row.nickname, score: row.score, date: row.created_at };
         });
       })
       .catch(function () {
-        return _getLocalLeaderboard(gameSlug, limit);
+        return [];
       });
-  }
-
-  function _getLocalLeaderboard(gameSlug, limit) {
-    var scores = _getAllLocalScores().filter(function (s) { return s.gameSlug === gameSlug; });
-    var best = {};
-    scores.forEach(function (s) {
-      if (!best[s.nickname] || s.score > best[s.nickname].score) {
-        best[s.nickname] = s;
-      }
-    });
-    return Object.values(best)
-      .sort(function (a, b) { return b.score - a.score; })
-      .slice(0, limit)
-      .map(function (s) { return { nickname: s.nickname, score: s.score, date: s.date }; });
-  }
-
-  function _getAllLocalScores() {
-    if (_isAnonymous()) return _sessionScores;
-    return _loadLocalScores().filter(function (s) { return s.nickname !== 'Аноним'; });
   }
 
   // ============ MY SCORES ============
 
   function getMyScores(gameSlug) {
-    var player = getPlayer();
-    if (!player) return [];
-    return _getAllLocalScores()
-      .filter(function (s) { return s.gameSlug === gameSlug && s.nickname === player.nickname; })
-      .sort(function (a, b) { return b.score - a.score; });
+    return []; // Sync version returns empty — use async
   }
 
   function getAllMyScores() {
-    var player = getPlayer();
-    if (!player) return [];
-    return _getAllLocalScores()
-      .filter(function (s) { return s.nickname === player.nickname; })
-      .sort(function (a, b) { return b.score - a.score; });
+    return []; // Sync version returns empty — use async
   }
 
   function getMyBestScore(gameSlug) {
-    var scores = getMyScores(gameSlug);
-    return scores.length > 0 ? scores[0].score : null;
+    return null; // Sync version returns null — use async
   }
 
-  // Async version — checks Supabase for best score
   function getMyBestScoreAsync(gameSlug) {
     var player = getPlayer();
     if (!player || _isAnonymous() || !_hasSupabase()) {
-      return Promise.resolve(getMyBestScore(gameSlug));
+      return Promise.resolve(null);
     }
 
     return sb.from('scores')
@@ -269,15 +183,11 @@
       .order('score', { ascending: false })
       .limit(1)
       .then(function (res) {
-        if (res.error || !res.data || res.data.length === 0) {
-          return getMyBestScore(gameSlug);
-        }
-        var supaScore = res.data[0].score;
-        var localScore = getMyBestScore(gameSlug) || 0;
-        return Math.max(supaScore, localScore);
+        if (res.error || !res.data || res.data.length === 0) return null;
+        return res.data[0].score;
       })
       .catch(function () {
-        return getMyBestScore(gameSlug);
+        return null;
       });
   }
 
@@ -293,54 +203,6 @@
     }
   }
 
-  // ============ MIGRATE LOCAL DATA TO SUPABASE ============
-
-  function migrateToSupabase() {
-    if (!_hasSupabase() || _isAnonymous()) return Promise.resolve(false);
-
-    var player = getPlayer();
-    var localScores = _loadLocalScores().filter(function (s) {
-      return s.nickname === player.nickname;
-    });
-
-    if (localScores.length === 0) return Promise.resolve(true);
-
-    // Get player ID (don't upsert to avoid wiping PIN)
-    return sb.from('players')
-      .select('id')
-      .eq('nickname', player.nickname)
-      .single()
-      .then(function (res) {
-        if (res.error || !res.data) return false;
-        var playerId = res.data.id;
-
-        // Batch insert local scores (only best per game to avoid duplicates)
-        var bestPerGame = {};
-        localScores.forEach(function (s) {
-          if (!bestPerGame[s.gameSlug] || s.score > bestPerGame[s.gameSlug].score) {
-            bestPerGame[s.gameSlug] = s;
-          }
-        });
-
-        var rows = Object.values(bestPerGame).map(function (s) {
-          return { player_id: playerId, game_slug: s.gameSlug, score: s.score };
-        });
-
-        return sb.from('scores')
-          .insert(rows)
-          .then(function (res2) {
-            if (res2.error) {
-              console.warn('[GameHub] Migration partial error:', res2.error.message);
-            }
-            return true;
-          });
-      })
-      .catch(function (e) {
-        console.warn('[GameHub] Migration failed:', e);
-        return false;
-      });
-  }
-
   // ============ ADMIN ============
 
   var ADMIN_NICK = 'Админ';
@@ -351,7 +213,6 @@
     return player && player.nickname === ADMIN_NICK;
   }
 
-  // Clear all scores for a specific game (admin only)
   function adminClearScores(gameSlug) {
     if (!isAdmin()) return Promise.resolve({error: 'not_admin'});
     if (!_hasSupabase()) return Promise.resolve({error: 'no_supabase'});
@@ -361,9 +222,6 @@
       .eq('game_slug', gameSlug)
       .then(function(res) {
         if (res.error) return {error: res.error.message};
-        // Also clear local scores for this game
-        var local = _loadLocalScores().filter(function(s) { return s.gameSlug !== gameSlug; });
-        _saveLocalScores(local);
         return {ok: true};
       });
   }
@@ -384,7 +242,6 @@
     registerPlayer: registerPlayer,
     verifyPin: verifyPin,
     backToHub: backToHub,
-    migrateToSupabase: migrateToSupabase,
     isSupabaseReady: _hasSupabase,
     isAdmin: isAdmin,
     adminClearScores: adminClearScores
