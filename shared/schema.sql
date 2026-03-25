@@ -49,7 +49,9 @@ CREATE POLICY "Anyone can insert scores"
   ON scores FOR INSERT
   WITH CHECK (true);
 
--- Leaderboard view: best score per player per game
+-- Leaderboard view: best score per player per game.
+-- DISTINCT ON (PostgreSQL-specific) keeps one row per (game, player).
+-- ORDER BY score DESC inside ensures the kept row is the highest score.
 CREATE OR REPLACE VIEW leaderboard AS
 SELECT DISTINCT ON (s.game_slug, p.nickname)
   s.game_slug,

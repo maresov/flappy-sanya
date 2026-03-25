@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../../shared/supabase-config.js"></script>
 <script src="../../shared/hub-sdk.js"></script>
+<script src="../../shared/polyfills.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
@@ -32,17 +33,6 @@ canvas { display: block; image-rendering: auto; }
 <body>
 <canvas id="game"></canvas>
 <script>
-// roundRect polyfill for older Safari
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
-    if (typeof r === 'number') r = [r,r,r,r];
-    var tl=r[0]||0,tr=r[1]||0,br=r[2]||0,bl=r[3]||0;
-    this.moveTo(x+tl,y); this.lineTo(x+w-tr,y); this.quadraticCurveTo(x+w,y,x+w,y+tr);
-    this.lineTo(x+w,y+h-br); this.quadraticCurveTo(x+w,y+h,x+w-br,y+h);
-    this.lineTo(x+bl,y+h); this.quadraticCurveTo(x,y+h,x,y+h-bl);
-    this.lineTo(x,y+tl); this.quadraticCurveTo(x,y,x+tl,y); this.closePath();
-  };
-}
 // ============ RATE DATA (weekly, March 2022 — March 2026, CBR) ============
 const RATE_DATA = [
   {date:"2022-03-07",rate:105.81},{date:"2022-03-14",rate:115.20},{date:"2022-03-21",rate:104.68},{date:"2022-03-28",rate:93.71},
@@ -105,6 +95,8 @@ const GENERATED_TARGET_MIN = 75;
 const GENERATED_TARGET_MAX = 105;
 const GENERATED_TARGET_MID = (GENERATED_TARGET_MIN + GENERATED_TARGET_MAX) / 2; // 90
 
+// Lazily generates synthetic rate data beyond the 211 historical weeks.
+// Uses mean reversion + growing volatility so difficulty ramps up over time.
 function ensureRateData(idx) {
   while (idx >= RATE_DATA.length) {
     const prev = RATE_DATA[RATE_DATA.length - 1];
@@ -252,12 +244,9 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 
 // ============ NAVIGATION HELPERS ============
-function goToHub() {
+function goHub() {
   if (window.GameHub) GameHub.backToHub();
   else window.location.href = '../../';
-}
-function goToProfile() {
-  window.location.href = '../../#profile';
 }
 
 // ============ GAME STATE ============
@@ -275,8 +264,8 @@ let menuJoke = getRandomJoke(JOKES_START, 0, 0);
 let skinJoke = getRandomJoke(JOKES_SKIN[0], 0, 0);
 
 // ============ COORDINATE MAPPING ============
+// Maps rate to canvas Y. Inverted: high rate (expensive $) = top of screen.
 function rateToY(rate) {
-  // rate=RATE_MAX(122) -> y=10 (top), rate=RATE_MIN(72) -> y=CANVAS_H-10 (bottom)
   const t = (rate - RATE_MIN) / (RATE_MAX - RATE_MIN);
   return CANVAS_H - 10 - t * (CANVAS_H - 20);
 }
@@ -284,8 +273,9 @@ function rateToY(rate) {
 // Mean rate for amplification baseline
 const RATE_MEAN = RATE_DATA.reduce((s,d) => s + d.rate, 0) / RATE_DATA.length;
 
+// Exaggerates deviation from mean (not a simple scale!) — keeps mean constant,
+// doubles the distance from it. Makes the rate curve more dramatic for gameplay.
 function amplifyRate(rate) {
-  // Amplify deviation from mean so ground curve has dramatic swings
   return RATE_MEAN + (rate - RATE_MEAN) * RATE_AMPLIFY;
 }
 
@@ -1313,7 +1303,7 @@ function drawMenu() {
     ctx.fillStyle = '#0a1628';
     ctx.font = 'bold 28px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('СТАРТ', cx, startBtnY + btnH * 0.65);
+    ctx.fillText('ИГРАТЬ', cx, startBtnY + btnH * 0.65);
 
     // Hub button — below start, same width
     ctx.fillStyle = '#546e7a';
@@ -1329,6 +1319,8 @@ function drawMenu() {
     ctx.fillText('Тап — прыгать  |  ⏸ — пауза', cx, hubBtnY + hubBtnH + 20);
     ctx.textAlign = 'left';
 
+    // Button hit-boxes stored during draw, checked in handleClick().
+    // Recalculated every frame because layout depends on dynamic content.
     window._menuBtns = {
       skins: window._skinBtns,
       start: { x: cx - btnW / 2, y: startBtnY, w: btnW, h: btnH },
@@ -1414,7 +1406,7 @@ function drawMenu() {
     ctx.fillStyle = '#0a1628';
     ctx.font = 'bold 24px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('СТАРТ', cx, btnY + btnH * 0.65);
+    ctx.fillText('ИГРАТЬ', cx, btnY + btnH * 0.65);
 
     // Hub button — below start, same width
     const hubBtnY = btnY + btnH + 10;
@@ -1660,7 +1652,9 @@ function endGame() {
   state = 'gameover';
 }
 
-const START_WEEK = 75; // Start at week 75 (~101₽, Aug 2023) — after initial spike/crash
+// Skip chaotic 2022 spike/crash — game starts at calmer Aug 2023 (~101₽).
+// Score = getCurrentDay() - START_WEEK, so week 75 = score 0.
+const START_WEEK = 75;
 
 function startGame() {
   state = 'playing';
@@ -1736,7 +1730,7 @@ function handleClick(clientX, clientY) {
       }
     }
     if (hitTest(mx, my, window._menuBtns.start)) { startGame(); return; }
-    if (window._menuBtns.hub && hitTest(mx, my, window._menuBtns.hub)) { goToHub(); return; }
+    if (window._menuBtns.hub && hitTest(mx, my, window._menuBtns.hub)) { goHub(); return; }
   }
   if (state === 'playing') {
     if (window._pauseBtn && hitTest(mx, my, window._pauseBtn)) { state = 'paused'; return; }
@@ -1745,12 +1739,12 @@ function handleClick(clientX, clientY) {
   if (state === 'paused' && window._pauseBtns) {
     if (hitTest(mx, my, window._pauseBtns.cont)) { state = 'playing'; return; }
     if (hitTest(mx, my, window._pauseBtns.exit)) { menuJoke = getRandomJoke(JOKES_START,0,0); skinJoke = getRandomJoke(JOKES_SKIN[selectedSkin],0,0); state = 'menu'; return; }
-    if (hitTest(mx, my, window._pauseBtns.hub)) { goToHub(); return; }
+    if (hitTest(mx, my, window._pauseBtns.hub)) { goHub(); return; }
   }
   if (state === 'gameover' && window._goBtns) {
     if (hitTest(mx, my, window._goBtns.retry)) { startGame(); return; }
     if (hitTest(mx, my, window._goBtns.menu)) { menuJoke = getRandomJoke(JOKES_START,0,0); skinJoke = getRandomJoke(JOKES_SKIN[selectedSkin],0,0); state = 'menu'; return; }
-    if (window._goBtns.hub && hitTest(mx, my, window._goBtns.hub)) { goToHub(); return; }
+    if (window._goBtns.hub && hitTest(mx, my, window._goBtns.hub)) { goHub(); return; }
   }
 }
 

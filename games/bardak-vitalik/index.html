@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<!-- Unlike flappy-sanya and goose-dima (canvas-only), this game uses HTML overlays
+     for menus/pause/gameover (.overlay divs) and canvas only for live gameplay.
+     showScreen(id) toggles between them. -->
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -74,18 +77,8 @@ canvas{display:block;width:100%;height:100%}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../../shared/supabase-config.js"></script>
 <script src="../../shared/hub-sdk.js"></script>
+<script src="../../shared/polyfills.js"></script>
 <script>
-// roundRect polyfill for older Safari
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
-    if (typeof r === 'number') r = [r,r,r,r];
-    var tl=r[0]||0,tr=r[1]||0,br=r[2]||0,bl=r[3]||0;
-    this.moveTo(x+tl,y); this.lineTo(x+w-tr,y); this.quadraticCurveTo(x+w,y,x+w,y+tr);
-    this.lineTo(x+w,y+h-br); this.quadraticCurveTo(x+w,y+h,x+w-br,y+h);
-    this.lineTo(x+bl,y+h); this.quadraticCurveTo(x,y+h,x,y+h-bl);
-    this.lineTo(x,y+tl); this.quadraticCurveTo(x,y,x+tl,y); this.closePath();
-  };
-}
 // ===== SKINS =====
 const VITALIK_SKINS = ['Со шваброй', 'С кальяном', 'Спит'];
 const SKIN_COLORS = ['#00e676', '#ffa726', '#ffd700'];
@@ -143,8 +136,9 @@ function drawVitalik(cvs, skin) {
   var cx = w / 2, cy = h / 2 + 4;
   var r = 16;
 
-  // Body (gray hoodie)
-  c.fillStyle = '#78909c';
+  // Body (hoodie color per skin)
+  var hoodieColors = ['#78909c', '#e65100', '#6a1b9a'];
+  c.fillStyle = hoodieColors[skin] || '#78909c';
   c.beginPath();
   c.ellipse(cx, cy + 8, 14, 16, 0, 0, Math.PI * 2);
   c.fill();
@@ -316,7 +310,7 @@ function renderSkinCards() {
 }
 
 // ===== CONSTANTS =====
-const TABLE_MAX = 10;
+const TABLE_MAX = 5;
 const FREEZE_DURATION = 5000;
 const BONUS_INTERVAL_MIN = 12000;
 const BONUS_INTERVAL_MAX = 22000;
@@ -387,7 +381,7 @@ let W, H, dpr;
 let state = 'start'; // start, playing, paused, gameover, wave
 let score = 0, highScore = 0, tablePile = 0;
 let dishes = [], bonuses = [], particles = [], tableDishes = [];
-let baseSpeed = 1, spawnInterval = 1800, spawnTimer = 0;
+let baseSpeed = 1.5, spawnInterval = 1800, spawnTimer = 0;
 let freezeEnd = 0, nextBonusTime = 0;
 let lastTime = 0, gameTime = 0;
 let gameElapsed = 0, speedMultiplier = 1, lastSpeedTick = 0;
@@ -469,7 +463,6 @@ function showScreen(id) {
 }
 
 function goHub() { if (window.GameHub) window.GameHub.backToHub(); else window.location.href = '../../'; }
-function goProfile() { window.location.href = '../../#profile'; }
 function goMenu() { if (waveTimeout) { clearTimeout(waveTimeout); waveTimeout = null; } state = 'start'; showStart(); }
 
 // ===== SCREENS =====
@@ -497,7 +490,7 @@ function startGame() {
   if (waveTimeout) { clearTimeout(waveTimeout); waveTimeout = null; }
   score = 0; tablePile = 0; gameTime = 0;
   dishes = []; bonuses = []; particles = []; tableDishes = [];
-  baseSpeed = 1; spawnInterval = 1800; spawnTimer = 0;
+  baseSpeed = 1.5; spawnInterval = 1800; spawnTimer = 0;
   freezeEnd = 0; nextWaveAt = WAVE_THRESHOLD;
   gameElapsed = 0; speedMultiplier = 1; lastSpeedTick = 0; speedFlashTimer = 0;
   waveActive = false; waveTimer = 0;
@@ -681,6 +674,8 @@ document.addEventListener('keydown', e => {
 });
 
 // ===== WAVE =====
+// Wave = 2.5s joke pause, then burst of dishes. The timeout fires only if
+// state is still 'wave' — dying or pausing during the pause cancels the burst.
 function triggerWave() {
   waveActive = true;
   waveTimer = 2.5;
@@ -721,7 +716,7 @@ function loop(ts) {
   let frozen = performance.now() < freezeEnd;
 
   // Difficulty ramp
-  baseSpeed = 1 + gameTime / 40;
+  baseSpeed = 1.5 + gameTime / 40;
   spawnInterval = Math.max(500, 1800 - gameTime * 8);
 
   // Spawn dishes
@@ -984,7 +979,7 @@ function draw(frozen) {
 
   // Table meter
   let meterY = hudY + fontSize + 8;
-  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffa726' : '#00e676';
+  ctx.fillStyle = tablePile >= 4 ? '#ff1744' : tablePile >= 3 ? '#ffa726' : '#00e676';
   ctx.textAlign = 'left';
   ctx.fillText('Посудомойка: ' + tablePile + '/' + TABLE_MAX, 20, meterY);
 
@@ -993,7 +988,7 @@ function draw(frozen) {
   ctx.fillStyle = '#1a2a44';
   ctx.fillRect(barX, barY, barW, barH);
   let fill = (tablePile / TABLE_MAX) * barW;
-  ctx.fillStyle = tablePile >= 7 ? '#ff1744' : tablePile >= 4 ? '#ffa726' : '#00e676';
+  ctx.fillStyle = tablePile >= 4 ? '#ff1744' : tablePile >= 3 ? '#ffa726' : '#00e676';
   ctx.fillRect(barX, barY, fill, barH);
 
   // Freeze timer

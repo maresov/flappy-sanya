@@ -101,6 +101,8 @@
     _submitToSupabase(player.nickname, gameSlug, score);
   }
 
+  // Auto-creates player record if not found (e.g. registered offline, then plays online).
+  // Created without PIN — such players can't log in, only have scores tracked.
   function _submitToSupabase(nickname, gameSlug, score) {
     sb.from('players')
       .select('id')
@@ -108,7 +110,6 @@
       .single()
       .then(function (res) {
         if (res.error || !res.data) {
-          // Player not found — create for score tracking
           sb.from('players')
             .insert({ nickname: nickname })
             .select('id')
@@ -132,8 +133,10 @@
 
   // ============ LEADERBOARD ============
 
+  // Sync stub — always returns []. Kept as offline fallback in hub's _renderLeaderboardLocal.
+  // Real data comes from getLeaderboardAsync.
   function getLeaderboard(gameSlug, limit) {
-    return []; // Sync version returns empty — use async
+    return [];
   }
 
   function getLeaderboardAsync(gameSlug, limit) {
@@ -157,18 +160,6 @@
   }
 
   // ============ MY SCORES ============
-
-  function getMyScores(gameSlug) {
-    return []; // Sync version returns empty — use async
-  }
-
-  function getAllMyScores() {
-    return []; // Sync version returns empty — use async
-  }
-
-  function getMyBestScore(gameSlug) {
-    return null; // Sync version returns null — use async
-  }
 
   function getMyBestScoreAsync(gameSlug) {
     var player = getPlayer();
@@ -234,9 +225,6 @@
     submitScore: submitScore,
     getLeaderboard: getLeaderboard,
     getLeaderboardAsync: getLeaderboardAsync,
-    getMyScores: getMyScores,
-    getAllMyScores: getAllMyScores,
-    getMyBestScore: getMyBestScore,
     getMyBestScoreAsync: getMyBestScoreAsync,
     checkNickname: checkNickname,
     registerPlayer: registerPlayer,

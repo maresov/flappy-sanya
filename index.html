@@ -378,8 +378,6 @@ const profileNickname = document.getElementById('profile-nickname');
 const profileStats = document.getElementById('profile-stats');
 const profileScores = document.getElementById('profile-scores');
 const profileNickRow = document.getElementById('profile-nick-row');
-const profileNickEditBtn = document.getElementById('profile-nick-edit-btn');
-
 // ============ ROUTING ============
 function showLogin() {
   loginScreen.classList.add('active');
@@ -479,7 +477,7 @@ async function doLogin() {
   if (!GameHub.checkNickname || !GameHub.registerPlayer || !GameHub.verifyPin) {
     GameHub.setPlayer(nick);
     showHub();
-    if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
+
     return;
   }
 
@@ -510,7 +508,7 @@ async function doLogin() {
     // Offline / Supabase unavailable — fall back to simple login
     GameHub.setPlayer(nick);
     showHub();
-    if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
+
   }
 }
 
@@ -524,7 +522,7 @@ async function doPinVerify() {
       GameHub.setPlayer(_pendingNick);
       hideAllScreens();
       showHub();
-      if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
+  
     } else {
       pinError.textContent = 'Неверный код, попробуйте ещё';
       pinError.style.display = 'block';
@@ -714,6 +712,8 @@ backToCatalog.addEventListener('click', function() {
 });
 
 // ============ HASH ROUTING ============
+// Guard: showProfile/showCatalog set location.hash which fires hashchange.
+// Without this flag, hashchange handler would re-enter → infinite loop.
 var _handlingHash = false;
 
 function handleHash() {

@@ -31,18 +31,8 @@ canvas { display: block; }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../../shared/supabase-config.js"></script>
 <script src="../../shared/hub-sdk.js"></script>
+<script src="../../shared/polyfills.js"></script>
 <script>
-// roundRect polyfill for older Safari
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
-    if (typeof r === 'number') r = [r,r,r,r];
-    var tl=r[0]||0,tr=r[1]||0,br=r[2]||0,bl=r[3]||0;
-    this.moveTo(x+tl,y); this.lineTo(x+w-tr,y); this.quadraticCurveTo(x+w,y,x+w,y+tr);
-    this.lineTo(x+w,y+h-br); this.quadraticCurveTo(x+w,y+h,x+w-br,y+h);
-    this.lineTo(x+bl,y+h); this.quadraticCurveTo(x,y+h,x,y+h-bl);
-    this.lineTo(x,y+tl); this.quadraticCurveTo(x,y,x+tl,y); this.closePath();
-  };
-}
 // ============ ГУСИ vs ДИМА ============
 
 const canvas = document.getElementById('game');
@@ -211,10 +201,6 @@ function loadHighScore() {
   }
 }
 
-function saveHighScore() {
-  // No-op: scores submitted via GameHub.submitScore in gameOver()
-}
-
 // ============ RESIZE ============
 function resize() {
   W = window.innerWidth;
@@ -345,8 +331,9 @@ function drawDima(x, y) {
   ctx.save();
   ctx.translate(x, y);
 
-  // Body (blue shirt)
-  ctx.fillStyle = '#3366cc';
+  // Body (shirt color per skin)
+  const shirtColors = ['#3366cc', '#2e7d32', '#c62828'];
+  ctx.fillStyle = shirtColors[selectedSkin] || '#3366cc';
   ctx.beginPath();
   ctx.ellipse(0, r * 0.4, r * 0.6, r * 0.7, 0, 0, Math.PI * 2);
   ctx.fill();
@@ -1018,7 +1005,6 @@ function gameOver() {
   currentQuip = DIMA_QUIPS[Math.floor(Math.random() * DIMA_QUIPS.length)];
   if (score > highScore) {
     highScore = score;
-    saveHighScore();
   }
   // Submit to hub
   if (window.GameHub?.submitScore) {
@@ -1089,7 +1075,8 @@ function update(dt) {
   for (let i = 0; i < geese.length; i++) {
     const g = geese[i];
 
-    // Trajectory effects
+    // Trajectory effects: wobble/drift perpendicular to velocity.
+    // perpX/perpY = 90° rotation of (vx,vy). Sine wobbles position; arc wobbles velocity.
     if (g.trajectory === 'sine') {
       g.wobblePhase += 0.08;
       const wobbleAmount = Math.sin(g.wobblePhase) * 3;

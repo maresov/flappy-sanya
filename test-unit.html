@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Юнит-тесты — без Supabase</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a1628;color:#e0e0e0;font-family:monospace;padding:20px;max-width:700px;margin:0 auto}
+h1{color:#00e676;margin-bottom:8px;font-size:24px}
+h2{color:#a0c4ff;margin:20px 0 8px;font-size:16px}
+.test{padding:12px 16px;margin:8px 0;border-radius:8px;background:rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px}
+.test .icon{font-size:20px;min-width:28px;text-align:center}
+.test .name{flex:1}
+.test .detail{font-size:12px;color:#a0c4ff;margin-top:4px}
+.pass{border-left:4px solid #00e676}
+.fail{border-left:4px solid #ff1744}
+.summary{margin-top:24px;padding:16px;border-radius:12px;font-size:18px;font-weight:bold;text-align:center}
+.summary.ok{background:rgba(0,230,118,0.15);color:#00e676}
+.summary.bad{background:rgba(255,23,68,0.15);color:#ff1744}
+.btn{display:inline-block;margin-top:20px;padding:14px 32px;background:#00e676;color:#0a1628;border:none;border-radius:12px;font-family:monospace;font-size:16px;font-weight:bold;cursor:pointer}
+.btn:active{transform:scale(0.95)}
+</style>
+</head>
+<body>
+<h1>Юнит-тесты (без Supabase)</h1>
+<div id="results"></div>
+<div id="summary"></div>
+<button class="btn" onclick="runTests()">ЗАПУСТИТЬ</button>
+
+<!-- Load SDK without Supabase — all async calls should gracefully return defaults -->
+<script src="shared/hub-sdk.js"></script>
+<script src="shared/polyfills.js"></script>
+<canvas id="testCanvas" width="100" height="100" style="display:none"></canvas>
+
+<script>
+// ============ TEST HARNESS ============
+var results = document.getElementById('results');
+var summaryDiv = document.getElementById('summary');
+var passed = 0, failed = 0;
+
+function log(name, ok, detail) {
+  var div = document.createElement('div');
+  div.className = 'test ' + (ok ? 'pass' : 'fail');
+  div.innerHTML = '<div class="icon">' + (ok ? '\u2705' : '\u274c') + '</div><div><div class="name">' + name + '</div>' + (detail ? '<div class="detail">' + detail + '</div>' : '') + '</div>';
+  results.appendChild(div);
+  if (ok) passed++; else failed++;
+}
+
+function section(title) {
+  var h = document.createElement('h2');
+  h.textContent = title;
+  results.appendChild(h);
+}
+
+function showSummary() {
+  var total = passed + failed;
+  summaryDiv.className = 'summary ' + (failed === 0 ? 'ok' : 'bad');
+  summaryDiv.textContent = passed + '/' + total + ' тестов пройдено' + (failed === 0 ? ' — ВСЁ ОК!' : ' — ЕСТЬ ОШИБКИ');
+}
+
+// ============ GAME FUNCTIONS (extracted for testing) ============
+var RATE_MIN = 48, RATE_MAX = 125, RATE_AMPLIFY = 2.0;
+var CANVAS_H_TEST = 500;
+
+function rateToY(rate) {
+  var t = (rate - RATE_MIN) / (RATE_MAX - RATE_MIN);
+  return CANVAS_H_TEST - 10 - t * (CANVAS_H_TEST - 20);
+}
+
+// Sample data for mean calculation
+var SAMPLE_RATES = [105.81, 83.59, 57.78, 91.59, 96.65, 90.63, 88.69, 84.95, 99.94, 83.87];
+var RATE_MEAN = SAMPLE_RATES.reduce(function(s, r) { return s + r; }, 0) / SAMPLE_RATES.length;
+
+function amplifyRate(rate) {
+  return RATE_MEAN + (rate - RATE_MEAN) * RATE_AMPLIFY;
+}
+
+function getRandomJoke(arr, score, rate) {
+  var joke = arr[Math.floor(Math.random() * arr.length)];
+  return joke.replace('{DAYS}', score).replace('{RATE}', rate ? rate.toFixed(0) : '??');
+}
+
+// Minimal RATE_DATA for ensureRateData test
+var TEST_RATE_DATA = [
+  {date:"2026-03-16",rate:81.05},
+  {date:"2026-03-23",rate:81.88}
+];
+var GENERATED_TARGET_MIN = 75, GENERATED_TARGET_MAX = 105;
+var GENERATED_TARGET_MID = (GENERATED_TARGET_MIN + GENERATED_TARGET_MAX) / 2;
+
+function ensureRateData(idx) {
+  while (idx >= TEST_RATE_DATA.length) {
+    var prev = TEST_RATE_DATA[TEST_RATE_DATA.length - 1];
+    var d = new Date(prev.date);
+    d.setDate(d.getDate() + 7);
+    var dateStr = d.toISOString().slice(0, 10);
+    var genCount = TEST_RATE_DATA.length - 2;
+    var transition = Math.min(genCount / 20, 1);
+    var meanRevertStrength = 0.05 * transition;
+    var drift = (GENERATED_TARGET_MID - prev.rate) * meanRevertStrength;
+    var volatility = 1 + 3 * transition;
+    var noise = (Math.random() - 0.5) * 2 * volatility;
+    var newRate = prev.rate + drift + noise;
+    if (newRate < GENERATED_TARGET_MIN) newRate = GENERATED_TARGET_MIN + Math.random() * 2;
+    if (newRate > GENERATED_TARGET_MAX) newRate = GENERATED_TARGET_MAX - Math.random() * 2;
+    newRate = Math.round(newRate * 100) / 100;
+    TEST_RATE_DATA.push({ date: dateStr, rate: newRate });
+  }
+}
+
+// ============ TEST RUNNER ============
+async function runTests() {
+  results.innerHTML = '';
+  summaryDiv.innerHTML = '';
+  passed = 0;
+  failed = 0;
+
+  // Save & clear localStorage to isolate tests
+  var savedPlayer = localStorage.getItem('gamehub_player');
+  localStorage.removeItem('gamehub_player');
+
+  // ---- hub-sdk.js ----
+  section('GameHub SDK');
+
+  // 1. getPlayer returns null when empty
+  var p = GameHub.getPlayer();
+  log('getPlayer() = null (пусто)', p === null, 'Получили: ' + JSON.stringify(p));
+
+  // 2. setPlayer stores nickname
+  GameHub.setPlayer('Тестик');
+  var p2 = GameHub.getPlayer();
+  log('setPlayer + getPlayer round-trip', p2 && p2.nickname === 'Тестик',
+    'Ожидали: {nickname:"Тестик"}, получили: ' + JSON.stringify(p2));
+
+  // 3. setPlayer trims whitespace
+  GameHub.setPlayer('  Пробелы  ');
+  var p3 = GameHub.getPlayer();
+  log('setPlayer обрезает пробелы', p3 && p3.nickname === 'Пробелы',
+    'Ожидали: "Пробелы", получили: "' + (p3 ? p3.nickname : null) + '"');
+
+  // 4. setPlayer ignores non-strings
+  GameHub.setPlayer('Before');
+  GameHub.setPlayer(null);
+  GameHub.setPlayer(undefined);
+  GameHub.setPlayer(123);
+  var p4 = GameHub.getPlayer();
+  log('setPlayer игнорирует не-строки', p4 && p4.nickname === 'Before',
+    'Ожидали: "Before", получили: "' + (p4 ? p4.nickname : null) + '"');
+
+  // 5. getLeaderboard sync stub returns []
+  var lb = GameHub.getLeaderboard('flappy-sanya', 10);
+  log('getLeaderboard() = [] (заглушка)', Array.isArray(lb) && lb.length === 0,
+    'Получили: ' + JSON.stringify(lb));
+
+  // 6. isAdmin — true for Админ
+  GameHub.setPlayer('Админ');
+  log('isAdmin() = true для "Админ"', GameHub.isAdmin() === true,
+    'isAdmin() = ' + GameHub.isAdmin());
+
+  // 7. isAdmin — false for others
+  GameHub.setPlayer('Вася');
+  log('isAdmin() = false для "Вася"', GameHub.isAdmin() === false,
+    'isAdmin() = ' + GameHub.isAdmin());
+
+  // 8. submitScore no-op for anonymous (no crash)
+  GameHub.setPlayer('Аноним');
+  var noError = true;
+  try { GameHub.submitScore('test-game', 100); } catch(e) { noError = false; }
+  log('submitScore не падает для Аноним', noError, 'Без ошибки: ' + noError);
+
+  // 9. submitScore no-op when no player
+  localStorage.removeItem('gamehub_player');
+  noError = true;
+  try { GameHub.submitScore('test-game', 100); } catch(e) { noError = false; }
+  log('submitScore не падает без игрока', noError, 'Без ошибки: ' + noError);
+
+  // 10. getLeaderboardAsync returns [] without Supabase
+  var lbAsync = await GameHub.getLeaderboardAsync('flappy-sanya', 10);
+  log('getLeaderboardAsync = [] (нет Supabase)', Array.isArray(lbAsync) && lbAsync.length === 0,
+    'Получили: ' + JSON.stringify(lbAsync));
+
+  // 11. getMyBestScoreAsync returns null without Supabase
+  GameHub.setPlayer('Тестик');
+  var best = await GameHub.getMyBestScoreAsync('flappy-sanya');
+  log('getMyBestScoreAsync = null (нет Supabase)', best === null,
+    'Получили: ' + JSON.stringify(best));
+
+  // ---- polyfills.js ----
+  section('Polyfills');
+
+  // 12. roundRect polyfill exists
+  var ctx = document.getElementById('testCanvas').getContext('2d');
+  log('roundRect доступен на canvas', typeof ctx.roundRect === 'function',
+    'typeof: ' + typeof ctx.roundRect);
+
+  // 13. roundRect doesn't throw
+  var rrOk = true;
+  try {
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 50, 30, 5);
+    ctx.closePath();
+  } catch(e) { rrOk = false; }
+  log('roundRect(x,y,w,h,r) не падает', rrOk, 'Scalar radius');
+
+  // 14. roundRect with array radius
+  rrOk = true;
+  try {
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 50, 30, [5, 5, 5, 5]);
+    ctx.closePath();
+  } catch(e) { rrOk = false; }
+  log('roundRect с массивом радиусов не падает', rrOk, 'Array [5,5,5,5]');
+
+  // ---- flappy-sanya game functions ----
+  section('Flappy Саня: игровая логика');
+
+  // 15. rateToY: high rate = low Y (top of screen)
+  var yHigh = rateToY(120);
+  var yLow = rateToY(50);
+  log('rateToY: высокий курс → верх экрана', yHigh < yLow,
+    'rate=120 → y=' + yHigh.toFixed(1) + ', rate=50 → y=' + yLow.toFixed(1));
+
+  // 16. rateToY: boundary values
+  var yMax = rateToY(RATE_MAX);
+  var yMin = rateToY(RATE_MIN);
+  log('rateToY: границы [10, ' + (CANVAS_H_TEST - 10) + ']',
+    Math.abs(yMax - 10) < 1 && Math.abs(yMin - (CANVAS_H_TEST - 10)) < 1,
+    'RATE_MAX→' + yMax.toFixed(1) + ', RATE_MIN→' + yMin.toFixed(1));
+
+  // 17. amplifyRate preserves mean
+  var ampMean = amplifyRate(RATE_MEAN);
+  log('amplifyRate сохраняет среднее', Math.abs(ampMean - RATE_MEAN) < 0.01,
+    'mean=' + RATE_MEAN.toFixed(2) + ', amplify(mean)=' + ampMean.toFixed(2));
+
+  // 18. amplifyRate doubles deviation
+  var testRate = RATE_MEAN + 10;
+  var ampRate = amplifyRate(testRate);
+  var expectedDev = (testRate - RATE_MEAN) * RATE_AMPLIFY;
+  log('amplifyRate удваивает отклонение', Math.abs((ampRate - RATE_MEAN) - expectedDev) < 0.01,
+    'Вход: ' + testRate.toFixed(1) + ', выход: ' + ampRate.toFixed(2) + ', отклонение: ' + (ampRate - RATE_MEAN).toFixed(2));
+
+  // 19. ensureRateData extends array
+  var lenBefore = TEST_RATE_DATA.length;
+  ensureRateData(12);
+  log('ensureRateData расширяет массив', TEST_RATE_DATA.length >= 13,
+    'Было: ' + lenBefore + ', стало: ' + TEST_RATE_DATA.length);
+
+  // 20. ensureRateData: generated rates within bounds
+  var allInBounds = TEST_RATE_DATA.slice(2).every(function(d) {
+    return d.rate >= GENERATED_TARGET_MIN && d.rate <= GENERATED_TARGET_MAX;
+  });
+  log('ensureRateData: курсы в пределах [' + GENERATED_TARGET_MIN + ', ' + GENERATED_TARGET_MAX + ']',
+    allInBounds, 'Сгенерировано: ' + TEST_RATE_DATA.slice(2).map(function(d){ return d.rate; }).join(', '));
+
+  // 21. ensureRateData: dates are sequential weeks
+  var datesOk = true;
+  for (var i = 1; i < TEST_RATE_DATA.length; i++) {
+    var d1 = new Date(TEST_RATE_DATA[i-1].date);
+    var d2 = new Date(TEST_RATE_DATA[i].date);
+    var diffDays = (d2 - d1) / (1000 * 60 * 60 * 24);
+    if (diffDays !== 7) { datesOk = false; break; }
+  }
+  log('ensureRateData: даты через 7 дней', datesOk,
+    'Первые 4 даты: ' + TEST_RATE_DATA.slice(0, 4).map(function(d){ return d.date; }).join(', '));
+
+  // 22. getRandomJoke returns string from array
+  var jokes = ['Шутка раз', 'Шутка два', 'Шутка три'];
+  var joke = getRandomJoke(jokes, 5, 90);
+  log('getRandomJoke возвращает строку из массива', jokes.indexOf(joke) >= 0,
+    'Получили: "' + joke + '"');
+
+  // 23. getRandomJoke replaces placeholders
+  var templJokes = ['Прошёл {DAYS} дн. при курсе {RATE}₽'];
+  var filled = getRandomJoke(templJokes, 42, 95.5);
+  log('getRandomJoke заменяет {DAYS} и {RATE}', filled === 'Прошёл 42 дн. при курсе 96₽',
+    'Получили: "' + filled + '"');
+
+  // ---- Cleanup ----
+  localStorage.removeItem('gamehub_player');
+  if (savedPlayer) localStorage.setItem('gamehub_player', savedPlayer);
+
+  showSummary();
+}
+</script>
+</body>
+</html>
