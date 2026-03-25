@@ -1,0 +1,399 @@
+/* GameHub — Dark Theme */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-primary: #0a0a2e;
+  --bg-card: rgba(255,255,255,0.06);
+  --bg-card-hover: rgba(255,255,255,0.12);
+  --text-primary: #ffffff;
+  --text-secondary: #a0c4ff;
+  --text-muted: rgba(255,255,255,0.45);
+  --accent-green: #00e676;
+  --accent-green-dark: #00c853;
+  --accent-orange: #ffa726;
+  --accent-gold: #ffd700;
+  --accent-red: #ff1744;
+  --border-subtle: rgba(255,255,255,0.1);
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+}
+
+html, body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ---- Hub Layout ---- */
+.hub-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+/* ---- Header ---- */
+.hub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 28px;
+}
+
+.hub-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.hub-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hub-nickname {
+  color: var(--accent-green);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hub-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.hub-link:hover {
+  color: var(--accent-green);
+}
+
+/* ---- Screens ---- */
+.hub-screen {
+  display: none;
+}
+
+.hub-screen.active {
+  display: block;
+}
+
+/* ---- Login Screen ---- */
+.login-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+}
+
+.login-screen.active {
+  display: flex;
+}
+
+.login-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 36px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.login-form input[type="text"] {
+  background: rgba(255,255,255,0.08);
+  border: 2px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 18px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.login-form input[type="text"]::placeholder {
+  color: var(--text-muted);
+}
+
+.login-form input[type="text"]:focus {
+  border-color: var(--accent-green);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: var(--accent-green);
+  color: #0a1628;
+}
+
+.btn-primary:hover {
+  background: var(--accent-green-dark);
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.btn-small {
+  padding: 8px 18px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+/* ---- Game Cards ---- */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.game-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.game-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-green);
+  transform: translateY(-2px);
+}
+
+.game-card-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.game-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.game-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.game-card-score {
+  font-size: 12px;
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+/* ---- Section Titles ---- */
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+/* ---- Leaderboard Table ---- */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.leaderboard-table th {
+  text-align: left;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.leaderboard-table td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.leaderboard-table tr:hover td {
+  background: rgba(255,255,255,0.03);
+}
+
+.leaderboard-rank {
+  color: var(--accent-gold);
+  font-weight: 700;
+  width: 36px;
+}
+
+.leaderboard-name {
+  color: var(--text-primary);
+}
+
+.leaderboard-score {
+  color: var(--accent-green);
+  font-weight: 600;
+  text-align: right;
+}
+
+.leaderboard-date {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+/* ---- Profile ---- */
+.profile-section {
+  margin-bottom: 28px;
+}
+
+.profile-nickname {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent-green);
+  margin-bottom: 6px;
+}
+
+.profile-stat {
+  display: inline-block;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-right: 12px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.profile-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+.profile-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.profile-scores-list {
+  list-style: none;
+  margin-top: 12px;
+}
+
+.profile-scores-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.profile-scores-list li .game-name {
+  font-weight: 600;
+}
+
+.profile-scores-list li .best-score {
+  color: var(--accent-green);
+  font-weight: 700;
+}
+
+/* ---- Back Link ---- */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--accent-green);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  .hub-container {
+    padding: 16px 12px 40px;
+  }
+
+  .hub-header h1 {
+    font-size: 17px;
+  }
+
+  .login-title {
+    font-size: 28px;
+  }
+
+  .games-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-card {
+    padding: 18px;
+  }
+
+  .profile-stat {
+    padding: 12px 16px;
+  }
+}
