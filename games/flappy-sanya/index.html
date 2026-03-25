@@ -1172,9 +1172,11 @@ function drawMenu() {
     const bottomPad = 16;
     const hintH = 18;
 
-    // Pin button + hint to bottom
+    // Pin two buttons + hint to bottom
+    const hubBtnH = 48;
     const hintY = CANVAS_H - bottomPad;
-    const startBtnY = hintY - hintH - 8 - btnH;
+    const hubBtnY = hintY - hintH - 8 - hubBtnH;
+    const startBtnY = hubBtnY - 10 - btnH;
 
     // Available space for content above button
     const contentBottom = startBtnY - 12;
@@ -1281,12 +1283,10 @@ function drawMenu() {
     ctx.fillText('СТАРТ', cx, startBtnY + btnH * 0.65);
 
     // Hub button — below start, same width
-    const hubBtnY = startBtnY + btnH + 12;
-    const hubBtnH = btnH;
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, hubBtnY, btnW, hubBtnH, 14); ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 22px monospace';
+    ctx.font = 'bold 20px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('← ХАБ', cx, hubBtnY + hubBtnH * 0.65);
 
