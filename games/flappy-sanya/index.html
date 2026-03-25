@@ -8,13 +8,13 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
-  background: #0a0a2e;
+  background: #0a1628;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   min-height: -webkit-fill-available;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: monospace;
   overflow: hidden;
   touch-action: manipulation;
   -webkit-touch-callout: none;
@@ -1369,7 +1369,7 @@ function drawMenu() {
       x: cx - totalW / 2 + i * (bw + gap), y: skinStartY, w: bw, h: bh
     }));
 
-    ctx.fillStyle = 'rgba(255,200,100,0.7)';
+    ctx.fillStyle = '#ffa726';
     ctx.font = '10px monospace';
     const sjY = skinEndY + 14;
     const sjLines = drawWrappedText(skinJoke, cx, sjY, CANVAS_W * 0.9, 13);
@@ -1434,7 +1434,7 @@ function drawPauseMenu() {
   ctx.fillText('ПРОДОЛЖИТЬ', cx, btnY1 + btnH * 0.63);
 
   // МЕНЮ ИГРЫ
-  ctx.fillStyle = '#ff5722';
+  ctx.fillStyle = '#546e7a';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#fff';
   ctx.font = `bold ${P ? 18 : 16}px monospace`;
@@ -1584,26 +1584,26 @@ function drawGameOver() {
       ctx.fillText(`Рекорд: ${highScore} нед.`, cx, afterSq);
     }
 
-    const btnW = 200, btnH = 45;
+    const btnW = 200, btnH = 48;
     const btnY1 = CANVAS_H * 0.63, btnY2 = btnY1 + btnH + 10, btnY3 = btnY2 + btnH + 10;
 
     ctx.fillStyle = '#00e676';
-    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 8); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#0a1628';
     ctx.font = 'bold 16px monospace';
-    ctx.fillText('ЗАНОВО', cx, btnY1 + 30);
+    ctx.fillText('ЗАНОВО', cx, btnY1 + 31);
 
     ctx.fillStyle = '#546e7a';
-    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 8); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.font = '14px monospace';
-    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + 28);
+    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + 30);
 
     ctx.fillStyle = '#546e7a';
-    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 8); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.font = '14px monospace';
-    ctx.fillText('ХАБ', cx, btnY3 + 28);
+    ctx.fillText('ХАБ', cx, btnY3 + 30);
     ctx.textAlign = 'left';
 
     window._goBtns = {
