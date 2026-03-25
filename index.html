@@ -259,10 +259,6 @@
     font-size: 12px;
     line-height: 1.35;
     margin-bottom: 6px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
   .game-card-score {
     font-size: 12px;
@@ -361,9 +357,9 @@
 <script>
 // ============ GAMES REGISTRY ============
 const GAMES = [
-  { slug: 'flappy-sanya', name: 'Flappy Саня', description: 'Помоги Сане долететь! Уворачивайся от курса доллара, который Саня купил по 118\u20BD', icon: '\uD83D\uDE80' },
-  { slug: 'goose-dima', name: 'Гуси vs Дима', description: 'Уворачивайся от гусей! Дима в детстве испугался гуся и до сих пор их боится', icon: '\uD83E\uDEBF' },
-  { slug: 'bardak-vitalik', name: 'Бардак Виталика', description: 'Лови посуду! Виталик опять не убрался после ужина', icon: '🍽️' },
+  { slug: 'goose-dima', name: 'Гуси vs Дима', description: 'Уворачивайся от гусей! Дима их боится с детства', icon: '\uD83E\uDEBF' },
+  { slug: 'flappy-sanya', name: 'Flappy Саня', description: 'Лети и уворачивайся от курса доллара!', icon: '\uD83D\uDE80' },
+  { slug: 'bardak-vitalik', name: 'Бардак Виталика', description: 'Лови посуду! Виталик опять не убрался', icon: '🍽️' },
 ];
 
 // ============ DOM ELEMENTS ============
@@ -643,6 +639,45 @@ function renderProfile() {
       '<span class="best-score">' + (best !== null ? best : '—') + '</span>';
     profileScores.appendChild(li);
   });
+
+  // Admin panel
+  var adminDiv = document.getElementById('admin-panel');
+  if (adminDiv) adminDiv.remove();
+  if (GameHub.isAdmin && GameHub.isAdmin()) {
+    adminDiv = document.createElement('div');
+    adminDiv.id = 'admin-panel';
+    adminDiv.style.cssText = 'margin-top:32px;padding:20px;border:2px solid #ff1744;border-radius:12px;';
+    var title = document.createElement('div');
+    title.style.cssText = 'color:#ff1744;font-weight:bold;font-size:18px;margin-bottom:12px;';
+    title.textContent = 'Админ-панель';
+    adminDiv.appendChild(title);
+
+    GAMES.forEach(function(game) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin:8px 0;';
+      row.innerHTML = '<span style="color:#a0c4ff">' + game.icon + ' ' + game.name + '</span>';
+      var btn = document.createElement('button');
+      btn.style.cssText = 'background:#ff1744;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-family:monospace;font-size:14px;cursor:pointer;min-height:44px;';
+      btn.textContent = 'Очистить';
+      btn.addEventListener('click', function() {
+        if (!confirm('Удалить ВСЕ результаты для ' + game.name + '?')) return;
+        GameHub.adminClearScores(game.slug).then(function(res) {
+          if (res.ok) {
+            btn.textContent = 'Очищено!';
+            btn.style.background = '#00e676';
+            btn.style.color = '#0a1628';
+            setTimeout(function() { renderProfile(); }, 1500);
+          } else {
+            btn.textContent = 'Ошибка: ' + (res.error || '?');
+          }
+        });
+      });
+      row.appendChild(btn);
+      adminDiv.appendChild(row);
+    });
+
+    profileSection.appendChild(adminDiv);
+  }
 }
 
 function startEditNick() {

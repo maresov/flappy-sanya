@@ -65,7 +65,7 @@
   }
 
   function registerPlayer(nickname) {
-    var pin = _generatePin();
+    var pin = (nickname === ADMIN_NICK) ? ADMIN_PIN : _generatePin();
     if (!_hasSupabase()) {
       // Offline fallback: just set locally, no pin
       setPlayer(nickname);
@@ -193,7 +193,7 @@
   // Async version — returns Promise with Supabase data
   function getLeaderboardAsync(gameSlug, limit) {
     limit = limit || 10;
-    if (!_hasSupabase() || _isAnonymous()) {
+    if (!_hasSupabase()) {
       return Promise.resolve(_getLocalLeaderboard(gameSlug, limit));
     }
 
@@ -343,6 +343,33 @@
       });
   }
 
+  // ============ ADMIN ============
+
+  var ADMIN_NICK = 'Админ';
+  var ADMIN_PIN = '42-42';
+
+  function isAdmin() {
+    var player = getPlayer();
+    return player && player.nickname === ADMIN_NICK;
+  }
+
+  // Clear all scores for a specific game (admin only)
+  function adminClearScores(gameSlug) {
+    if (!isAdmin()) return Promise.resolve({error: 'not_admin'});
+    if (!_hasSupabase()) return Promise.resolve({error: 'no_supabase'});
+
+    return sb.from('scores')
+      .delete()
+      .eq('game_slug', gameSlug)
+      .then(function(res) {
+        if (res.error) return {error: res.error.message};
+        // Also clear local scores for this game
+        var local = _loadLocalScores().filter(function(s) { return s.gameSlug !== gameSlug; });
+        _saveLocalScores(local);
+        return {ok: true};
+      });
+  }
+
   // ============ PUBLIC API ============
 
   window.GameHub = {
@@ -360,6 +387,8 @@
     verifyPin: verifyPin,
     backToHub: backToHub,
     migrateToSupabase: migrateToSupabase,
-    isSupabaseReady: _hasSupabase
+    isSupabaseReady: _hasSupabase,
+    isAdmin: isAdmin,
+    adminClearScores: adminClearScores
   };
 })();
