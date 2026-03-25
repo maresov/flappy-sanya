@@ -238,6 +238,15 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 
+// ============ NAVIGATION HELPERS ============
+function goToHub() {
+  if (window.GameHub) GameHub.backToHub();
+  else window.location.href = '../../';
+}
+function goToProfile() {
+  window.location.href = '../../#profile';
+}
+
 // ============ GAME STATE ============
 let state = 'menu';
 let selectedSkin = 0;
@@ -1113,6 +1122,21 @@ function drawHUD() {
   }
   ctx.textAlign = 'left';
 
+  // Pause button (top-right corner)
+  if (state === 'playing') {
+    const pbSize = P ? 44 : 34;
+    const pbX = CANVAS_W - pbSize - (P ? 8 : 6);
+    const pbY = P ? 8 : 6;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath(); ctx.roundRect(pbX, pbY, pbSize, pbSize, 8); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `${P ? 24 : 18}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('⏸', pbX + pbSize / 2, pbY + pbSize * 0.7);
+    ctx.textAlign = 'left';
+    window._pauseBtn = { x: pbX, y: pbY, w: pbSize, h: pbSize };
+  }
+
   // Y-axis labels
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.font = `${P ? 12 : 9}px monospace`;
@@ -1262,9 +1286,21 @@ function drawMenu() {
     ctx.fillText('Тап — прыгать  |  Двойной тап — пауза', cx, hintY);
     ctx.textAlign = 'left';
 
+    // Hub button (top-left)
+    const hubBtnW = P ? 100 : 90, hubBtnH = P ? 36 : 30;
+    const hubBtnX = 10, hubBtnY2 = 10;
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(hubBtnX, hubBtnY2, hubBtnW, hubBtnH, 8); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${P ? 16 : 13}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('← ХАБ', hubBtnX + hubBtnW / 2, hubBtnY2 + hubBtnH * 0.65);
+    ctx.textAlign = 'left';
+
     window._menuBtns = {
       skins: window._skinBtns,
-      start: { x: cx - btnW / 2, y: startBtnY, w: btnW, h: btnH }
+      start: { x: cx - btnW / 2, y: startBtnY, w: btnW, h: btnH },
+      hub: { x: hubBtnX, y: hubBtnY2, w: hubBtnW, h: hubBtnH }
     };
 
   } else {
@@ -1353,9 +1389,21 @@ function drawMenu() {
     ctx.fillText('↑ / Пробел / Тап — прыгать  |  ESC — пауза', cx, btnY + btnH + 22);
     ctx.textAlign = 'left';
 
+    // Hub button (top-left)
+    const hubBtnW = 90, hubBtnH = 30;
+    const hubBtnX = 10, hubBtnY2 = 10;
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(hubBtnX, hubBtnY2, hubBtnW, hubBtnH, 8); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('← ХАБ', hubBtnX + hubBtnW / 2, hubBtnY2 + hubBtnH * 0.65);
+    ctx.textAlign = 'left';
+
     window._menuBtns = {
       skins: window._skinBtns,
-      start: { x: cx - btnW / 2, y: btnY, w: btnW, h: btnH }
+      start: { x: cx - btnW / 2, y: btnY, w: btnW, h: btnH },
+      hub: { x: hubBtnX, y: hubBtnY2, w: hubBtnW, h: hubBtnH }
     };
   }
 }
@@ -1370,29 +1418,52 @@ function drawPauseMenu() {
   ctx.fillStyle = '#fff';
   ctx.font = `bold ${P ? 42 : 32}px monospace`;
   ctx.textAlign = 'center';
-  ctx.fillText('ПАУЗА', cx, CANVAS_H * (P ? 0.35 : 0.32));
+  ctx.fillText('ПАУЗА', cx, CANVAS_H * (P ? 0.22 : 0.2));
 
   const btnW = P ? CANVAS_W * 0.7 : 240;
-  const btnH = P ? 54 : 45;
-  const btnY1 = CANVAS_H * (P ? 0.44 : 0.4);
-  const btnY2 = btnY1 + btnH + (P ? 18 : 14);
+  const btnH = P ? 50 : 42;
+  const btnGap = P ? 14 : 11;
+  const totalBtnsH = btnH * 4 + btnGap * 3;
+  const btnY1 = CANVAS_H * (P ? 0.3 : 0.28);
+  const btnY2 = btnY1 + btnH + btnGap;
+  const btnY3 = btnY2 + btnH + btnGap;
+  const btnY4 = btnY3 + btnH + btnGap;
 
+  // ПРОДОЛЖИТЬ
   ctx.fillStyle = '#00e676';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#0a1628';
-  ctx.font = `bold ${P ? 22 : 16}px monospace`;
+  ctx.font = `bold ${P ? 20 : 16}px monospace`;
   ctx.fillText('ПРОДОЛЖИТЬ', cx, btnY1 + btnH * 0.63);
 
+  // МЕНЮ ИГРЫ
   ctx.fillStyle = '#ff5722';
   ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.font = `bold ${P ? 18 : 16}px monospace`;
-  ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + btnH * 0.63);
+  ctx.font = `bold ${P ? 18 : 15}px monospace`;
+  ctx.fillText('МЕНЮ ИГРЫ', cx, btnY2 + btnH * 0.63);
+
+  // ХАБ
+  ctx.fillStyle = '#546e7a';
+  ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 10); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${P ? 18 : 15}px monospace`;
+  ctx.fillText('ХАБ', cx, btnY3 + btnH * 0.63);
+
+  // ПРОФИЛЬ
+  ctx.fillStyle = '#546e7a';
+  ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY4, btnW, btnH, 10); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${P ? 18 : 15}px monospace`;
+  ctx.fillText('ПРОФИЛЬ', cx, btnY4 + btnH * 0.63);
+
   ctx.textAlign = 'left';
 
   window._pauseBtns = {
     cont: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
-    exit: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH }
+    exit: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH },
+    hub: { x: cx - btnW / 2, y: btnY3, w: btnW, h: btnH },
+    profile: { x: cx - btnW / 2, y: btnY4, w: btnW, h: btnH }
   };
 }
 
@@ -1458,22 +1529,32 @@ function drawGameOver() {
     }
 
     // Buttons pinned to bottom
+    const btnY3 = btnY2 - btnH - 14;
+    const btnY1adj = btnY3 - btnH - 14;
+
     ctx.fillStyle = '#00e676';
-    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 10); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1adj, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#0a1628';
     ctx.font = 'bold 22px monospace';
-    ctx.fillText('ЗАНОВО', cx, btnY1 + btnH * 0.65);
+    ctx.fillText('ЗАНОВО', cx, btnY1adj + btnH * 0.65);
+
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 10); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px monospace';
+    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY3 + btnH * 0.62);
 
     ctx.fillStyle = '#546e7a';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY2, btnW, btnH, 10); ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.font = '16px monospace';
-    ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + btnH * 0.62);
+    ctx.fillText('ХАБ', cx, btnY2 + btnH * 0.62);
     ctx.textAlign = 'left';
 
     window._goBtns = {
-      retry: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
-      menu: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH }
+      retry: { x: cx - btnW / 2, y: btnY1adj, w: btnW, h: btnH },
+      menu: { x: cx - btnW / 2, y: btnY3, w: btnW, h: btnH },
+      hub: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH }
     };
   } else {
     // Desktop game over
@@ -1515,7 +1596,7 @@ function drawGameOver() {
     }
 
     const btnW = 200, btnH = 45;
-    const btnY1 = CANVAS_H * 0.73, btnY2 = btnY1 + btnH + 12;
+    const btnY1 = CANVAS_H * 0.63, btnY2 = btnY1 + btnH + 10, btnY3 = btnY2 + btnH + 10;
 
     ctx.fillStyle = '#00e676';
     ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY1, btnW, btnH, 8); ctx.fill();
@@ -1528,11 +1609,18 @@ function drawGameOver() {
     ctx.fillStyle = '#fff';
     ctx.font = '14px monospace';
     ctx.fillText('ВЫБОР ПЕРСОНАЖА', cx, btnY2 + 28);
+
+    ctx.fillStyle = '#546e7a';
+    ctx.beginPath(); ctx.roundRect(cx - btnW / 2, btnY3, btnW, btnH, 8); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px monospace';
+    ctx.fillText('ХАБ', cx, btnY3 + 28);
     ctx.textAlign = 'left';
 
     window._goBtns = {
       retry: { x: cx - btnW / 2, y: btnY1, w: btnW, h: btnH },
-      menu: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH }
+      menu: { x: cx - btnW / 2, y: btnY2, w: btnW, h: btnH },
+      hub: { x: cx - btnW / 2, y: btnY3, w: btnW, h: btnH }
     };
   }
 }
@@ -1627,15 +1715,22 @@ function handleClick(clientX, clientY) {
       }
     }
     if (hitTest(mx, my, window._menuBtns.start)) { startGame(); return; }
+    if (window._menuBtns.hub && hitTest(mx, my, window._menuBtns.hub)) { goToHub(); return; }
   }
-  if (state === 'playing') { jump(); return; }
+  if (state === 'playing') {
+    if (window._pauseBtn && hitTest(mx, my, window._pauseBtn)) { state = 'paused'; return; }
+    jump(); return;
+  }
   if (state === 'paused' && window._pauseBtns) {
     if (hitTest(mx, my, window._pauseBtns.cont)) { state = 'playing'; return; }
     if (hitTest(mx, my, window._pauseBtns.exit)) { menuJoke = getRandomJoke(JOKES_START,0,0); skinJoke = getRandomJoke(JOKES_SKIN[selectedSkin],0,0); state = 'menu'; return; }
+    if (hitTest(mx, my, window._pauseBtns.hub)) { goToHub(); return; }
+    if (hitTest(mx, my, window._pauseBtns.profile)) { goToProfile(); return; }
   }
   if (state === 'gameover' && window._goBtns) {
     if (hitTest(mx, my, window._goBtns.retry)) { startGame(); return; }
     if (hitTest(mx, my, window._goBtns.menu)) { menuJoke = getRandomJoke(JOKES_START,0,0); skinJoke = getRandomJoke(JOKES_SKIN[selectedSkin],0,0); state = 'menu'; return; }
+    if (window._goBtns.hub && hitTest(mx, my, window._goBtns.hub)) { goToHub(); return; }
   }
 }
 
