@@ -552,7 +552,7 @@ function drawHUD() {
   ctx.fillStyle = ACCENT;
   ctx.font = `bold ${fontSize}px monospace`;
   ctx.textAlign = 'left';
-  ctx.fillText(`Очки: ${score}`, 15, 30);
+  ctx.fillText(`Очки: ${score}`, 20, 30);
 
   // High score
   ctx.fillStyle = '#ffd700';
@@ -565,7 +565,7 @@ function drawHUD() {
     ctx.fillStyle = DARK_GRAY;
     ctx.font = `${fontSize - 4}px monospace`;
     ctx.textAlign = 'left';
-    ctx.fillText(player.nickname, 15, 55);
+    ctx.fillText(player.nickname, 20, 55);
   }
 
   // Speed flash
@@ -578,7 +578,7 @@ function drawHUD() {
 
   // Pause button
   if (state === 'playing') {
-    const pbX = W - 54;
+    const pbX = W - 64;
     const pbY = 8;
     const pbS = 44;
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
