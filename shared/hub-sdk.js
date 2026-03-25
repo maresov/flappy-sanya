@@ -32,23 +32,41 @@
     localStorage.setItem(STORAGE_SCORES, JSON.stringify(scores));
   }
 
+  function _isAnonymous() {
+    var player = getPlayer();
+    return !player || player.nickname === 'Аноним';
+  }
+
+  // Session-only scores for anonymous users (cleared on page reload)
+  var _sessionScores = [];
+
   function submitScore(gameSlug, score) {
     const player = getPlayer();
     if (!player) return;
-    const scores = _loadScores();
-    scores.push({
+    var entry = {
       gameSlug: gameSlug,
       nickname: player.nickname,
       score: score,
       date: new Date().toISOString()
-    });
-    _saveScores(scores);
+    };
+    if (_isAnonymous()) {
+      _sessionScores.push(entry);
+    } else {
+      const scores = _loadScores();
+      scores.push(entry);
+      _saveScores(scores);
+    }
+  }
+
+  function _getAllScores() {
+    // For anonymous: only session scores. For named: only persistent scores (no anon leaderboard pollution)
+    if (_isAnonymous()) return _sessionScores;
+    return _loadScores().filter(function (s) { return s.nickname !== 'Аноним'; });
   }
 
   function getLeaderboard(gameSlug, limit) {
     limit = limit || 10;
-    const scores = _loadScores().filter(function (s) { return s.gameSlug === gameSlug; });
-    // Group by nickname, keep best score per player
+    const scores = _getAllScores().filter(function (s) { return s.gameSlug === gameSlug; });
     const best = {};
     scores.forEach(function (s) {
       if (!best[s.nickname] || s.score > best[s.nickname].score) {
@@ -64,7 +82,7 @@
   function getMyScores(gameSlug) {
     var player = getPlayer();
     if (!player) return [];
-    return _loadScores()
+    return _getAllScores()
       .filter(function (s) { return s.gameSlug === gameSlug && s.nickname === player.nickname; })
       .sort(function (a, b) { return b.score - a.score; });
   }
@@ -72,7 +90,7 @@
   function getAllMyScores() {
     var player = getPlayer();
     if (!player) return [];
-    return _loadScores()
+    return _getAllScores()
       .filter(function (s) { return s.nickname === player.nickname; })
       .sort(function (a, b) { return b.score - a.score; });
   }
