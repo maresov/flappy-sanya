@@ -1097,7 +1097,7 @@ function drawCeiling() {
   // Label
   ctx.fillStyle = '#ff1744';
   ctx.font = `bold ${IS_PORTRAIT ? 14 : 11}px monospace`;
-  ctx.fillText('118₽ — ВЫ КУПИЛИ ТУТ', IS_PORTRAIT ? 12 : 10, ceilingY - (IS_PORTRAIT ? 8 : 5));
+  ctx.fillText('118₽ — ВЫ КУПИЛИ ТУТ', 20, ceilingY - (IS_PORTRAIT ? 8 : 5));
 }
 
 function drawHUD() {
@@ -1128,7 +1128,7 @@ function drawHUD() {
   // Pause button (top-right corner)
   if (state === 'playing') {
     const pbSize = P ? 44 : 44;
-    const pbX = CANVAS_W - pbSize - (P ? 8 : 6);
+    const pbX = CANVAS_W - pbSize - 20;
     const pbY = P ? 8 : 6;
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath(); ctx.roundRect(pbX, pbY, pbSize, pbSize, 8); ctx.fill();
