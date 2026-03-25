@@ -249,6 +249,11 @@
     <div class="section-title">Каталог игр</div>
     <div class="section-subtitle">Выбирай и играй!</div>
     <div class="games-grid" id="games-grid"></div>
+    <div id="global-leaderboard" style="margin-top:32px;display:none;">
+      <div class="section-title">Таблица лидеров</div>
+      <div id="leaderboard-tabs" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"></div>
+      <div id="leaderboard-table"></div>
+    </div>
   </div>
 
   <!-- Profile -->
@@ -269,6 +274,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="shared/supabase-config.js"></script>
 <script src="shared/hub-sdk.js"></script>
 <script>
 // ============ GAMES REGISTRY ============
@@ -318,6 +325,7 @@ function showCatalog() {
   profileToggle.textContent = 'Профиль';
   window.location.hash = '';
   renderGames();
+  setTimeout(renderLeaderboard, 50);
 }
 
 function showProfile() {
@@ -339,6 +347,8 @@ function doLogin() {
   if (!nick) { nicknameInput.focus(); return; }
   GameHub.setPlayer(nick);
   showHub();
+  // Migrate local scores to Supabase on first login
+  if (GameHub.migrateToSupabase) GameHub.migrateToSupabase();
 }
 
 function doAnonLogin() {
@@ -497,6 +507,81 @@ window.addEventListener('hashchange', function() {
   handleHash();
 });
 
+// ============ LEADERBOARD ============
+var _activeLeaderboardGame = '';
+
+function renderLeaderboard() {
+  var lbDiv = document.getElementById('global-leaderboard');
+  var tabsDiv = document.getElementById('leaderboard-tabs');
+  var tableDiv = document.getElementById('leaderboard-table');
+
+  if (!GameHub.isSupabaseReady || !GameHub.isSupabaseReady()) {
+    // Show local leaderboard instead
+    lbDiv.style.display = 'block';
+    _renderLeaderboardTabs(tabsDiv);
+    _renderLeaderboardLocal(tableDiv, _activeLeaderboardGame || GAMES[0].slug);
+    return;
+  }
+
+  lbDiv.style.display = 'block';
+  _renderLeaderboardTabs(tabsDiv);
+  _loadLeaderboardAsync(tableDiv, _activeLeaderboardGame || GAMES[0].slug);
+}
+
+function _renderLeaderboardTabs(tabsDiv) {
+  tabsDiv.innerHTML = '';
+  var activeSlug = _activeLeaderboardGame || GAMES[0].slug;
+  GAMES.forEach(function(game) {
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-small';
+    btn.style.cssText = game.slug === activeSlug
+      ? 'background:#00e676;color:#0a1628;font-weight:bold;'
+      : 'background:rgba(255,255,255,0.1);color:#a0c4ff;';
+    btn.textContent = game.icon + ' ' + game.name;
+    btn.addEventListener('click', function() {
+      _activeLeaderboardGame = game.slug;
+      renderLeaderboard();
+    });
+    tabsDiv.appendChild(btn);
+  });
+}
+
+function _loadLeaderboardAsync(tableDiv, gameSlug) {
+  tableDiv.innerHTML = '<div style="color:var(--text-muted);padding:16px;">Загрузка...</div>';
+  GameHub.getLeaderboardAsync(gameSlug, 10).then(function(data) {
+    _renderLeaderboardTable(tableDiv, data);
+  });
+}
+
+function _renderLeaderboardLocal(tableDiv, gameSlug) {
+  var data = GameHub.getLeaderboard(gameSlug, 10);
+  _renderLeaderboardTable(tableDiv, data);
+}
+
+function _renderLeaderboardTable(tableDiv, data) {
+  if (!data || data.length === 0) {
+    tableDiv.innerHTML = '<div style="color:var(--text-muted);padding:16px;text-align:center;">Пока нет результатов. Будь первым!</div>';
+    return;
+  }
+  var html = '<table style="width:100%;border-collapse:collapse;font-family:monospace;">';
+  html += '<tr style="color:var(--text-muted);font-size:13px;"><th style="text-align:left;padding:8px;">#</th><th style="text-align:left;padding:8px;">Игрок</th><th style="text-align:right;padding:8px;">Очки</th></tr>';
+  var player = GameHub.getPlayer();
+  var myNick = player ? player.nickname : '';
+  data.forEach(function(row, i) {
+    var medal = i === 0 ? '\u{1F947}' : i === 1 ? '\u{1F948}' : i === 2 ? '\u{1F949}' : (i + 1);
+    var isMe = row.nickname === myNick;
+    var rowStyle = isMe ? 'background:rgba(0,230,118,0.1);' : '';
+    var nameStyle = isMe ? 'color:#00e676;font-weight:bold;' : 'color:#fff;';
+    html += '<tr style="border-top:1px solid rgba(255,255,255,0.05);' + rowStyle + '">';
+    html += '<td style="padding:10px 8px;">' + medal + '</td>';
+    html += '<td style="padding:10px 8px;' + nameStyle + '">' + row.nickname + '</td>';
+    html += '<td style="padding:10px 8px;text-align:right;color:#ffd700;font-weight:bold;">' + row.score + '</td>';
+    html += '</tr>';
+  });
+  html += '</table>';
+  tableDiv.innerHTML = html;
+}
+
 // ============ INIT ============
 (function init() {
   var player = GameHub.getPlayer();
@@ -505,6 +590,7 @@ window.addEventListener('hashchange', function() {
     hubMain.classList.add('active');
     updateHeader();
     handleHash();
+    setTimeout(renderLeaderboard, 100);
   } else {
     showLogin();
   }
