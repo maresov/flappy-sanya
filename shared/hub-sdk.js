@@ -155,7 +155,14 @@
       .single()
       .then(function (res) {
         if (res.error || !res.data) {
-          // Player not found in Supabase — skip (they must register first)
+          // Player not found in Supabase — create for score tracking
+          sb.from('players')
+            .insert({ nickname: nickname })
+            .select('id')
+            .single()
+            .then(function (res2) {
+              if (res2.data) _insertScore(res2.data.id, gameSlug, score);
+            });
           return;
         }
         _insertScore(res.data.id, gameSlug, score);
