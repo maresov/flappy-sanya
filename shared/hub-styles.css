@@ -385,13 +385,7 @@ html, body {
     font-size: 28px;
   }
 
-  .games-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .game-card {
-    padding: 18px;
-  }
+  /* games-grid columns now controlled by index.html mobile override */
 
   .profile-stat {
     padding: 12px 16px;
