@@ -95,6 +95,7 @@ let W, H;
 let state = 'start'; // start, playing, paused, gameover
 let score = 0;
 let highScore = 0;
+let _lastAutoSave = 0;
 let dima = { x: 0, y: 0 };
 let geese = [];
 let lastSpawnTime = 0;
@@ -998,7 +999,6 @@ function startGame() {
 }
 
 function gameOver() {
-  state = 'gameover';
   shakeTimer = 0;
   shakeIntensity = 0;
   currentJoke = JOKES[Math.floor(Math.random() * JOKES.length)];
@@ -1006,10 +1006,11 @@ function gameOver() {
   if (score > highScore) {
     highScore = score;
   }
-  // Submit to hub
+  // Submit to hub before changing state
   if (window.GameHub?.submitScore) {
     window.GameHub.submitScore('goose-dima', score);
   }
+  state = 'gameover';
 }
 
 function checkCollision(goose) {
@@ -1121,6 +1122,12 @@ function update(dt) {
     if (isOffScreen(g)) {
       toRemove.push(i);
       score++;
+      // Auto-save every 10 points
+      if (score > 0 && score > highScore && score !== _lastAutoSave && score % 10 === 0) {
+        _lastAutoSave = score;
+        highScore = score;
+        if (window.GameHub?.submitScore) window.GameHub.submitScore('goose-dima', score);
+      }
     }
   }
 

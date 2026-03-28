@@ -273,6 +273,7 @@ let selectedSkin = 0;
 let highScore = 0;
 if (window.GameHub && GameHub.getMyBestScoreAsync) { GameHub.getMyBestScoreAsync('flappy-sanya').then(function(s) { if (s && s > highScore) highScore = s; }); }
 let score = 0;
+let _lastAutoSave = 0;
 let playerY = CANVAS_H / 2;
 let playerVY = 0;
 let scrollX = 0;
@@ -1691,8 +1692,9 @@ function update() {
   scrollX += SCROLL_SPEED * (1 + speedBoosts * 0.1);
   score = getCurrentDay() - START_WEEK;
 
-  // Auto-save score every 50 points to prevent loss on crash
-  if (score > 0 && score % 50 === 0 && score > highScore) {
+  // Auto-save score every 10 points to prevent loss on crash
+  if (score > 0 && score > highScore && score !== _lastAutoSave && score % 10 === 0) {
+    _lastAutoSave = score;
     highScore = score;
     if (window.GameHub) GameHub.submitScore('flappy-sanya', score);
   }
