@@ -1326,6 +1326,11 @@ window.addEventListener('keyup', (e) => {
 // Prevent context menu on long press
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
+// Prevent double-tap zoom/back in in-app browsers (Telegram, etc.)
+document.addEventListener('dblclick', e => e.preventDefault());
+document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchend', e => e.preventDefault(), { passive: false });
+
 // ============ INIT ============
 window.addEventListener('resize', resize);
 loadHighScore();

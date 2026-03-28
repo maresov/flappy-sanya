@@ -601,6 +601,11 @@ canvas.addEventListener('pointerdown', e => {
   handleClick(e.clientX - rect.left, e.clientY - rect.top);
 });
 
+// Prevent double-tap zoom/back in in-app browsers (Telegram, etc.)
+document.addEventListener('dblclick', e => e.preventDefault());
+document.addEventListener('touchstart', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchend', e => e.preventDefault(), { passive: false });
+
 // Keyboard pause
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' || e.key === 'p') {

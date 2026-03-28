@@ -1789,6 +1789,10 @@ canvas.addEventListener('touchstart', (e) => {
 }, { passive: false });
 document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
+// Prevent double-tap zoom/back in in-app browsers (Telegram, etc.)
+document.addEventListener('dblclick', e => e.preventDefault());
+document.addEventListener('touchend', e => e.preventDefault(), { passive: false });
+
 // ============ START ============
 gameLoop();
 </script>
