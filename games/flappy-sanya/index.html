@@ -98,7 +98,9 @@ const GENERATED_TARGET_MID = (GENERATED_TARGET_MIN + GENERATED_TARGET_MAX) / 2; 
 // Lazily generates synthetic rate data beyond the 211 historical weeks.
 // Uses mean reversion + growing volatility so difficulty ramps up over time.
 function ensureRateData(idx) {
-  while (idx >= RATE_DATA.length) {
+  // Cap array at 5000 entries to prevent memory issues on long runs
+  const MAX_RATE_DATA = 5000;
+  while (idx >= RATE_DATA.length && RATE_DATA.length < MAX_RATE_DATA) {
     const prev = RATE_DATA[RATE_DATA.length - 1];
     // Parse previous date and add 7 days
     const d = new Date(prev.date);
@@ -126,6 +128,22 @@ function ensureRateData(idx) {
 
     RATE_DATA.push({ date: dateStr, rate: newRate });
   }
+}
+
+// For indices beyond MAX_RATE_DATA, wrap around the generated portion
+function getRateEntry(idx) {
+  if (idx < RATE_DATA.length) return RATE_DATA[idx];
+  // Wrap around the generated portion (after original 211 entries)
+  const genStart = 211;
+  const genLen = RATE_DATA.length - genStart;
+  if (genLen <= 0) return RATE_DATA[RATE_DATA.length - 1];
+  const wrappedIdx = genStart + ((idx - genStart) % genLen);
+  const entry = RATE_DATA[wrappedIdx];
+  // Generate a plausible date for the wrapped entry
+  const weeksFromStart = idx - 211;
+  const baseDate = new Date(RATE_DATA[211].date);
+  baseDate.setDate(baseDate.getDate() + weeksFromStart * 7);
+  return { date: baseDate.toISOString().slice(0, 10), rate: entry.rate };
 }
 
 // ============ JOKES ============
@@ -286,10 +304,10 @@ function getGroundY(px) {
   const i = Math.floor(dayFloat);
   const frac = dayFloat - i;
   let rate;
-  if (i < 0) rate = RATE_DATA[0].rate;
+  if (i < 0) rate = getRateEntry(0).rate;
   else {
     ensureRateData(i + 1);
-    rate = RATE_DATA[i].rate + (RATE_DATA[i + 1].rate - RATE_DATA[i].rate) * frac;
+    rate = getRateEntry(i).rate + (getRateEntry(i + 1).rate - getRateEntry(i).rate) * frac;
   }
   return rateToY(amplifyRate(rate)) + CANVAS_H * GROUND_OFFSET_RATIO;
 }
@@ -1074,9 +1092,9 @@ function drawGround() {
         const gfs = IS_PORTRAIT ? 12 : 9;
         ctx.fillStyle = 'rgba(0,230,118,0.7)';
         ctx.font = `${gfs}px monospace`;
-        ctx.fillText(RATE_DATA[dayIdx].rate.toFixed(1), actualPx - 12, y + 14);
+        ctx.fillText(getRateEntry(dayIdx).rate.toFixed(1), actualPx - 12, y + 14);
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillText(RATE_DATA[dayIdx].date.slice(5), actualPx - 12, y + 14 + gfs + 2);
+        ctx.fillText(getRateEntry(dayIdx).date.slice(5), actualPx - 12, y + 14 + gfs + 2);
       }
     }
   }
@@ -1105,8 +1123,8 @@ function drawHUD() {
   const P = IS_PORTRAIT;
   const day = getCurrentDay();
   ensureRateData(day);
-  const currentDate = RATE_DATA[day].date;
-  const currentRate = RATE_DATA[day].rate;
+  const currentDate = getRateEntry(day).date;
+  const currentRate = getRateEntry(day).rate;
   const hudY = rateToY(CEILING_RATE) + (P ? 28 : 20);
   const pad = P ? 12 : 0;
 
@@ -1516,7 +1534,7 @@ function drawGameOver() {
     if (day > 0) {
       ctx.fillStyle = '#a0c4ff';
       ctx.font = '20px monospace';
-      const rateText = `Курс: ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`;
+      const rateText = `Курс: ${getRateEntry(day).rate.toFixed(2)}₽ (${getRateEntry(day).date})`;
       drawWrappedText(rateText, cx, y + 16, textW, 24);
       y += 30;
     }
@@ -1585,7 +1603,7 @@ function drawGameOver() {
     if (day > 0) {
       ctx.fillStyle = '#a0c4ff';
       ctx.font = '20px monospace';
-      drawWrappedText(`Врезался при курсе ${RATE_DATA[day].rate.toFixed(2)}₽ (${RATE_DATA[day].date})`, cx, CANVAS_H * 0.32, CANVAS_W * 0.85, 24);
+      drawWrappedText(`Врезался при курсе ${getRateEntry(day).rate.toFixed(2)}₽ (${getRateEntry(day).date})`, cx, CANVAS_H * 0.32, CANVAS_W * 0.85, 24);
     }
 
     ctx.fillStyle = '#ffa726';
@@ -1646,7 +1664,7 @@ function endGame() {
   }
   const day = getCurrentDay();
   ensureRateData(day);
-  currentJoke = getRandomJoke(JOKES_END, score, RATE_DATA[day].rate);
+  currentJoke = getRandomJoke(JOKES_END, score, getRateEntry(day).rate);
   currentSanyaQuip = SANYA_QUIPS[Math.floor(Math.random() * SANYA_QUIPS.length)];
   if (window.GameHub) GameHub.submitScore('flappy-sanya', score);
   state = 'gameover';
@@ -1659,7 +1677,7 @@ const START_WEEK = 75;
 function startGame() {
   state = 'playing';
   scrollX = START_WEEK * DAY_WIDTH;
-  playerY = rateToY(RATE_DATA[START_WEEK].rate);
+  playerY = rateToY(getRateEntry(START_WEEK).rate);
   playerVY = 0;
   score = 0;
 }
@@ -1672,6 +1690,12 @@ function update() {
   const speedBoosts = Math.floor(Math.max(0, weeksPlayed) / 20);
   scrollX += SCROLL_SPEED * (1 + speedBoosts * 0.1);
   score = getCurrentDay() - START_WEEK;
+
+  // Auto-save score every 50 points to prevent loss on crash
+  if (score > 0 && score % 50 === 0 && score > highScore) {
+    highScore = score;
+    if (window.GameHub) GameHub.submitScore('flappy-sanya', score);
+  }
 
   // Ensure procedural data exists ahead of the player
   ensureRateData(getCurrentDay() + 20);
