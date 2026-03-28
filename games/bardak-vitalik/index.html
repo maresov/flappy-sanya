@@ -428,7 +428,7 @@ function showGameOver() {
 function startGame() {
   score = 0; tablePile = 0; gameTime = 0; _lastAutoSave = 0;
   dishes = []; bonuses = []; particles = []; tableDishes = [];
-  baseSpeed = 1.5; spawnInterval = 1800; spawnTimer = 0;
+  baseSpeed = 1.8; spawnInterval = 1200; spawnTimer = 0;
   freezeEnd = 0;
   gameElapsed = 0; speedMultiplier = 1; lastSpeedTick = 0;
   nextBonusTime = performance.now() + rand(BONUS_INTERVAL_MIN, BONUS_INTERVAL_MAX);
@@ -634,16 +634,22 @@ function loop(ts) {
   let frozen = performance.now() < freezeEnd;
 
   // Difficulty ramp (gentle: /90 for speed, *3 for spawn interval)
-  baseSpeed = 1.5 + gameTime / 90;
-  spawnInterval = Math.max(700, 1800 - gameTime * 3);
+  baseSpeed = 1.8 + gameTime / 120;
+  spawnInterval = Math.max(700, 1200 - gameTime * 1.5);
+
+  // Safety cap: don't let too many fast dishes overwhelm the player
+  let activeDishes = dishes.filter(d => !d.caught).length;
+  if (activeDishes >= 5 && spawnTimer <= 0) {
+    spawnTimer = 400; // Force a small delay
+  }
 
   // Spawn dishes
   spawnTimer -= dt * 1000;
   if (spawnTimer <= 0) {
     spawnDish();
     // Chance to spawn multiple (delayed and less frequent)
-    if (gameTime > 50 && Math.random() < 0.2) spawnDish();
-    if (gameTime > 90 && Math.random() < 0.15) spawnDish();
+    if (gameTime > 25 && Math.random() < 0.2) spawnDish();
+    if (gameTime > 60 && Math.random() < 0.15) spawnDish();
     spawnTimer = spawnInterval + rand(-200, 200);
   }
 
