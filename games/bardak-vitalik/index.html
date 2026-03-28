@@ -636,9 +636,9 @@ function loop(ts) {
   spawnTimer -= dt * 1000;
   if (spawnTimer <= 0) {
     spawnDish();
-    // Chance to spawn multiple
-    if (gameTime > 30 && Math.random() < 0.3) spawnDish();
-    if (gameTime > 60 && Math.random() < 0.2) spawnDish();
+    // Chance to spawn multiple (delayed and less frequent)
+    if (gameTime > 50 && Math.random() < 0.2) spawnDish();
+    if (gameTime > 90 && Math.random() < 0.15) spawnDish();
     spawnTimer = spawnInterval + rand(-200, 200);
   }
 
