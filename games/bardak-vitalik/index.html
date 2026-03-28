@@ -311,32 +311,6 @@ const TABLE_MAX = 5;
 const FREEZE_DURATION = 5000;
 const BONUS_INTERVAL_MIN = 12000;
 const BONUS_INTERVAL_MAX = 22000;
-const WAVE_THRESHOLD = 20;
-
-const WAVE_JOKES = [
-  'Виталик: «Да я потом уберу»',
-  'Виталик: «Это замачивается!»',
-  'Виталик: «Завтра поеду смотреть\nквартиру... наверное»',
-  'Виталик выбирает квартиру уже 3-й год',
-  'Виталик: «Посудомойка?\nЗачем, если есть потом»',
-  'Виталик ушёл на перекур вместо уборки',
-  'Виталик: «Сначала покурю, потом уберу»',
-  'Виталик: «Машину тоже пока не буду брать»',
-  'Виталик думает. Долго думает. Очень долго',
-  'Виталик: «А может квартиру через годик?»',
-  'Виталик вышел покурить и забыл про посуду',
-  'Виталик: «Уборка — это не моё.\nМоё — думать»',
-  'Друзья ушли. Бардак остался.\nВиталик тоже',
-  'Виталик: «Гости виноваты,\nа я просто свидетель»',
-  'Посуда копится быстрее,\nчем Виталик думает',
-  'Виталик: «Это не бардак,\nэто творческий беспорядок»',
-  'Раковина переполнена.\nВиталик невозмутим',
-  'Виталик: «Кто последний ел —\nтот и моет. А я спал»',
-  'Друзья обещали помочь.\nДрузья ушли',
-  'Виталик: «Замочу до утра.\nИли до вечера. Или навсегда»',
-  'Виталик: «Пацаны, вы серьёзно\nвсё это оставили?»',
-  'Гора посуды растёт.\nВиталик медитирует',
-];
 
 const GO_JOKES = [
   'Виталик: «Нет! Только не посудомойка!»',
@@ -452,7 +426,7 @@ function showGameOver() {
 
 // ===== GAME INIT =====
 function startGame() {
-  score = 0; tablePile = 0; gameTime = 0;
+  score = 0; tablePile = 0; gameTime = 0; _lastAutoSave = 0;
   dishes = []; bonuses = []; particles = []; tableDishes = [];
   baseSpeed = 1.5; spawnInterval = 1800; spawnTimer = 0;
   freezeEnd = 0;
@@ -493,13 +467,6 @@ function spawnDish() {
     type, x, y: -h, w, h, speed,
     caught: false, alpha: 1
   });
-}
-
-function spawnWave() {
-  let count = randInt(5, 8);
-  for (let i = 0; i < count; i++) {
-    setTimeout(() => { if (state === 'playing') spawnDish(); }, i * 200);
-  }
 }
 
 function spawnBonus() {
@@ -569,9 +536,14 @@ function addTableDish(type) {
   let tw = type.wRatio * W * 0.6;
   let th = type.hRatio * H * 0.5;
   tw = Math.max(tw, 36); th = Math.max(th, 20);
+  // Spread dishes horizontally across the table instead of stacking
+  let slotCount = TABLE_MAX;
+  let slotWidth = (W * 0.8) / slotCount;
+  let idx = tableDishes.length % slotCount;
+  let slotX = W * 0.1 + idx * slotWidth + (slotWidth - tw) / 2;
   tableDishes.push({
-    type, x: rand(W * 0.1, W * 0.9 - tw), w: tw, h: th,
-    rotation: rand(-0.3, 0.3)
+    type, x: slotX, w: tw, h: th,
+    rotation: rand(-0.2, 0.2)
   });
 }
 
@@ -611,6 +583,12 @@ function handleClick(cx, cy) {
     if (cx >= d.x - d.w / 2 - tapPad && cx <= d.x + d.w / 2 + tapPad && cy >= d.y - d.h / 2 - tapPad && cy <= d.y + d.h / 2 + tapPad) {
       d.caught = true;
       score += d.type.points;
+      // Auto-save score every 10 points to prevent loss on crash
+      if (score > 0 && score > highScore && score !== _lastAutoSave && score % 10 === 0) {
+        _lastAutoSave = score;
+        highScore = score;
+        if (window.GameHub) window.GameHub.submitScore('bardak-vitalik', score);
+      }
       addCatchParticles(d.x, d.y, d.type.color);
       return;
     }
@@ -641,18 +619,18 @@ function loop(ts) {
   gameTime += dt;
   gameElapsed += dt;
 
-  // Speed increase every 20 seconds (gentler ramp)
-  let currentTick = Math.floor(gameElapsed / 20);
+  // Speed increase every 30 seconds (gentle ramp)
+  let currentTick = Math.floor(gameElapsed / 30);
   if (currentTick > lastSpeedTick) {
-    speedMultiplier *= 1.06;
+    speedMultiplier *= 1.04;
     lastSpeedTick = currentTick;
   }
 
   let frozen = performance.now() < freezeEnd;
 
-  // Difficulty ramp (gentler: /60 instead of /40, *5 instead of *8)
-  baseSpeed = 1.5 + gameTime / 60;
-  spawnInterval = Math.max(600, 1800 - gameTime * 5);
+  // Difficulty ramp (gentle: /90 for speed, *3 for spawn interval)
+  baseSpeed = 1.5 + gameTime / 90;
+  spawnInterval = Math.max(700, 1800 - gameTime * 3);
 
   // Spawn dishes
   spawnTimer -= dt * 1000;
@@ -777,10 +755,14 @@ function draw(frozen) {
     ctx.restore();
   }
 
-  // Freeze overlay
+  // Freeze overlay — prominent blue tint when active
   if (frozen) {
-    ctx.fillStyle = 'rgba(0, 100, 255, 0.08)';
+    ctx.fillStyle = 'rgba(0, 100, 255, 0.18)';
     ctx.fillRect(0, 0, W, H);
+    // Frost border effect
+    ctx.strokeStyle = 'rgba(100, 181, 246, 0.5)';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, W - 6, H - 6);
   }
 
   // Dishes
@@ -848,17 +830,42 @@ function draw(frozen) {
   // Bonuses
   for (let b of bonuses) {
     ctx.save();
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = b.type === 'freeze' ? 'rgba(160, 196, 255, 0.85)' : 'rgba(0, 230, 118, 0.85)';
     let bw = b.w, bh = b.h;
-    ctx.beginPath();
-    ctx.roundRect(b.x - bw / 2, b.y - bh / 2, bw, bh, 10);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold ' + Math.max(20, bh * 0.38) + 'px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(b.text, b.x, b.y);
+    if (b.type === 'freeze') {
+      // Freeze bonus: larger with pulsing glow
+      let pulse = 1 + 0.15 * Math.sin(performance.now() / 150);
+      bw = b.w * 1.3 * pulse;
+      bh = b.h * 1.4 * pulse;
+      ctx.shadowColor = '#64b5f6';
+      ctx.shadowBlur = 25 + 10 * Math.sin(performance.now() / 200);
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = 'rgba(100, 181, 246, 0.9)';
+      ctx.beginPath();
+      ctx.roundRect(b.x - bw / 2, b.y - bh / 2, bw, bh, 12);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(b.x - bw / 2, b.y - bh / 2, bw, bh, 12);
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold ' + Math.max(22, bh * 0.42) + 'px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('❄ ' + b.text, b.x, b.y);
+    } else {
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = 'rgba(0, 230, 118, 0.85)';
+      ctx.beginPath();
+      ctx.roundRect(b.x - bw / 2, b.y - bh / 2, bw, bh, 10);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold ' + Math.max(20, bh * 0.38) + 'px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(b.text, b.x, b.y);
+    }
     ctx.restore();
   }
 
@@ -881,18 +888,6 @@ function draw(frozen) {
       ctx.arc(p.x, p.y, p.r * Math.min(1, alpha + 0.3), 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.restore();
-  }
-
-  // Speed flash text
-  if (speedFlashTimer > 0) {
-    ctx.save();
-    ctx.globalAlpha = Math.min(1, speedFlashTimer / 0.3);
-    ctx.fillStyle = '#ffa726';
-    ctx.font = 'bold ' + Math.max(22, W * 0.05) + 'px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(speedFlashText || 'Посуда летит быстрее!', W / 2, H * 0.4);
     ctx.restore();
   }
 
@@ -926,12 +921,21 @@ function draw(frozen) {
   ctx.fillStyle = tablePile >= 4 ? '#ff1744' : tablePile >= 3 ? '#ffa726' : '#00e676';
   ctx.fillRect(barX, barY, fill, barH);
 
-  // Freeze timer
+  // Freeze timer — prominent display
   if (frozen) {
     let remaining = Math.ceil((freezeEnd - performance.now()) / 1000);
-    ctx.fillStyle = '#a0c4ff';
+    let freezeFontSize = Math.max(28, Math.min(36, W * 0.06));
+    ctx.save();
+    // Background banner
+    ctx.fillStyle = 'rgba(0, 80, 200, 0.7)';
+    ctx.fillRect(W / 2 - 140, hudY - 4, 280, freezeFontSize + 12);
+    // Text
+    ctx.font = 'bold ' + freezeFontSize + 'px monospace';
+    ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
-    ctx.fillText('❄ ' + remaining + 'с', W / 2, hudY);
+    ctx.textBaseline = 'top';
+    ctx.fillText('❄ ЗАМОРОЖЕНО ' + remaining + 'с', W / 2, hudY);
+    ctx.restore();
   }
 
   // Pause button
