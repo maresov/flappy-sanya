@@ -307,8 +307,8 @@ function renderSkinCards() {
 }
 
 // ===== CONSTANTS =====
-const TABLE_MAX = 5;
-const FREEZE_DURATION = 5000;
+const TABLE_MAX = 3;
+const FREEZE_DURATION = 2000;
 const BONUS_INTERVAL_MIN = 12000;
 const BONUS_INTERVAL_MAX = 22000;
 
@@ -476,7 +476,7 @@ function spawnBonus() {
   let fromLeft = Math.random() < 0.5;
   bonuses.push({
     type: isFreeze ? 'freeze' : 'clear',
-    text: isFreeze ? '📱 Срочно ответить!' : '🤝 Друзья помогают',
+    text: isFreeze ? '📱 Покурить IQOS' : '🤝 Друзья помогают',
     x: fromLeft ? -200 : W + 200,
     y: y,
     speed: (fromLeft ? 1 : -1) * rand(60, 100),
@@ -914,7 +914,7 @@ function draw(frozen) {
 
   // Table meter
   let meterY = hudY + fontSize + 8;
-  ctx.fillStyle = tablePile >= 4 ? '#ff1744' : tablePile >= 3 ? '#ffa726' : '#00e676';
+  ctx.fillStyle = tablePile >= 3 ? '#ff1744' : tablePile >= 2 ? '#ffa726' : '#00e676';
   ctx.textAlign = 'left';
   ctx.fillText('Посудомойка: ' + tablePile + '/' + TABLE_MAX, 20, meterY);
 
@@ -923,7 +923,7 @@ function draw(frozen) {
   ctx.fillStyle = '#1a2a44';
   ctx.fillRect(barX, barY, barW, barH);
   let fill = (tablePile / TABLE_MAX) * barW;
-  ctx.fillStyle = tablePile >= 4 ? '#ff1744' : tablePile >= 3 ? '#ffa726' : '#00e676';
+  ctx.fillStyle = tablePile >= 3 ? '#ff1744' : tablePile >= 2 ? '#ffa726' : '#00e676';
   ctx.fillRect(barX, barY, fill, barH);
 
   // Freeze timer — prominent display
@@ -939,7 +939,7 @@ function draw(frozen) {
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('❄ ЗАМОРОЖЕНО ' + remaining + 'с', W / 2, hudY);
+    ctx.fillText('❄ Покурить IQOS ' + remaining + 'с', W / 2, hudY);
     ctx.restore();
   }
 
